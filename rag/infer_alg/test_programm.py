@@ -8,12 +8,15 @@ if __name__=='__main__':
     parser.add_argument("--db_path", type = str, help = 'path to preprocessed databset with index')
     parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')
     parser.add_argument("--retriever_path", type = str, help = 'path to colbert model')
-    parser.add_argument('--generate_maxlength', type = int, help = 'llm generate max length')
+    parser.add_argument('--generate_maxlength', type = int, default = 50, help = 'llm generate max length')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
-
+    parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
+    parser.add_argument('--doc_maxlen', type = int, default = 300, help = 'the doc max len decided by the wikidata format, here we set 300')
+    parser.add_argument('--nbits', type = int, default = 2, help = 'encode each dimension with n bits')
     args = parser.parse_args()
     pdb.set_trace()
     rag = NaiveRag(args)
+    passages = rag.search('hello what your name')
     output = rag.llm_inference('hello what your name')
     # 需要注意的是 generate 的代码需要截取后面的回答，
         #     (Pdb) output_text

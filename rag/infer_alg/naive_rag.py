@@ -1,32 +1,35 @@
+import os
 import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
-
+import faiss
+from colbert.data import Queries, Collection
+from colbert import Indexer, Searcher
+from colbert.infra import Run, RunConfig, ColBERTConfig
+import pdb
 class NaiveRag:
     def __init__(self, args):
         
         # common args
-        self.n_docs = args.n_docs
         self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
         self.generate_maxlength = args.generate_maxlength
-        self.retriever_path = args.retriever_path # 也就是说这里直接接受的是处理好的数据
         self.use_vllm = args.use_vllm
-        # 解码算法的模式选择 greedy 还有 nucleus 
-        
+        self.num_gpu = args.num_gpu
         self.eval_datapath = args.eval_datapath
+
+        # retrieval args
+        self.n_docs = args.n_docs
+        self.nbits = args.nbits
+        self.doc_maxlen = args.doc_maxlen # 这个后期其实可以固定下来
+        self.retriever_path = args.retriever_path # 也就是说这里直接接受的是处理好的数据
         self.db_path = args.db_path
 
-        # load database
+        # load database & eval dataset
         self.database = self.load_database() # 这部分我感觉可以合并到 setup_retrieval 部分
+        self.eval_dataset = self.load_evaldataset()
 
-        # load eval dataset
-        self.eval_dataset = self.load_evaldataset() 
-
-        # load llm  
-        self.llm, self.tokenizer = self.load_llm() 
-
-        # load retriever
-        self.retrieval = self.setup_retrieval() 
+        self.llm, self.tokenizer = self.load_llm()
+        self.retrieval = self.setup_retrieval()
 
     def init(self):
         # 
@@ -34,14 +37,15 @@ class NaiveRag:
 
     def inference(self, query):
         # 这部分好像不需要 embedding，因为直接可以调用 self.retrieval(query) 然后就可以直接得到结果
-        passages = self.retrieval(query) 
-        inputs = get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
+        passages = self.search(query) # 这里我感觉可以构造一个 dic()
+        #这部分只能得到 idx 可以进一步将 retrieval 封装起来直接返回一个 dic 这样效果更好一些
+        # passages  = dict of dict
+        inputs = self.get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
         # 这部分必须是 str 才可以
-        outputs = self.llm_inference(inputs) 
+        outputs = self.llm_inference(inputs) # 
             # 这部分需要经过 3 个部分 encode -> generate -> decode
             # 所以还是集成起来比价合适
-        response = postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法，
-        # 
+        response = self.postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法，
         return response
 
     def load_database(self):
@@ -64,9 +68,24 @@ class NaiveRag:
         return llm, tokenizer
         
     def setup_retrieval(self):
-        pass
-
+        # TODO: idnex_name 后续得想的简单点，不然参数太多了，直接给一个 wiki 的 encode 就完了
+        dataroot = '/home/wyd/data/4-colbert/lotte'
+        dataset = 'lifestyle'
+        datasplit = 'dev'
+        index_name = f'{dataset}.{datasplit}.{self.nbits}bits'
+        collection_path = os.path.join(dataroot, dataset, datasplit, 'collection.tsv') # 外挂数据的路径还是需要想办法解决一下
+        collection = Collection(path = collection_path)
+        with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.db_path)):  # nranks specifies the number of GPUs to use.
+            config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
+            indexer = Indexer(checkpoint = self.retriever_path, config=config)
+            indexer.index(name = index_name, collection = collection, overwrite='reuse') # here we set reuse mode
+        
+        with Run().context(RunConfig(experiment = self.db_path)):
+            searcher = Searcher(index = index_name)
+        return searcher
+    
     def get_prompt(self, passages, query): #prompt 如果子类不进行继承，那么就使用 naive_rag 的 prompt
+        # emmmm这块得把 passages 拼接进来才行啊，
         template = f'''
             [任务描述]
             请根据用户输入的上下文回答问题，并遵守回答要求。
@@ -99,3 +118,11 @@ class NaiveRag:
             return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
         else:
             return output_text.replace("<s> " + inputs, "").strip()
+    
+    def search(self, query):
+        ids = self.retrieval.search(query, k = self.n_docs)
+        passages = {}
+        for passage_id, passage_rank, passage_score in zip(*ids): # 这里面的*是用来解耦元素的，将整个 list 全部变成一个单独的个体
+            print(f"\t [{passage_rank}] \t\t {passage_score:.1f} \t\t {self.retrieval.collection[passage_id]}")
+            passages[passage_rank] = {'content': self.retrieval.collection[passage_id], 'score':passage_score}
+        return passages
