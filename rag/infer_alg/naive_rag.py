@@ -1,7 +1,7 @@
 import argparse
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
-class NiaveRag:
+class NaiveRag:
     def __init__(self, args):
         
         # common args

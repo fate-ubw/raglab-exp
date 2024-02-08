@@ -1,4 +1,4 @@
-from naive_rag import NiaveRag
+from naive_rag import NaiveRag
 import argparse
 import pdb
 if __name__=='__main__':
@@ -13,7 +13,7 @@ if __name__=='__main__':
 
     args = parser.parse_args()
     pdb.set_trace()
-    rag = NiaveRag(args)
+    rag = NaiveRag(args)
     output = rag.llm_inference('hello what your name')
     # 需要注意的是 generate 的代码需要截取后面的回答，
         #     (Pdb) output_text
