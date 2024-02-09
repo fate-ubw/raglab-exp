@@ -5,7 +5,7 @@ if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
-    parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'] help = 'different mode of ingerence')
+    parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'], help = 'different mode of ingerence')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     parser.add_argument("--db_path", type = str, help = 'path to preprocessed databset with index')
     parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')

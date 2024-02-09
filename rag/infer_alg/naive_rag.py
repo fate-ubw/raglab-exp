@@ -43,7 +43,7 @@ class NaiveRag:
         # 
         raise NotImplementedError
 
-    def inference(self, query):
+    def inference(self, query = None):
         if 'interact' == self.mode:
             passages = self.search(query) # 这里我感觉可以构造一个 dic()
             # passages: dict of dict
