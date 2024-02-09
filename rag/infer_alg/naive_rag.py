@@ -1,20 +1,25 @@
 import os
 import argparse
+from datetime import datetime
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import faiss
 from colbert.data import Queries, Collection
 from colbert import Indexer, Searcher
 from colbert.infra import Run, RunConfig, ColBERTConfig
+from utils import load_jsonlines
 import pdb
+from tqdm import tqdm
 class NaiveRag:
     def __init__(self, args):
         
         # common args
+        self.mode = args.mode
         self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
         self.generate_maxlength = args.generate_maxlength
         self.use_vllm = args.use_vllm
         self.num_gpu = args.num_gpu
+
         self.eval_datapath = args.eval_datapath
 
         # retrieval args
@@ -25,9 +30,12 @@ class NaiveRag:
         self.db_path = args.db_path
 
         # load database & eval dataset
-        self.database = self.load_database() # 这部分我感觉可以合并到 setup_retrieval 部分
-        self.eval_dataset = self.load_evaldataset()
-
+        if 'evaluation' == self.mode: # load evaluation dataset
+            self.eval_dataset = self.load_evaldataset() #把握 input 和 output
+            self.output_dir = args.output_dir
+        elif 'interact' == self.mode: # 
+            pass
+        # load model and database
         self.llm, self.tokenizer = self.load_llm()
         self.retrieval = self.setup_retrieval()
 
@@ -36,23 +44,55 @@ class NaiveRag:
         raise NotImplementedError
 
     def inference(self, query):
-        # 这部分好像不需要 embedding，因为直接可以调用 self.retrieval(query) 然后就可以直接得到结果
-        passages = self.search(query) # 这里我感觉可以构造一个 dic()
-        #这部分只能得到 idx 可以进一步将 retrieval 封装起来直接返回一个 dic 这样效果更好一些
-        # passages  = dict of dict
-        inputs = self.get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
-        # 这部分必须是 str 才可以
-        outputs = self.llm_inference(inputs) # 
-            # 这部分需要经过 3 个部分 encode -> generate -> decode
-            # 所以还是集成起来比价合适
-        response = self.postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法，
-        return response
+        if 'interact' == self.mode:
+            passages = self.search(query) # 这里我感觉可以构造一个 dic()
+            # passages: dict of dict
+            inputs = self.get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
+            outputs = self.llm_inference(inputs) # 
 
-    def load_database(self):
-        pass
+            response = self.postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法
+            return response
+        elif 'evaluation' == self.mode: 
+            self.eval_dataset 
+            inference_result = []
+            for idx, eval_data in tqdm(enumerate(self.eval_dataset)):
+                qeustion = eval_data["question"]
+                passages = self.search(question)
+                inputs = self.get_prompt(passages, question)
+                outputs = self.llm_inference(inputs)
+                response = self.postporcess(outputs)
+                eval_data["output"] = response
+                inference_result.append(eval_data)
+            # TODO 存储机制，这块得好好想想
+            # 其实这块可以再进一步实现顺序的问题，也就是第一token 可以是 1,2,3,4 遍历所有文件，找到 basename 然后用-split 然后找到对第一个 token 排序，找到最大的，然后
+
+            # check存储路径
+            print('storing result....')
+            if not os.path.exists(self.output_dir):
+                os.makedirs(self.output_dir)
+            # 文件名称
+            model_name = os.path.basename(self.llm_path)
+            input_filename = os.path.basename(self.eval_datapath)
+            eval_Dataname = os.path.splitext(input_filename)[0] #这个拿到的是dataset 的 name
+            time = datetime.now().strftime('%m%d_%H%M') # time 
+            output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl' #
+            output_file = os.path.json(self.output_dir, output_name)
+            # 存储文件
+            with open(output_file, 'w') as outfile:
+                for result in inference_result:
+                    json.dump(result, outfile)
+                    outfile.write('\n')
+            print('success')
+            eval_result = None
+            return eval_result
 
     def load_evaldataset(self):
-        pass
+        if input_path.endswith(".json"):
+            eval_dataset = json.load(open(self.eval_datapath))
+        else:
+            eval_dataset = load_jsonlines(self.eval_datapath) # 这一部分拿到的是一个 list of dict 
+        # eval_dataset：type：list of dict
+        return eval_dataset
 
     def load_llm(self):
         # load tokenizer and llm
@@ -61,7 +101,7 @@ class NaiveRag:
         tokenizer = None
         if self.use_vllm:
             llm = LLM(model=self.llm_path) # 成功加载
-            self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens=50, logprobs=32000, skip_special_tokens = False)
+            self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         else:
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
             llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
@@ -85,19 +125,22 @@ class NaiveRag:
         return searcher
     
     def get_prompt(self, passages, query): #prompt 如果子类不进行继承，那么就使用 naive_rag 的 prompt
-        # emmmm这块得把 passages 拼接进来才行啊，
-        template = f'''
-            [任务描述]
-            请根据用户输入的上下文回答问题，并遵守回答要求。
-            [背景知识]
-            {context}
-            [回答要求]
-            - 你需要严格根据背景知识的内容回答，禁止根据常识和已知信息回答问题。
-            - 对于不知道的信息，直接回答“未找到相关答案”
-            [问题]
-            {question}
-            '''
-        prompt = template.format(context = passages, question = query)
+        # passages is dict type 
+        # 不对不同任务有不同的 prompt 这部分直接就
+        collater = ''
+        for rank_id, tmp in passages.items():
+            collater += f'Passages{rank_id}: ' + tmp['content'] +'\n'  # 这个拿回来之后             
+        prompt = f'''
+                [Task]
+                Please answer the question based on the user's input context and comply with the answering requirements.
+                [Background Knowledge]
+                {collater}
+                [Answering Requirements]
+                - You need to strictly answer based on the content of the background knowledge, and it is forbidden to answer questions based on common sense and known information.
+                - For information that is not known, simply answer "No relevant answer found"
+                [Question]
+                {query}
+                '''
         return prompt
     
     def postporcess(self, samples): # naive rag 不需要对生成的结果进行更多的操作，但是根据不同的任务需要对 special token 进行处理的
