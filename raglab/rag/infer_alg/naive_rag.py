@@ -42,6 +42,7 @@ class NaiveRag:
 
     def inference(self, query = None, mode = 'interact', task = None):
         assert mode in ['interact', 'evaluation']
+        assert task in ['PopQA']
         if 'interact' == mode:
             passages = self.search(query)
             # passages: dict of dict
@@ -50,23 +51,23 @@ class NaiveRag:
             response = self.postporcess(outputs) 
             return response
         elif 'evaluation' == mode:
-
-            popqa =  PopQA(self.output_dir, self.llm_path, self.eval_datapath) 
-            self.eval_dataset = popqa.load_dataset() #
-            
-            inference_results = []
-            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
-                passages = self.search(question)
-                inputs = self.get_prompt(passages, question)
-                outputs = self.llm_inference(inputs)
-                eval_data["generation"] = outputs 
-                inference_results.append(eval_data)
-            popqa.save_result(inference_results, self.output_dir) #直接
-            print('start evaluation!')
-            eval_result = popqa.eval_acc(args) #首先是必须得读得到
-            print(eval_result)
-            return eval_result
+            if 'PopQA' == task:
+                popqa =  PopQA(self.output_dir, self.llm_path, self.eval_datapath) 
+                self.eval_dataset = popqa.load_dataset() #
+                
+                inference_results = []
+                for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                    question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
+                    passages = self.search(question)
+                    inputs = self.get_prompt(passages, question)
+                    outputs = self.llm_inference(inputs)
+                    eval_data["generation"] = outputs 
+                    inference_results.append(eval_data)
+                
+                popqa.save_result(inference_results, self.output_dir)
+                eval_result = popqa.eval_acc(inference_results) 
+                print(f'PopQA accuracy: {eval_result}')
+            return eval_result 
 
     def load_llm(self):
         llm = None

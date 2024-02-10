@@ -21,11 +21,6 @@ if __name__=='__main__':
     args = parser.parse_args()
     over_write_args_from_file(args, args.config) #
     rag = NaiveRag(args) 
-    # response = rag.inference('tell me how to be a good teacher', mode = 'interact') #喔喔不对不对， mode 应该是用户来设置的，
-    # (Pdb) outputs = '[Answer]\n 
-    # 参数--json 
-    # 要设计一个 yaml 文件来存储全部的参数
-    eval_result = rag.inference(mode = 'evaluation') #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
-
-    # I think the most important thing is to be a good listener. You need to be able to understand what the student is trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to'
+    eval_result = rag.inference(mode = 'evaluation', task = "PopQA") #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
+    pdb.set_trace()
     print(eval_result)

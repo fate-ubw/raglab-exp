@@ -1,8 +1,12 @@
 import os
-from datetime import datetime
 import jsonlines
 import json
-from raglab.dataset.utils import load_jsonlines 
+from tqdm import tqdm
+from datetime import datetime
+import numpy as np
+
+from raglab.dataset.utils import load_jsonlines
+from raglab.dataset.metric import match
 class PopQA:
     def __init__(self, output_dir, llm_path, eval_datapath):
         # init all the path of 
@@ -36,3 +40,11 @@ class PopQA:
         print(f'output file path:{output_file}') 
         print('success!')
 
+    def eval_acc(self, infer_results: list[dict]): #
+        print('start evaluation!')
+        eval_results = []
+        for idx, data in enumerate(tqdm(infer_results)): #把全部的数据传进来，然后直接进行 for loop
+            metric_result = match(data["generation"], data["answers"])
+            eval_results.append(metric_result)
+        # 这里应该把结果存储下来***.json.eval_result
+        return np.mean(eval_results) 
