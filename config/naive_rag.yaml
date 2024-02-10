@@ -1,0 +1,10 @@
+num_gpu: 2
+output_dir: /home/wyd/RagLab-exp/1-eval_output
+llm_path: /home/wyd/model/llama-7b-hf
+db_path: /home/wyd/ColBERT/experiments/notebook
+eval_datapath: /home/wyd/data/1-self_rag/1-eval_data/factscore_unlabeled_alpaca_13b_retrieval_10samples.jsonl
+retriever_path: /home/wyd/model/colbertv2.0
+generate_maxlength: 2000
+# max length should bigger than the length of input_ids
+n_docs: 5
+use_vllm:

@@ -15,7 +15,6 @@ class NaiveRag:
     def __init__(self, args):
         
         # common args
-        self.mode = args.mode
         self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
         self.generate_maxlength = args.generate_maxlength
         self.use_vllm = args.use_vllm
@@ -40,6 +39,7 @@ class NaiveRag:
         raise NotImplementedError
 
     def inference(self, query = None, mode = 'interact'):
+        assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
             passages = self.search(query) # 这里我感觉可以构造一个 dic()
             # passages: dict of dict
@@ -63,6 +63,8 @@ class NaiveRag:
             # 这个函数应该是 PopQa.save()这样就比较合理了，不需要全部的
             # PopQA.evaluate() 直接进行评价，这部分还是直接实
             pdb.set_trace()
+            # 优先解决args 的问题还是有
+
             print('start evaluation!')
             eval_result = eval_PopQA(args) #
             print(eval_result)
