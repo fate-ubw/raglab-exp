@@ -7,10 +7,12 @@ import faiss
 from colbert.data import Queries, Collection
 from colbert import Indexer, Searcher
 from colbert.infra import Run, RunConfig, ColBERTConfig
-from utils import load_evaldataset, save_inference_result
 import pdb
 from tqdm import tqdm
 import json
+
+from raglab.dataset.PopQA import PopQA # load popqa class
+from raglab.rag.infer_alg.utils import load_evaldataset, save_inference_result
 class NaiveRag:
     def __init__(self, args):
         
@@ -38,51 +40,39 @@ class NaiveRag:
         # 
         raise NotImplementedError
 
-    def inference(self, query = None, mode = 'interact'):
+    def inference(self, query = None, mode = 'interact', task = None):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            passages = self.search(query) # 这里我感觉可以构造一个 dic()
+            passages = self.search(query)
             # passages: dict of dict
-            inputs = self.get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
+            inputs = self.get_prompt(passages, query) 
             outputs = self.llm_inference(inputs) # 
-            response = self.postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法
+            response = self.postporcess(outputs) 
             return response
-        elif 'evaluation' == mode: 
-            self.eval_dataset = load_evaldataset(self.eval_datapath) # 不同数据集合使用不同的 load 方法不一样的，input output 不一样
-            #把握 input 和 output
-            inference_result = []
+        elif 'evaluation' == mode:
+
+            popqa =  PopQA(self.output_dir, self.llm_path, self.eval_datapath) 
+            self.eval_dataset = popqa.load_dataset() #
+            
+            inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
                 passages = self.search(question)
                 inputs = self.get_prompt(passages, question)
                 outputs = self.llm_inference(inputs)
-                response = self.postporcess(outputs)
-                eval_data["generation"] = response 
-                inference_result.append(eval_data)
-            save_inference_result(inference_result, self.output_dir, self.llm_path, self.eval_datapath)
-            # 这个函数应该是 PopQa.save()这样就比较合理了，不需要全部的
-            # PopQA.evaluate() 直接进行评价，这部分还是直接实
-            pdb.set_trace()
-            # 优先解决args 的问题还是有
-
+                eval_data["generation"] = outputs 
+                inference_results.append(eval_data)
+            popqa.save_result(inference_results, self.output_dir) #直接
             print('start evaluation!')
-            eval_result = eval_PopQA(args) #
+            eval_result = popqa.eval_acc(args) #首先是必须得读得到
             print(eval_result)
-            # evaluation 在dataset文件夹下面
-            # - popQA.py 
-            # 每一个 dataset 写一个.py文件：load 
-            #  可以设计一个 baseclass 来实现 multi-choice
-            
             return eval_result
 
-
     def load_llm(self):
-        # load tokenizer and llm
-        # todo: vllm的参数设置也必须统一起来
         llm = None
         tokenizer = None
         if self.use_vllm:
-            llm = LLM(model=self.llm_path) # 成功加载
+            llm = LLM(model=self.llm_path) 
             self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         else:
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
@@ -106,7 +96,7 @@ class NaiveRag:
             searcher = Searcher(index = index_name)
         return searcher
     
-    def get_prompt(self, passages, query): #prompt 如果子类不进行继承，那么就使用 naive_rag 的 prompt
+    def get_prompt(self, passages, query): 
         # passages is dict type 
         # 不对不同任务有不同的 prompt 这部分直接就
         collater = ''
@@ -125,13 +115,8 @@ class NaiveRag:
                 '''
         # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的instruction 是不一样的
         return prompt
-    
-    def postporcess(self, samples): # naive rag 不需要对生成的结果进行更多的操作，但是根据不同的任务需要对 special token 进行处理的
-        
-        processed_samples = samples
-        return processed_samples
 
-    def llm_inference(self, inputs): # 内置调用 llm 的算法 
+    def llm_inference(self, inputs): 
         if self.use_vllm:
             output = self.llm.generate(inputs, self.sampling_params)
             output_text = output[0].outputs[0].text
@@ -139,8 +124,7 @@ class NaiveRag:
             input_ids = self.tokenizer.encode(inputs, return_tensors="pt")
             output_ids = self.llm.generate(input_ids, do_sample = False, max_length = self.generate_maxlength)
             output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
-        #到时候可以写一个 vllm 的开关，但是 load 的时候就需要决定使用哪种算法
-        if '<\s>' in output_text: # 因为
+        if '<\s>' in output_text: 
             return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
         else:
             return output_text.replace("<s> " + inputs, "").strip()
