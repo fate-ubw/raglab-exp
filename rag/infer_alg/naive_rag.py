@@ -7,9 +7,10 @@ import faiss
 from colbert.data import Queries, Collection
 from colbert import Indexer, Searcher
 from colbert.infra import Run, RunConfig, ColBERTConfig
-from utils import load_jsonlines
+from utils import load_evaldataset, save_inference_result
 import pdb
 from tqdm import tqdm
+import json
 class NaiveRag:
     def __init__(self, args):
         
@@ -21,6 +22,7 @@ class NaiveRag:
         self.num_gpu = args.num_gpu
 
         self.eval_datapath = args.eval_datapath
+        self.output_dir = args.output_dir
 
         # retrieval args
         self.n_docs = args.n_docs
@@ -29,70 +31,48 @@ class NaiveRag:
         self.retriever_path = args.retriever_path # 也就是说这里直接接受的是处理好的数据
         self.db_path = args.db_path
 
-        # load database & eval dataset
-        if 'evaluation' == self.mode: # load evaluation dataset
-            self.eval_dataset = self.load_evaldataset() #把握 input 和 output
-            self.output_dir = args.output_dir
-        elif 'interact' == self.mode: # 
-            pass
         # load model and database
-        self.llm, self.tokenizer = self.load_llm()
+        self.llm, self.tokenizer = self.load_llm() # 传一个args
         self.retrieval = self.setup_retrieval()
 
     def init(self):
         # 
         raise NotImplementedError
 
-    def inference(self, query = None):
-        if 'interact' == self.mode:
+    def inference(self, query = None, mode = 'interact'):
+        if 'interact' == mode:
             passages = self.search(query) # 这里我感觉可以构造一个 dic()
             # passages: dict of dict
             inputs = self.get_prompt(passages, query) # 这部分就需要设计一个 prompt 合并 query和 passages
             outputs = self.llm_inference(inputs) # 
-
             response = self.postporcess(outputs) # 不同的任务可能需要使用不同的文本处理方法
             return response
-        elif 'evaluation' == self.mode: 
-            self.eval_dataset 
+        elif 'evaluation' == mode: 
+            self.eval_dataset = load_evaldataset(self.eval_datapath) # 不同数据集合使用不同的 load 方法不一样的，input output 不一样
+            #把握 input 和 output
             inference_result = []
-            for idx, eval_data in tqdm(enumerate(self.eval_dataset)):
-                qeustion = eval_data["question"]
+            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
                 passages = self.search(question)
                 inputs = self.get_prompt(passages, question)
                 outputs = self.llm_inference(inputs)
                 response = self.postporcess(outputs)
-                eval_data["output"] = response
+                eval_data["generation"] = response 
                 inference_result.append(eval_data)
-            # TODO 存储机制，这块得好好想想
-            # 其实这块可以再进一步实现顺序的问题，也就是第一token 可以是 1,2,3,4 遍历所有文件，找到 basename 然后用-split 然后找到对第一个 token 排序，找到最大的，然后
-
-            # check存储路径
-            print('storing result....')
-            if not os.path.exists(self.output_dir):
-                os.makedirs(self.output_dir)
-            # 文件名称
-            model_name = os.path.basename(self.llm_path)
-            input_filename = os.path.basename(self.eval_datapath)
-            eval_Dataname = os.path.splitext(input_filename)[0] #这个拿到的是dataset 的 name
-            time = datetime.now().strftime('%m%d_%H%M') # time 
-            output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl' #
-            output_file = os.path.json(self.output_dir, output_name)
-            # 存储文件
-            with open(output_file, 'w') as outfile:
-                for result in inference_result:
-                    json.dump(result, outfile)
-                    outfile.write('\n')
-            print('success')
-            eval_result = None
+            save_inference_result(inference_result, self.output_dir, self.llm_path, self.eval_datapath)
+            # 这个函数应该是 PopQa.save()这样就比较合理了，不需要全部的
+            # PopQA.evaluate() 直接进行评价，这部分还是直接实
+            pdb.set_trace()
+            print('start evaluation!')
+            eval_result = eval_PopQA(args) #
+            print(eval_result)
+            # evaluation 在dataset文件夹下面
+            # - popQA.py 
+            # 每一个 dataset 写一个.py文件：load 
+            #  可以设计一个 baseclass 来实现 multi-choice
+            
             return eval_result
 
-    def load_evaldataset(self):
-        if input_path.endswith(".json"):
-            eval_dataset = json.load(open(self.eval_datapath))
-        else:
-            eval_dataset = load_jsonlines(self.eval_datapath) # 这一部分拿到的是一个 list of dict 
-        # eval_dataset：type：list of dict
-        return eval_dataset
 
     def load_llm(self):
         # load tokenizer and llm
@@ -141,6 +121,7 @@ class NaiveRag:
                 [Question]
                 {query}
                 '''
+        # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的instruction 是不一样的
         return prompt
     
     def postporcess(self, samples): # naive rag 不需要对生成的结果进行更多的操作，但是根据不同的任务需要对 special token 进行处理的

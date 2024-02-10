@@ -5,10 +5,8 @@ python /home/wyd/RagLab-exp/rag/infer_alg/test_programm.py \
     --mode interact \
     --llm_path /home/wyd/model/llama-7b-hf \
     --db_path /home/wyd/ColBERT/experiments/notebook \
-    --eval_datapath /home/wyd/data/1-self_rag/1-eval_data/popqa_longtail_w_gs.jsonl \
+    --eval_datapath /home/wyd/data/1-self_rag/1-eval_data/factscore_unlabeled_alpaca_13b_retrieval_10samples.jsonl \
     --retriever_path /home/wyd/model/colbertv2.0 \
     --generate_maxlength 500 \
     --n_docs 5 \
     --use_vllm \
-
-    

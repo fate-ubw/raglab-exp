@@ -15,10 +15,13 @@ if __name__=='__main__':
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     parser.add_argument('--doc_maxlen', type = int, default = 300, help = 'the doc max len decided by the wikidata format, here we set 300')
     parser.add_argument('--nbits', type = int, default = 2, help = 'encode each dimension with n bits')
-    args = parser.parse_args()
+    args = parser.parse_args() 
     rag = NaiveRag(args) # 在定义的时候就需要定义清楚
-    pdb.set_trace()
-    response = rag.inference('tell me how to be a good teacher')
-    # (Pdb) outputs = '[Answer]\n                
+    response = rag.inference('tell me how to be a good teacher', mode = 'interact') #喔喔不对不对， mode 应该是用户来设置的，
+    # (Pdb) outputs = '[Answer]\n 
+    # 参数--json 
+    # 要设计一个 yaml 文件来存储全部的参数
+    eval_result = rag.inference(mode = 'evaluation', task = ) #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
+
     # I think the most important thing is to be a good listener. You need to be able to understand what the student is trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to understand what they are trying to say and what they are trying to achieve. You need to be able to'
-    print(output)
+    print(eval_result)
