@@ -2,6 +2,7 @@ from raglab.rag.infer_alg.naive_rag import NaiveRag
 from utils import over_write_args_from_file
 import argparse
 import pdb
+import pudb
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
@@ -19,8 +20,8 @@ if __name__=='__main__':
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args()
+    pu.db
     over_write_args_from_file(args, args.config) #
-    rag = NaiveRag(args) 
+    rag = NaiveRag(args)# so we can edit the file in vim 
     eval_result = rag.inference(mode = 'evaluation', task = "PopQA") #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
-    pdb.set_trace()
     print(eval_result)
