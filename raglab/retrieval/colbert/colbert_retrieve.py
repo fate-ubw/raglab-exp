@@ -9,7 +9,8 @@ class ColbertRetrieve(Retrieve):
     def __init__(self, args):
         self.index_dbPath = args.index_dbPath
         self.text_dbPath = args.text_dbPath
-        self.retriever_path = args.retriever_path
+        self.retriever_modelPath = args.retriever_modelPath
+        
         self.nbits = args.nbits
         self.num_gpu = args.num_gpu
         self.doc_maxlen = args.doc_maxlen

@@ -11,11 +11,11 @@ if __name__=='__main__':
     parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'], help = 'different mode of ingerence')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
-    parser.add_argument('--retrieval_name', type = str, default = 'colbert', help = 'the name of retrieval model')
+    parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
     parser.add_argument("--index_dbPath", type = str, help = 'path to index database. Index is index and embedding pairs')
     parser.add_argument('--text_dbPath', type = str, help='path to text database')
     parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')
-    parser.add_argument("--retriever_path", type = str, help = 'path to colbert model')
+    parser.add_argument("--retriever_modelPath", type = str, help = 'path to colbert model')
     parser.add_argument('--generate_maxlength', type = int, default = 50, help = 'llm generate max length')
     parser.add_argument("--n_docs", type= int, default=10, help="Number of documents to retrieve per questions")
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
