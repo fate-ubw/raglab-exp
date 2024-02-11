@@ -8,7 +8,7 @@ import errno
 from typing import Union, Tuple, List, Dict
 from collections import defaultdict
 
-from src import dist_utils
+from raglab.retrieval.contriever.src import dist_utils
 
 Number = Union[float, int]
 

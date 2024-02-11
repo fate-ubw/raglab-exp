@@ -5,7 +5,7 @@ import torch
 import transformers
 from transformers import BertModel, XLMRobertaModel
 
-from src import utils
+from raglab.retrieval.contriever.src import utils
 import pdb
 
 class Contriever(BertModel):

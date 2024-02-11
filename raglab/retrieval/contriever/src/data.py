@@ -12,10 +12,10 @@ import logging
 from collections import defaultdict
 import torch.distributed as dist
 
-from src import dist_utils
-
+from raglab.retrieval.contriever.src import dist_utils
+from tqdm import tqdm
 logger = logging.getLogger(__name__)
-
+import pudb
 
 def load_data(opt, tokenizer):
     datasets = {}
@@ -237,8 +237,9 @@ def load_passages(path):
                 passages.append(ex)
         else:
             reader = csv.reader(fin, delimiter="\t")
-            for k, row in enumerate(reader):
-                if not row[0] == "id":
-                    ex = {"id": row[0], "title": row[2], "text": row[1]}
-                    passages.append(ex)
+            passages = [{"id": row[0], "title": row[2], "text": row[1]} for row in tqdm(reader) if row[0] != "id"] #faster than source code 
+            # for k, row in enumerate(reader):
+            #     if not row[0] == "id":
+            #         ex = {"id": row[0], "title": row[2], "text": row[1]}
+            #         passages.append(ex)
     return passages

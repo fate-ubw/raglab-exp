@@ -10,6 +10,7 @@ from vllm import LLM, SamplingParams
 from raglab.dataset.PopQA import PopQA # load popqa class
 from raglab.rag.infer_alg.utils import load_evaldataset, save_inference_result
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
+from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
 import pudb
 class NaiveRag:
     def __init__(self, args):
@@ -29,7 +30,7 @@ class NaiveRag:
         self.n_docs = args.n_docs
         self.nbits = args.nbits
         self.doc_maxlen = args.doc_maxlen# 后期根据数据的处理情况都定义下来
-        self.retriever_path = args.retriever_path 
+        self.retriever_modelPath = args.retriever_modelPath 
         self.index_dbPath = args.index_dbPath
         self.text_dbPath = args.text_dbPath
 
@@ -85,6 +86,9 @@ class NaiveRag:
         if 'colbert' == self.retrieval_name:
             retrieval_model = ColbertRetrieve(self.args) 
             retrieval_model.setup_retrieve()
+        elif 'contriever' == self.retrieval_name:
+            retrieval_model = ContrieverRrtieve(self.args)
+            retrieval_model.setup_retrieve()
         return retrieval_model 
     
     def get_prompt(self, passages, query): 
@@ -122,4 +126,7 @@ class NaiveRag:
     def search(self, query):
         if 'colbert' == self.retrieval_name:
             passages = self.retrieval.search(query)
+        elif 'contriever' == self.retrieval_name:
+            passages = self.retrieval.search(query)
+
         return passages

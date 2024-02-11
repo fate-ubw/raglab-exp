@@ -21,6 +21,17 @@ if __name__=='__main__':
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     parser.add_argument('--doc_maxlen', type = int, default = 300, help = 'the doc max len decided by the wikidata format, here we set 300')
     parser.add_argument('--nbits', type = int, default = 2, help = 'encode each dimension with n bits')
+    
+    # contrieval config
+    parser.add_argument('--projection_size', type = int, default=768, help = 'size of embedding') # righ
+    parser.add_argument('--n_subquantizers', type = int, default=0, help="Number of subquantizer used for vector quantization, if 0 flat index is used")
+    parser.add_argument('--n_bits', type = int, default = 8, help="Number of bits per subquantizer")
+    parser.add_argument("--indexing_batch_size", type=int, default=1000000, help="Batch size of the number of passages indexed")   
+    parser.add_argument("--lowercase", action="store_true", help="lowercase text before encoding")# 目前不需要设置这个参数
+    parser.add_argument("--normalize_text", action="store_true", help="normalize text") #调用 retrieval 不需要使用
+    parser.add_argument("--per_gpu_batch_size", type=int, default=64, help="Batch size for question encoding")
+    parser.add_argument("--question_maxlength", type=int, default=512, help="Maximum number of tokens in a question")
+
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args()

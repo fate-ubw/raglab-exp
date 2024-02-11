@@ -38,5 +38,4 @@ class ColbertRetrieve(Retrieve):
         for passage_id, passage_rank, passage_score in zip(*ids): # 这里面的*是用来解耦元素的，将整个 list 全部变成一个单独的个体
             print(f"\t [{passage_rank}] \t\t {passage_score:.1f} \t\t {self.searcher.collection[passage_id]}")
             passages[passage_rank] = {'content': self.searcher.collection[passage_id], 'score':passage_score}
-        pu.db
         return passages
