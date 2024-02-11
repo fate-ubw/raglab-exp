@@ -7,12 +7,11 @@ import numpy as np
 
 from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metric import match
-class PopQA:
+from raglab.dataset.QA import QA
+class PopQA(QA):
     def __init__(self, output_dir, llm_path, eval_datapath):
-        self.output_dir = output_dir
-        self.llm_path = llm_path 
-        self.eval_datapath = eval_datapath
-
+        super().__init__(output_dir, llm_path, eval_datapath)
+    
     def load_dataset(self): 
         if self.eval_datapath.endswith(".json"):
             eval_dataset = json.load(open(self.eval_datapath))
@@ -36,7 +35,7 @@ class PopQA:
             for result in inference_result:
                 json.dump(result, outfile)
                 outfile.write('\n')
-        print(f'output file path:{output_file}') 
+        print(f'output file path:{output_file}')
         print('success!')
 
     def eval_acc(self, infer_results: list[dict]): #
@@ -46,4 +45,4 @@ class PopQA:
             metric_result = match(data["generation"], data["answers"])
             eval_results.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result
-        return np.mean(eval_results) 
+        return np.mean(eval_results)

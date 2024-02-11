@@ -1,10 +1,14 @@
 num_gpu: 2
 output_dir: /home/wyd/RagLab-exp/1-eval_output
 llm_path: /home/wyd/model/llama-7b-hf
-db_path: /home/wyd/ColBERT/experiments/notebook
+# retrieval config
+retrieval_name: colbert
+index_dbPath: /home/wyd/ColBERT/experiments/notebook
+text_dbPath: /home/wyd/data/4-colbert/lotte/lifestyle/dev/collection.tsv
 eval_datapath: /home/wyd/data/1-self_rag/1-eval_data/factscore_unlabeled_alpaca_13b_retrieval_10samples.jsonl
 retriever_path: /home/wyd/model/colbertv2.0
-generate_maxlength: 50
+generate_maxlength: 300
 # max length should bigger than the length of input_ids
 n_docs: 1
 use_vllm:
+nbits: 2
