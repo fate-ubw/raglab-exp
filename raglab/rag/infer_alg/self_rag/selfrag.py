@@ -8,7 +8,6 @@ class SelfRag(NaiveRag):
     def __init__(self, args):
         super().__init__(args)
         self.init(args)
-        #super相当于NaiveRag 类的实例
 
     def init(self, args):
         self.download_dir = args.download_dir
@@ -26,7 +25,6 @@ class SelfRag(NaiveRag):
         self.retrieval_mode = args.retrieval_mode
 
     def inference(self, query=None, mode='interact', task=None):
-        # mode 肯定是有的，如果有 mode 还得封装一层
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
             pass   
@@ -34,13 +32,13 @@ class SelfRag(NaiveRag):
             if 'PopQA' == self.task:
                 pass
 
-    def load_llm(self): # self rag 的代码必须得使用 vllm 来进行生成，因为这样才能比较方便的得到log prob
+    def load_llm(self): 
         llm = LLM(model=self.llm_path)
         self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
         return llm, tokenizer
 
-    def get_prompt(self, passages, query):# self rag好想不需要 get prompt，因为这个框架和其它所有的都不太一样
+    def get_prompt(self, passages, query):
         return super().get_prompt(passages, query)
 
     def generation(self, prompt, evidences, max_new_tokens = 300,
