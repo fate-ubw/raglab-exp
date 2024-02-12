@@ -59,7 +59,9 @@ class NaiveRag:
                 inference_results = []
                 for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                     question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
-                    passages = self.search(question)
+                    passages = self.retrieval.search(question) # 这里面必须调用 search 函数因为 每个self.retrieval自带的search 函数都不一样没法统一
+                    # 不对其实这里不需要写一个 search
+                    # 因为self.retrieval已经是不同的 class 了由于每个 retrieval 的 class 都统一了搜索的方法是 search 所以不需要再套一个 search 方法了
                     inputs = self.get_prompt(passages, question)
                     outputs = self.llm_inference(inputs)
                     eval_data["generation"] = outputs 
@@ -121,11 +123,3 @@ class NaiveRag:
             return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
         else:
             return output_text.replace("<s> " + inputs, "").strip()
-    
-    def search(self, query):
-        if 'colbert' == self.retrieval_name:
-            passages = self.retrieval.search(query)
-        elif 'contriever' == self.retrieval_name:
-            passages = self.retrieval.search(query)
-        
-        return passages
