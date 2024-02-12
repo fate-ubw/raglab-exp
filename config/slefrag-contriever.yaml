@@ -1,18 +1,18 @@
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: /home/zxw/rag/data/1-self_rag/2-eval_data/popqa_longtail_w_gs.jsonl
+eval_datapath: /home/wyd/data/1-self_rag/1-eval_data/factscore_unlabeled_alpaca_13b_retrieval_10samples.jsonl
 task: PopQA
-output_dir: /home/zxw/rag/raglab-exp/1-eval_output
+output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
-llm_path: /home/zxw/rag/model/Llama-2-7b-hf
+llm_path: /home/wyd/model/selfrag_llama2_7b
 generate_maxlength: 300
 use_vllm:
 # retrieval common config
 retrieval_name: contriever
-index_dbPath: /home/zxw/rag/data/2-wikipidia_embedding_debug/*
-text_dbPath: /home/zxw/rag/data/2-self_rag-retrieval_passages/psgs_w100.tsv
-retriever_modelPath: /home/zxw/rag/model/contriever-msmarco
+index_dbPath: /home/wyd/data/5-contriever/wikipedia_embeddings/*
+text_dbPath: /home/wyd/data/5-contriever/psgs_w100.tsv
+retriever_modelPath: /home/wyd/model/contriever-msmarco
 n_docs: 5
 # colbert config
 nbits: 2
