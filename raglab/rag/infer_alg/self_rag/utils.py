@@ -31,3 +31,17 @@ def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
             ut_tokens[token] = tokenizer.convert_tokens_to_ids(token)
 
     return ret_tokens, rel_tokens, grd_tokens, ut_tokens
+    
+def postprocess_answer_option_conditioned(answer):
+    for token in control_tokens:
+        answer = answer.replace(token, "")
+
+    if "</s>" in answer:
+        answer = answer.replace("</s>", "")
+    if "\n" in answer:
+        answer = answer.replace("\n", "")
+
+    if "<|endoftext|>" in answer:
+        answer = answer.replace("<|endoftext|>", "")
+
+    return answer
