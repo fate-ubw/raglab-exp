@@ -2,8 +2,8 @@ import argparse
 import pdb
 import pudb
 
-from raglab.rag.infer_alg.naive_rag import NaiveRag
-from raglab.rag.infer_alg.self_rag import SelfRag
+from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
+from raglab.rag.infer_alg.self_rag.selfrag import SelfRag
 from utils import over_write_args_from_file
 def get_config():
     parser = argparse.ArgumentParser()

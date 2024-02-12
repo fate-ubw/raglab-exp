@@ -8,7 +8,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 
 from raglab.dataset.PopQA import PopQA # load popqa class
-from raglab.rag.infer_alg.utils import load_evaldataset, save_inference_result
+from raglab.rag.infer_alg.naive_rag.utils import load_evaldataset, save_inference_result
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
 import pudb
@@ -42,7 +42,7 @@ class NaiveRag:
         
         raise NotImplementedError
 
-    def inference(self, query = None, mode = 'interact'):
+    def inference(self, query = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
             passages = self.search(query)
