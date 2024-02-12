@@ -72,7 +72,7 @@ class NaiveRag:
     def load_llm(self):
         llm = None
         tokenizer = None
-        sampling_params
+        sampling_params = None
         if self.use_vllm:
             llm = LLM(model=self.llm_path) 
             sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
