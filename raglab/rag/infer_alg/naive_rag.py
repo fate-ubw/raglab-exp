@@ -128,5 +128,5 @@ class NaiveRag:
             passages = self.retrieval.search(query)
         elif 'contriever' == self.retrieval_name:
             passages = self.retrieval.search(query)
-
+        
         return passages

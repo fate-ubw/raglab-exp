@@ -10,7 +10,7 @@ index_dbPath: /home/zxw/rag/data/2-wikipidia_embedding_debug/*
 text_dbPath: /home/zxw/rag/data/2-self_rag-retrieval_passages/psgs_w100.tsv
 eval_datapath: /home/zxw/rag/data/1-self_rag/2-eval_data/popqa_longtail_w_gs.jsonl
 retriever_modelPath: /home/zxw/rag/model/contriever-msmarco
-n_docs: 1
+n_docs: 5
 # colbert config
 nbits: 2
 # contriever config

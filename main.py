@@ -4,7 +4,7 @@ import pudb
 
 from raglab.rag.infer_alg.naive_rag import NaiveRag
 from utils import over_write_args_from_file
-if __name__=='__main__':
+def get_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
@@ -31,11 +31,15 @@ if __name__=='__main__':
     parser.add_argument("--normalize_text", action="store_true", help="normalize text") #调用 retrieval 不需要使用
     parser.add_argument("--per_gpu_batch_size", type=int, default=64, help="Batch size for question encoding")
     parser.add_argument("--question_maxlength", type=int, default=512, help="Maximum number of tokens in a question")
-
+    
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args()
     over_write_args_from_file(args, args.config) #
+    return args
+
+if __name__=='__main__':
+    args = get_config()
     rag = NaiveRag(args)# so we can edit the file in vim 
     pu.db
     eval_result = rag.inference(mode = 'evaluation', task = "PopQA") #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心

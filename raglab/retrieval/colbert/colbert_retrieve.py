@@ -21,17 +21,16 @@ class ColbertRetrieve(Retrieve):
         datasplit = 'dev'
         index_name = f'{dataset}.{datasplit}.{self.nbits}bits' # TODO 知识库的名字需要后期再想办法参数化
         collection_path = self.text_dbPath
-        collection = Collection(path = collection_path) # 尝试一下能不能直接
+        collection = Collection(path = collection_path) 
 
         with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
             config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
             indexer = Indexer(checkpoint = self.retriever_path, config = config)
-            indexer.index(name = index_name, collection = collection, overwrite='reuse') # here we set reuse mode
+            indexer.index(name = index_name, collection = collection, overwrite='reuse') # set reuse mode
 
         with Run().context(RunConfig(experiment = self.index_dbPath)): 
             self.searcher = Searcher(index = index_name)
-        # 这里才完成 self.searcher 的定义下面再进行 seearch 的封装即可
-    
+        
     def search(self, query):
         ids = self.searcher.search(query, k = self.n_docs)
         passages = {}
