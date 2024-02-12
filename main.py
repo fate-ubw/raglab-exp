@@ -3,11 +3,14 @@ import pdb
 import pudb
 
 from raglab.rag.infer_alg.naive_rag import NaiveRag
+from raglab.rag.infer_alg.self_rag import SelfRag
 from utils import over_write_args_from_file
 def get_config():
     parser = argparse.ArgumentParser()
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
+    parser.add_argument('--task', type=str, choices=['PopQA'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
+
     parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'], help = 'different mode of ingerence')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
@@ -31,7 +34,23 @@ def get_config():
     parser.add_argument("--normalize_text", action="store_true", help="normalize text") #调用 retrieval 不需要使用
     parser.add_argument("--per_gpu_batch_size", type=int, default=64, help="Batch size for question encoding")
     parser.add_argument("--question_maxlength", type=int, default=512, help="Maximum number of tokens in a question")
-    
+
+    # self rag config
+    parser.add_argument('--download_dir', type=str, default=".cache",help="specify vllm model download dir")
+    parser.add_argument("--world_size",  type=int, default=1,help="world size to use multiple GPUs.")
+    parser.add_argument("--dtype",  type=str, default="half",help="We use bfloat16 for training. If you run inference on GPUs that do not support BF16, please set this to be `half`.")
+    # Decoding hyperparams
+    parser.add_argument('--threshold', type=float,
+                        default=None, help="Adaptive threshold.")
+    parser.add_argument("--use_seqscore", action="store_true")
+    parser.add_argument("--use_groundness", action="store_true", help="use ground score")
+    parser.add_argument("--use_utility", action="store_true", help="tree search")
+    parser.add_argument("--beam_width", type=int, default=2, help="beam search width")
+    parser.add_argument("--max_depth",type=int, default=2, help="tree depth width")
+    parser.add_argument("--w_rel", type=float, default=1.0, help="reward weight for document relevance")
+    parser.add_argument("--w_sup", type=float, default=1.0, help="reward weight for generation support (attribution)")
+    parser.add_argument("--w_use", type=float, default=1.0,help="reward weight for overall completeness / utility.")
+    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="default", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval'])    
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args()
@@ -40,7 +59,8 @@ def get_config():
 
 if __name__=='__main__':
     args = get_config()
-    rag = NaiveRag(args)# so we can edit the file in vim 
     pu.db
-    eval_result = rag.inference(mode = 'evaluation', task = "PopQA") #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
+    rag = SelfRag(args) # 因为集成了 NaiveRag 所以也会 setup retrieval
+    rag = NaiveRag(args)# so we can edit the file in vim 
+    eval_result = rag.inference(mode = 'evaluation') #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
     print(eval_result)

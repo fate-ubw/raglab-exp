@@ -16,11 +16,11 @@ class NaiveRag:
     def __init__(self, args):
         self.args = args 
         # common args
+        self.task = args.task
         self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
         self.generate_maxlength = args.generate_maxlength
         self.use_vllm = args.use_vllm
         self.num_gpu = args.num_gpu
-
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
         
@@ -42,9 +42,8 @@ class NaiveRag:
         
         raise NotImplementedError
 
-    def inference(self, query = None, mode = 'interact', task = None):
+    def inference(self, query = None, mode = 'interact'):
         assert mode in ['interact', 'evaluation']
-        assert task in ['PopQA']
         if 'interact' == mode:
             passages = self.search(query)
             # passages: dict of dict
@@ -53,7 +52,7 @@ class NaiveRag:
             response = self.postporcess(outputs) 
             return response
         elif 'evaluation' == mode:
-            if 'PopQA' == task:
+            if 'PopQA' == self.task:
                 popqa =  PopQA(self.output_dir, self.llm_path, self.eval_datapath) 
                 self.eval_dataset = popqa.load_dataset() #
                 
