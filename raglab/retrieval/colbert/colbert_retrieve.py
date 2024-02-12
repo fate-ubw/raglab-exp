@@ -25,7 +25,7 @@ class ColbertRetrieve(Retrieve):
 
         with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
             config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
-            indexer = Indexer(checkpoint = self.retriever_path, config = config)
+            indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
             indexer.index(name = index_name, collection = collection, overwrite='reuse') # set reuse mode
 
         with Run().context(RunConfig(experiment = self.index_dbPath)): 
