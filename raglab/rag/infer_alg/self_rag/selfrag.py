@@ -34,16 +34,12 @@ class SelfRag(NaiveRag):
             if 'PopQA' == self.task:
                 pass
 
-    def load_llm(self):
+    def load_llm(self): # self rag 的代码必须得使用 vllm 来进行生成，因为这样才能比较方便的得到log prob
         llm = None
         tokenizer = None
-        if self.use_vllm:
-            llm = LLM(model=self.llm_path) 
-            self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
-            tokenizer = AutoTokenizer.from_pretrained(gpt, padding_side="left")
-        else:
-            tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
-            llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
+        llm = LLM(model=self.llm_path) 
+        self.sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+        tokenizer = AutoTokenizer.from_pretrained(gpt, padding_side="left")
         return llm, tokenizer    
     def get_prompt(self, passages, query):# self rag好想不需要 get prompt，因为这个框架和其它所有的都不太一样
         return super().get_prompt(passages, query)
