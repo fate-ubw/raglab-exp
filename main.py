@@ -59,8 +59,9 @@ def get_config():
 
 if __name__=='__main__':
     args = get_config()
-    pu.db
-    # rag = SelfRag(args) # 因为集成了 NaiveRag 所以也会 setup retrieval
-    rag = NaiveRag(args)# so we can edit the file in vim 
-    eval_result = rag.inference(mode = 'evaluation') #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
-    print(eval_result)
+    rag = NaiveRag(args) 
+    result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
+
+    rag = SelfRag(args) # 因为集成了 NaiveRag 所以也会 setup retrieval
+    retult = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact') #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
+    print(result)
