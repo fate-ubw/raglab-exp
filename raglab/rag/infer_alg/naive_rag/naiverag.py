@@ -45,7 +45,7 @@ class NaiveRag:
     def inference(self, query = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            passages = self.search(query)
+            passages = self.retrieval.search(query)
             # passages: dict of dict
             inputs = self.get_prompt(passages, query) 
             outputs = self.llm_inference(inputs) 
