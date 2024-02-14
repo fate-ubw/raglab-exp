@@ -1,9 +1,12 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
+from raglab.dataset.PopQA import PopQA
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
-from raglab.rag.infer_alg.self_rag.utils import load_special_tokens, postprocess_answer_option_conditioned
+from raglab.rag.infer_alg.self_rag.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
+from raglab.rag.infer_alg.self_rag.utils import PROMPT_DICT, process_data_evidences
 import pudb
+from tqdm import tqdm
 
 class SelfRag(NaiveRag):
     def __init__(self, args):
@@ -24,21 +27,48 @@ class SelfRag(NaiveRag):
         self.w_sup = args.w_sup
         self.w_use = args.w_use
         self.retrieval_mode = args.retrieval_mode
+        self.show_specialtokens = args.show_specialtokens
+        self.realtime_retrieval = args.realtime_retrieval
 
     def inference(self, query=None, mode='interact', task=None):
         assert mode in ['interact', 'evaluation']
-        evidences = []
         if 'interact' == mode:
             response, generation_track, do_retrieve = self.generation(query, evidences, max_new_tokens = self.generate_maxlength, 
                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                             mode = self.retrieval_mode, 
                             closed = self.task in ["fever", "arc_c"],
-                            show_specialtoken = True)
+                            show_specialtokens = self.show_specialtokens)
             return response, generation_track, do_retrieve
         elif 'evaluation' == mode:
             if 'PopQA' == self.task:
-                pass
+                popqa = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
+                self.eval_dataset = popqa.load_dataset()
+                self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task)
+                inference_results = []
+                for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                    temp = {}
+                    question = eval_data['question']
+                    input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) #
+                    if self.realtime_retrieval == False:
+                        _, evidences = process_data_evidences(eval_data, self.n_docs)
+                    # input = self.get_instruction(eval_data)
+                    response, generation_track, do_retrieve = self.generation(input, evidences, max_new_tokens = self.generate_maxlength, 
+                                    use_seqscore = self.use_seqscore, threshold = self.threshold,
+                                    w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
+                                    mode = self.retrieval_mode, 
+                                    closed = self.task in ["fever", "arc_c"],
+                                    show_specialtokens = self.show_specialtokens)
+                    temp['question'] = question
+                    temp['answers'] = eval_data['answers']
+                    temp['generation'] = response
+                    temp['instruction'] = input
+                    temp['generation_track'] = generation_track
+                    inference_results.append(temp)
+                popqa.save_result(inference_results)
+                eval_result = popqa.eval_acc(inference_results)
+                print(f'PopQA accuracy: {eval_result}')
+            return eval_result
 
     def load_llm(self): 
         llm = LLM(model=self.llm_path)
@@ -46,12 +76,13 @@ class SelfRag(NaiveRag):
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
         return llm, tokenizer, sampling_params
 
-    def get_prompt(self, passages, query):
-        return super().get_prompt(passages, query)
+    def get_instruction(self, query):
+        instruction = query
+        return instruction
         
-    def generation(self, prompt, evidences, max_new_tokens = 300,
+    def generation(self, prompt, evidences=None, max_new_tokens = 300,
                     use_seqscore=False, threshold=0.2,
-                    w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", closed=False, show_specialtoken = True): 
+                    w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", closed=False, show_specialtokens = True): 
         # args init
         #load special token
         ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(
@@ -67,14 +98,14 @@ class SelfRag(NaiveRag):
             ratio, results = self.first_token_retrievalRatio(prompt, ret_tokens, results)
             do_retrieve = ratio > threshold
         # "do retrieval or not retrieval
-        if do_retrieve is True:
-            # retrieval.search()
-            passages = self.retrieval.search(prompt) 
-      
+        if do_retrieve is True:             
             #TODO 使用 colbert 的时候还需要添加 title 属性这个相对难一些
-            evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(
-            passage["title"], passage["content"]) for rank, passage in passages.items()]
-            # evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in evidences] 
+            if self.realtime_retrieval == True: # 使用本地的 passages 进行复现
+                passages = self.retrieval.search(prompt)
+                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(
+                passage["title"], passage["content"]) for rank, passage in passages.items()]
+            else:
+                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in evidences] 
             
             preds = self.llm.generate(evidence_augmented_inputs, self.sampling_params)
             # calculate score of each candidate
@@ -94,7 +125,6 @@ class SelfRag(NaiveRag):
                 # Issupport score
                 ground_score, grd_score_dict = self.IssupportToken_score(pred, grd_tokens, p_idx, grd_score_dict)
                 # Utility score
-                pu.db
                 utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens, p_idx, ut_score_dict)
                 
                 if use_seqscore is True:
@@ -109,19 +139,22 @@ class SelfRag(NaiveRag):
                                         "grd_score_dict": grd_score_dict,
                                         "ut_score_dict": ut_score_dict} 
                 pred_text = pred.outputs[0].text 
-                results["retrieval_{}".format(p_idx)] = {
-                    "pred": pred_text, "score": final_score, "ctx": passages[p_idx+1]}
+                if self.realtime_retrieval == True:
+                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": passages[p_idx+1]}
+                else:
+                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": evidences[p_idx]}
         else: 
-            # no retrieval generation 
+            # no retrieval generation
             prompt += "[No Retrieval]"
             preds = self.llm.generate([prompt], self.sampling_params)
             pred = preds[0].outputs[0].text 
             results['no_retrieval'] = {"pred": pred} # no retrieval no need score and passages
-
+        
+        
         # Aggregating answers
-        if len(results) == 1: 
+        if len(results) <= 2: # 因为我给 no retrieval 也添加了 reult，也就是说 adaptive 当中如果走了 no retrieval 的逻辑，这个时候 result len == 2，所以走了第二个逻辑，
             # post process for no retrieval
-            if True == show_specialtoken: 
+            if True == self.show_specialtokens: 
                 return pred, results, do_retrieve
             else:
                 # remove all sprcial tokens 
@@ -134,7 +167,7 @@ class SelfRag(NaiveRag):
                     if key == "decide_retrieval_mode":
                         continue
                     #TODO figure out close setting
-                    # if show_specialtoken == True:
+                    # if self.show_specialtokens == True:
                     #     answer = result["pred"]
                     # else:
                     answer = postprocess_answer_option_conditioned(result["pred"])
@@ -151,7 +184,7 @@ class SelfRag(NaiveRag):
                 best_path = sorted(path2score.items(), key=lambda x: x[1], reverse=True)[0][0]
                 # best_path: 'retrieval_4'
                 best_option = results[best_path]["pred"]
-                if show_specialtoken == True:
+                if self.show_specialtokens == True:
                     pass
                 else:
                     # remove all special token 
@@ -170,11 +203,11 @@ class SelfRag(NaiveRag):
             if id not in pred_log_probs[0]: #【0】is first token
                 score_dict[tok] = -100
             prob = pred_log_probs[0][id] # get the special logprob
-            score_dict[tok] = np.exp(float(prob)) 
+            # score_dict[tok] = np.exp(float(prob)) # 
+            score_dict[tok] = float(prob) # source code calculation 
         results["decide_retrieval_mode"] = preds[0].outputs[0].text 
         ratio = score_dict["[Retrieval]"] / (score_dict["[Retrieval]"] + score_dict["[No Retrieval]"])  
-        
-        return ratio.item(), results
+        return float(ratio), results
 
     def sequence_score(self,pred):
         '''

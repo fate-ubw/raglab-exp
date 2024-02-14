@@ -1,3 +1,4 @@
+seed: 633
 num_gpu: 2
 output_dir: /home/wyd/raglab-exp/1-eval_output
 task: PopQA

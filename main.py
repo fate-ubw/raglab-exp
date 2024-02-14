@@ -1,12 +1,26 @@
 import argparse
 import pdb
 import pudb
+import random
+import torch
+import numpy as np
 
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag.selfrag import SelfRag
 from utils import over_write_args_from_file
+
+def set_randomSeed(args):
+    # random seed
+    random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    torch.backends.cudnn.deterministic = True
+
+
 def get_config():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-seed', type=int, default = 663, help='random  seed')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
     parser.add_argument('--task', type=str, choices=['PopQA'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
@@ -39,7 +53,7 @@ def get_config():
     parser.add_argument('--download_dir', type=str, default=".cache",help="specify vllm model download dir")
     parser.add_argument("--world_size",  type=int, default=1,help="world size to use multiple GPUs.")
     parser.add_argument("--dtype",  type=str, default="half",help="We use bfloat16 for training. If you run inference on GPUs that do not support BF16, please set this to be `half`.")
-    # Decoding hyperparams
+        # Decoding hyperparams
     parser.add_argument('--threshold', type=float,
                         default=None, help="Adaptive threshold.")
     parser.add_argument("--use_seqscore", action="store_true")
@@ -50,18 +64,21 @@ def get_config():
     parser.add_argument("--w_rel", type=float, default=1.0, help="reward weight for document relevance")
     parser.add_argument("--w_sup", type=float, default=1.0, help="reward weight for generation support (attribution)")
     parser.add_argument("--w_use", type=float, default=1.0,help="reward weight for overall completeness / utility.")
-    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="default", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval'])    
+    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="default", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
+    parser.add_argument('--show_specialtokens', action="store_true", help='show special tokens or remove all special tokens in outputs')
+    parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args()
-    over_write_args_from_file(args, args.config) #
+    over_write_args_from_file(args, args.config)
     return args
 
 if __name__=='__main__':
     args = get_config()
-    rag = NaiveRag(args) 
-    result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
-
-    rag = SelfRag(args) # 因为集成了 NaiveRag 所以也会 setup retrieval
-    retult = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact') #参数在定义 Naiverag 的时候就传进去了，这部分不需要担心
-    print(result)
+    set_randomSeed(args)
+    # rag = NaiveRag(args) 
+    # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
+    rag = SelfRag(args)
+    # response, generation_track, do_retrieve = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
+    eval_result = rag.inference(mode = 'evaluation') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
+    print(eval_result)

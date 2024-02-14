@@ -120,6 +120,6 @@ class ContrieverRrtieve(Retrieve):
     def add_passages(self, passages, top_passages_and_scores):
         docs = {}
         for rank, (doc_id, score) in enumerate(zip(top_passages_and_scores[0][0], top_passages_and_scores[0][1])):
-            passages_info = {'content':passages[doc_id]['text'],'title': passages[doc_id]['title'],'id':passages[doc_id]['id'],'scoe':score}
+            passages_info = {'content':passages[doc_id]['text'],'title': passages[doc_id]['title'],'id':passages[doc_id]['id'],'score':float(score)}
             docs[rank+1] = passages_info
         return docs

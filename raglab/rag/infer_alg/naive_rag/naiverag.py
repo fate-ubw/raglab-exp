@@ -57,14 +57,17 @@ class NaiveRag:
                 
                 inference_results = []
                 for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                    temp = {}
                     question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
                     passages = self.retrieval.search(question) # 这里面必须调用 search 函数因为 每个self.retrieval自带的search 函数都不一样没法统一
-                    inputs = self.get_prompt(passages, question)
+                    inputs = self.get_instruction(passages, question)
                     outputs = self.llm_inference(inputs)
-                    eval_data["generation"] = outputs 
-                    inference_results.append(eval_data)
+                    temp["question"] = question
+                    temp["answets"] = eval_data["answers"]
+                    temp["generation"] = outputs 
+                    inference_results.append(temp)
                 
-                popqa.save_result(inference_results, self.output_dir)
+                popqa.save_result(inference_results)
                 eval_result = popqa.eval_acc(inference_results) 
                 print(f'PopQA accuracy: {eval_result}')
             return eval_result 
@@ -90,12 +93,12 @@ class NaiveRag:
             retrieval_model.setup_retrieve()
         return retrieval_model 
     
-    def get_prompt(self, passages, query): 
+    def get_instruction(self, passages, query): 
         # passages is dict type
         collater = ''
         for rank_id, tmp in passages.items(): 
             collater += f'Passages{rank_id}: ' + tmp['content'] +'\n'  # 这个拿回来之后             
-        prompt = f'''
+        instruction = f'''
                 [Task]
                 Please answer the question based on the user's input context and comply with the answering requirements.
                 [Background Knowledge]
@@ -107,7 +110,7 @@ class NaiveRag:
                 {query}
                 '''
         # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的instruction 是不一样的
-        return prompt
+        return instruction
 
     def llm_inference(self, inputs): 
         if self.use_vllm:
