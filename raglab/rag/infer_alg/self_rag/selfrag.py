@@ -2,9 +2,11 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
 from raglab.dataset.PopQA import PopQA
+from raglab.dataset.PubHealth import PubHealth
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
 from raglab.rag.infer_alg.self_rag.utils import PROMPT_DICT, process_data_evidences
+
 import pudb
 from tqdm import tqdm
 
@@ -33,41 +35,64 @@ class SelfRag(NaiveRag):
     def inference(self, query=None, mode='interact', task=None):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            response, generation_track, do_retrieve = self.generation(query, evidences, max_new_tokens = self.generate_maxlength, 
+            input = f"### Instruction:\n{query}\n\n### Response:\n" # add inference format
+            source_question = query
+            response, generation_track, do_retrieve = self.generation(input, source_question,evidences, max_new_tokens = self.generate_maxlength, 
                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                             mode = self.retrieval_mode, 
-                            closed = self.task in ["fever", "arc_c"],
+                            closed = self.task in ["PubHealth", "arc_c"],
                             show_specialtokens = self.show_specialtokens)
             return response, generation_track, do_retrieve
         elif 'evaluation' == mode:
+            # difine dataset
             if 'PopQA' == self.task:
-                popqa = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
-                self.eval_dataset = popqa.load_dataset()
-                self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task)
-                inference_results = []
-                for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                    temp = {}
-                    question = eval_data['question']
-                    input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) #
-                    if self.realtime_retrieval == False:
-                        _, evidences = process_data_evidences(eval_data, self.n_docs)
-                    # input = self.get_instruction(eval_data)
-                    response, generation_track, do_retrieve = self.generation(input, evidences, max_new_tokens = self.generate_maxlength, 
-                                    use_seqscore = self.use_seqscore, threshold = self.threshold,
-                                    w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
-                                    mode = self.retrieval_mode, 
-                                    closed = self.task in ["fever", "arc_c"],
-                                    show_specialtokens = self.show_specialtokens)
-                    temp['question'] = question
-                    temp['answers'] = eval_data['answers']
-                    temp['generation'] = response
-                    temp['instruction'] = input
-                    temp['generation_track'] = generation_track
-                    inference_results.append(temp)
-                popqa.save_result(inference_results)
-                eval_result = popqa.eval_acc(inference_results)
-                print(f'PopQA accuracy: {eval_result}')
+                EvalData = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
+            elif 'PubHealth' == self.task:
+                EvalData = PubHealth(self.output_dir, self.llm_path, self.eval_datapath)
+            
+            self.eval_dataset = EvalData.load_dataset()
+            pu.db
+            self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
+            inference_results = []
+            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                temp = {}
+                source_question = eval_data['question'] 
+                input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) # get instruction 
+
+                if self.realtime_retrieval == True:
+                    evidences = []
+                else:
+                    _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages and do not use retrieval model in real-time
+                # input = self.get_instruction(eval_data)
+                
+                response, generation_track, do_retrieve = self.generation(input, source_question, evidences, max_new_tokens = self.generate_maxlength, 
+                                use_seqscore = self.use_seqscore, threshold = self.threshold,
+                                w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
+                                mode = self.retrieval_mode, 
+                                closed = self.task in ["PubHealth","fever", "arc_c"],
+                                show_specialtokens = self.show_specialtokens)
+                print(f'source question:{source_question}')
+                print(f'response: {response}') # 看一下生成的结果
+                if "SUPPORTS" in response:
+                    response = "true" 
+                elif "REFUTES" in response: 
+                    response = "false"
+                print(f'postpreprocess response: {response}')
+
+                temp['question'] = source_question
+                temp['answers'] = eval_data['answers']
+                temp['generation'] = response
+                temp['instruction'] = input
+                temp['generation_track'] = generation_track
+                inference_results.append(temp)
+                # calculate the error in each step
+                eval_result = EvalData.eval_acc(inference_results)
+                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+
+            EvalData.save_result(inference_results)
+            eval_result = EvalData.eval_acc(inference_results)
+            print(f'Final {self.task} accuracy: {eval_result}')
             return eval_result
 
     def load_llm(self): 
@@ -80,11 +105,12 @@ class SelfRag(NaiveRag):
         instruction = query
         return instruction
         
-    def generation(self, prompt, evidences=None, max_new_tokens = 300,
+    def generation(self, prompt, source_question, evidences = None, max_new_tokens = 300,
                     use_seqscore=False, threshold=0.2,
                     w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", closed=False, show_specialtokens = True): 
         # args init
         #load special token
+        
         ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(
         self.tokenizer, use_grounding=self.use_groundness, use_utility=self.use_utility)
         results = {}
@@ -101,7 +127,7 @@ class SelfRag(NaiveRag):
         if do_retrieve is True:             
             #TODO 使用 colbert 的时候还需要添加 title 属性这个相对难一些
             if self.realtime_retrieval == True: # 使用本地的 passages 进行复现
-                passages = self.retrieval.search(prompt)
+                passages = self.retrieval.search(source_question) # attention: you need source question as retrieval input
                 evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(
                 passage["title"], passage["content"]) for rank, passage in passages.items()]
             else:
@@ -150,7 +176,7 @@ class SelfRag(NaiveRag):
             pred = preds[0].outputs[0].text 
             results['no_retrieval'] = {"pred": pred} # no retrieval no need score and passages
         
-        
+
         # Aggregating answers
         if len(results) <= 2: # 因为我给 no retrieval 也添加了 reult，也就是说 adaptive 当中如果走了 no retrieval 的逻辑，这个时候 result len == 2，所以走了第二个逻辑，
             # post process for no retrieval

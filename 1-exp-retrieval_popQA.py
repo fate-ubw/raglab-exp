@@ -4,10 +4,13 @@ import pudb
 import random
 import torch
 import numpy as np
-
+from tqdm import tqdm
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag.selfrag import SelfRag
 from utils import over_write_args_from_file
+from raglab.dataset.PopQA import PopQA
+from raglab.dataset.PubHealth import PubHealth
+import pudb
 
 def set_randomSeed(args):
     # random seed
@@ -22,7 +25,7 @@ def get_config():
     parser.add_argument('-seed', type=int, default = 663, help='random  seed')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
-    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','fever'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
+    parser.add_argument('--task', type=str, choices=['PopQA'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
     parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'], help = 'different mode of ingerence')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
@@ -76,5 +79,17 @@ if __name__=='__main__':
     # rag = NaiveRag(args) 
     # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
     rag = SelfRag(args)
-    eval_result = rag.inference(mode = 'evaluation') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
-    print(eval_result)
+    passage_id_map = rag.retrieval.passage_id_map
+    pu.db
+    popqa = PubHealth(args.output_dir, args.llm_path, args.eval_datapath)
+    eval_dataset = popqa.load_dataset()
+    retrieval_results = []
+    pu.db
+    for idx, eval_data in enumerate(tqdm(eval_dataset)):
+        temp = {}
+        question = eval_data['question']
+        passages = rag.retrieval.search(question)
+        temp["question"] = question
+        temp['ctx'] = passages
+        retrieval_results.append(temp)
+    popqa.save_result(retrieval_results)

@@ -33,8 +33,9 @@ TASK_INST = {"wow": "Given a chat history separated by new lines, generates an i
              "arc_easy": "Given four answer candidates, A, B, C and D, choose the best answer choice.",
              "arc_c": "Given four answer candidates, A, B, C and D, choose the best answer choice.",
              "trex": "Given the input format 'Subject Entity [SEP] Relationship Type,' predict the target entity.",
-             "asqa": "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers."}
-
+             "asqa": "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers.",
+             "PubHealth": "Is the following statement correct or not? Say true if it's correct; otherwise say false.",}
+# fever is the task name of PubHealth
 
 rel_tokens_names = ["[Irrelevant]", "[Relevant]"]
 retrieval_tokens_names = ["[No Retrieval]",
