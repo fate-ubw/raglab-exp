@@ -1,8 +1,8 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
-from raglab.dataset.PopQA import PopQA
-from raglab.dataset.PubHealth import PubHealth
+
+from raglab.dataset import PopQA, PubHealth, ArcChallenge, TriviaQA, MultiChoiceQA
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
 from raglab.rag.infer_alg.self_rag.utils import PROMPT_DICT, process_data_evidences
@@ -41,18 +41,21 @@ class SelfRag(NaiveRag):
                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                             mode = self.retrieval_mode, 
-                            closed = self.task in ["PubHealth", "arc_c"],
-                            show_specialtokens = self.show_specialtokens)
+                            show_specialtokens = self.show_specialtokens) 
             return response, generation_track, do_retrieve
         elif 'evaluation' == mode:
             # difine dataset
             if 'PopQA' == self.task:
-                EvalData = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
+                self.EvalData = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
             elif 'PubHealth' == self.task:
-                EvalData = PubHealth(self.output_dir, self.llm_path, self.eval_datapath)
+                self.EvalData = PubHealth(self.output_dir, self.llm_path, self.eval_datapath)
+            elif 'ArcChallenge' == self.task:
+                self.EvalData = ArcChallenge(self.output_dir, self.llm_path, self.eval_datapath)
+            elif 'TriviaQA' == self.task:
+                self.EvalData = TriviaQA(self.output_dir, self.llm_path, self.eval_datapath)
             
-            self.eval_dataset = EvalData.load_dataset()
-            pu.db
+            self.eval_dataset = self.EvalData.load_dataset()
+            #TODO  preprocess data 应该放在每一个 dataset class 方法下面,和具体数据绑定
             self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
@@ -64,21 +67,17 @@ class SelfRag(NaiveRag):
                     evidences = []
                 else:
                     _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages and do not use retrieval model in real-time
-                # input = self.get_instruction(eval_data)
-                
                 response, generation_track, do_retrieve = self.generation(input, source_question, evidences, max_new_tokens = self.generate_maxlength, 
-                                use_seqscore = self.use_seqscore, threshold = self.threshold,
-                                w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
-                                mode = self.retrieval_mode, 
-                                closed = self.task in ["PubHealth","fever", "arc_c"],
-                                show_specialtokens = self.show_specialtokens)
+                                                        use_seqscore = self.use_seqscore, threshold = self.threshold,
+                                                        w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
+                                                        mode = self.retrieval_mode, 
+                                                        show_specialtokens = self.show_specialtokens)
                 print(f'source question:{source_question}')
-                print(f'response: {response}') # 看一下生成的结果
-                if "SUPPORTS" in response:
+                print(f'response: {response}')
+                if "SUPPORTS" in response: # the trick in self rag source code. In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
                     response = "true" 
                 elif "REFUTES" in response: 
                     response = "false"
-                print(f'postpreprocess response: {response}')
 
                 temp['question'] = source_question
                 temp['answers'] = eval_data['answers']
@@ -87,11 +86,11 @@ class SelfRag(NaiveRag):
                 temp['generation_track'] = generation_track
                 inference_results.append(temp)
                 # calculate the error in each step
-                eval_result = EvalData.eval_acc(inference_results)
+                eval_result = self.EvalData.eval_acc(inference_results)
                 print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
-
-            EvalData.save_result(inference_results)
-            eval_result = EvalData.eval_acc(inference_results)
+            # end of for loop
+            self.EvalData.save_result(inference_results)
+            eval_result = self.EvalData.eval_acc(inference_results)
             print(f'Final {self.task} accuracy: {eval_result}')
             return eval_result
 
@@ -107,7 +106,7 @@ class SelfRag(NaiveRag):
         
     def generation(self, prompt, source_question, evidences = None, max_new_tokens = 300,
                     use_seqscore=False, threshold=0.2,
-                    w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", closed=False, show_specialtokens = True): 
+                    w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", show_specialtokens = True): 
         # args init
         #load special token
         
@@ -176,7 +175,6 @@ class SelfRag(NaiveRag):
             pred = preds[0].outputs[0].text 
             results['no_retrieval'] = {"pred": pred} # no retrieval no need score and passages
         
-
         # Aggregating answers
         if len(results) <= 2: # 因为我给 no retrieval 也添加了 reult，也就是说 adaptive 当中如果走了 no retrieval 的逻辑，这个时候 result len == 2，所以走了第二个逻辑，
             # post process for no retrieval
@@ -188,14 +186,17 @@ class SelfRag(NaiveRag):
                 return postprocessed_pred, results, do_retrieve 
         else:
             answer2score = {}
-            if closed is True:
+            if isinstance(self.EvalData, MultiChoiceQA): #判断是否是 MultiChoiceQA 如果是则使用另一个 rank 的方法
+                '''
+                this Aggregating is for multi-choice question
+                source explaination: For SELF-RAG inference on PubHealth and ARC-C, instead of determining the output with the highest score as in other tasks, 
+                                    we aggregate the scores for each option and select the answer option with the highest score.       
+                paper: https://arxiv.org/abs/2310.11511
+                
+                '''
                 for key, result in results.items(): #TODO debug for this code
                     if key == "decide_retrieval_mode":
                         continue
-                    #TODO figure out close setting
-                    # if self.show_specialtokens == True:
-                    #     answer = result["pred"]
-                    # else:
                     answer = postprocess_answer_option_conditioned(result["pred"])
                     score = result["score"]
                     answer2score.setdefault(answer, 0)
@@ -203,19 +204,19 @@ class SelfRag(NaiveRag):
                 sorted_answers = sorted(
                     answer2score.items(), key=lambda x: x[1], reverse=True)
                 best_option = sorted_answers[0][0]
-            else: 
+            else:
                 path2score = {key: item["score"] for key,
-                            item in results.items() if key != "decide_retrieval_mode"} # 关键字换成了decide_retrieval_mode，这样就知道这个是第一次的记录
+                            item in results.items() if key != "decide_retrieval_mode"} 
                 # (Pdb) path2score {'retrieval_0': 3.4123800585196546, 'retrieval_1': 2.27039496913239, 'retrieval_2': 3.4020720076164856, 'retrieval_3': 2.6283043364201686, 'retrieval_4': 3.722096903736915, 'retrieval_5': 3.461728838250881, 'retrieval_6': 1.6601180656216912, 'retrieval_7': 2.9027644863792044, 'retrieval_8': 2.852774340193746, 'retrieval_9': 2.2013860727179604}
                 best_path = sorted(path2score.items(), key=lambda x: x[1], reverse=True)[0][0]
-                # best_path: 'retrieval_4'
+                # (Pdb)  best_path: 'retrieval_4'
                 best_option = results[best_path]["pred"]
                 if self.show_specialtokens == True:
                     pass
                 else:
                     # remove all special token 
                     best_option = postprocess_answer_option_conditioned(best_option)
-        
+
         return best_option, results, do_retrieve 
 
     def first_token_retrievalRatio(self, prompt, ret_tokens, results):

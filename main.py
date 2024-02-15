@@ -22,7 +22,7 @@ def get_config():
     parser.add_argument('-seed', type=int, default = 663, help='random  seed')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
-    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','fever'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
+    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
     parser.add_argument('--mode', type = str, default = 'interact', choices = ['interact', 'evaluation'], help = 'different mode of ingerence')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
