@@ -7,7 +7,7 @@ task: PubHealth
 output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
 llm_path: /home/wyd/model/selfrag_llama2_7b
-generate_maxlength: 100
+generate_maxlength: 50
 use_vllm:
 # retrieval common config
 retrieval_name: contriever

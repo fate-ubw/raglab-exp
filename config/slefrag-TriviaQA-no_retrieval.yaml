@@ -1,8 +1,8 @@
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
-task: PopQA
+eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/triviaqa_test_w_gs.jsonl
+task: TriviaQA
 output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
 llm_path: /home/wyd/model/selfrag_llama2_7b
@@ -39,5 +39,3 @@ w_use: 0.5
 retrieval_mode: "no_retrieval"
 show_specialtokens: True
 realtime_retrieval: True
-
-

@@ -6,7 +6,7 @@ task: PopQA
 output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
 llm_path: /home/wyd/model/selfrag_llama2_7b
-generate_maxlength: 300
+generate_maxlength: 100
 use_vllm:
 # retrieval common config
 retrieval_name: contriever
@@ -38,6 +38,5 @@ w_sup: 1.0
 w_use: 0.5
 retrieval_mode: "always_retrieval"
 show_specialtokens: True
-
-
+realtime_retrieval: True
 

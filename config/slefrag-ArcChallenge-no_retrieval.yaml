@@ -1,12 +1,13 @@
+seed: 633
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
-task: PopQA
+eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/arc_challenge_processed.jsonl
+task: ArcChallenge
 output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
 llm_path: /home/wyd/model/selfrag_llama2_7b
-generate_maxlength: 100
+generate_maxlength: 50
 use_vllm:
 # retrieval common config
 retrieval_name: contriever
@@ -27,7 +28,7 @@ question_maxlength: 512 # Maximum number of tokens in a question
 download_dir: ".cache"
 world_size: 1
 dtype: "half"
-threshold: 0.2  
+threshold: 0.2
 use_seqscore: True
 use_groundness: True
 use_utility: True
@@ -39,5 +40,3 @@ w_use: 0.5
 retrieval_mode: "no_retrieval"
 show_specialtokens: True
 realtime_retrieval: True
-
-
