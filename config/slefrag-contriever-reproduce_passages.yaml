@@ -2,7 +2,7 @@ seed: 633
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
+eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs_10samples.jsonl
 task: PopQA
 output_dir: /home/wyd/raglab-exp/1-eval_output
 # llm config
