@@ -19,8 +19,8 @@ class PopQA(QA):
             eval_dataset = load_jsonlines(self.eval_datapath)
     # eval_dataset：type：list of dict
         return eval_dataset
-    
-    def save_result(self, inference_result: list[dict]): # 这个还是直接使用吧
+        
+    def save_result(self, inference_result: list[dict]): 
         print('storing result....')
         if not os.path.exists(self.output_dir): 
             os.makedirs(self.output_dir)
@@ -31,11 +31,8 @@ class PopQA(QA):
         output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl'
         output_file = os.path.join(self.output_dir, output_name)
         
-        with jsonlines.open(output_file, 'w') as outfile: # 使用 jsonl 存储没有 numpy 的问题
+        with jsonlines.open(output_file, 'w') as outfile: 
             outfile.write(inference_result)
-            # for result in inference_result:
-            #     json.dump(result, outfile)
-            #     outfile.write('\n')
         print(f'output file path:{output_file}')
         print('success!')
 
