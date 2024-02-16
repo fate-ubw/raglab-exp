@@ -4,8 +4,8 @@ import numpy as np
 
 from raglab.dataset import PopQA, PubHealth, ArcChallenge, TriviaQA, MultiChoiceQA
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
-from raglab.rag.infer_alg.self_rag.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
-from raglab.rag.infer_alg.self_rag.utils import PROMPT_DICT, process_data_evidences
+from raglab.rag.infer_alg.self_rag_reproduction.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
+from raglab.rag.infer_alg.self_rag_reproduction.utils import PROMPT_DICT, process_data_evidences
 
 import pudb
 from tqdm import tqdm
