@@ -62,7 +62,7 @@ def get_config():
     parser.add_argument("--w_rel", type=float, default=1.0, help="reward weight for document relevance")
     parser.add_argument("--w_sup", type=float, default=1.0, help="reward weight for generation support (attribution)")
     parser.add_argument("--w_use", type=float, default=1.0,help="reward weight for overall completeness / utility.")
-    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="default", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
+    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="no_retrieval", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
     parser.add_argument('--show_specialtokens', action="store_true", help='show special tokens or remove all special tokens in outputs')
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
     # config file
