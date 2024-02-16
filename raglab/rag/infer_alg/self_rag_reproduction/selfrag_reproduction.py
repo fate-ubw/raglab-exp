@@ -10,7 +10,7 @@ from raglab.rag.infer_alg.self_rag.utils import PROMPT_DICT, process_data_eviden
 import pudb
 from tqdm import tqdm
 
-class SelfRag(NaiveRag):
+class SelfRag_Reproduction(NaiveRag):
     def __init__(self, args):
         super().__init__(args)
         self.init(args)
@@ -230,10 +230,7 @@ class SelfRag(NaiveRag):
             if id not in pred_log_probs[0]: #[0] get the first token
                 score_dict[tok] = -100
             prob = pred_log_probs[0][id] # get the special logprob
-            score_dict[tok] = float(prob) 
-            # TODO this code should be: score_dict[tok] = np.exp(float(prob)) 
-            # This bug is from self rag source code [https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_short_form.py#L79]
-            # The correct version of self rag referenced in Raglab's Selfrag-correct 
+            score_dict[tok] = np.exp(float(prob)) # Diff: diff from the source code [https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_short_form.py#L79]
         results["decide_retrieval_mode"] = preds[0].outputs[0].text 
         ratio = score_dict["[Retrieval]"] / (score_dict["[Retrieval]"] + score_dict["[No Retrieval]"])  
         return float(ratio), results

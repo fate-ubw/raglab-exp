@@ -6,8 +6,6 @@ import torch
 import numpy as np
 
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
-from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
-
 from utils import over_write_args_from_file
 
 def set_randomSeed(args):
@@ -74,8 +72,6 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
-    # rag = NaiveRag(args) 
-    # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
-    rag = SelfRag_Original(args)
-    eval_result = rag.inference(mode = 'evaluation') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
-    print(eval_result)
+    rag = NaiveRag(args) 
+    result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
+    print(result)

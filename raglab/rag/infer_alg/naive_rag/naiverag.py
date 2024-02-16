@@ -53,9 +53,8 @@ class NaiveRag:
         elif 'evaluation' == mode:
             if 'PopQA' == self.task:
                 popqa =  PopQA(self.output_dir, self.llm_path, self.eval_datapath) 
-                self.eval_dataset = popqa.load_dataset() #
-                
-                inference_results = []
+                self.eval_dataset = popqa.load_dataset() # right
+                inference_results = [] 
                 for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                     temp = {}
                     question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
@@ -71,7 +70,7 @@ class NaiveRag:
                 eval_result = popqa.eval_acc(inference_results) 
                 print(f'PopQA accuracy: {eval_result}')
             return eval_result 
-
+    
     def load_llm(self):
         llm = None
         tokenizer = None

@@ -18,7 +18,7 @@ class PopQA(QA):
         else:
             eval_dataset = load_jsonlines(self.eval_datapath)
     # eval_dataset：type：list of dict
-        return eval_dataset
+        return eval_dataset # list of dict 
         
     def save_result(self, inference_result: list[dict]): 
         print('storing result....')
@@ -36,7 +36,7 @@ class PopQA(QA):
         print(f'output file path:{output_file}')
         print('success!')
 
-    def eval_acc(self, infer_results: list[dict]): #
+    def eval_acc(self, infer_results: list[dict]): # 
         print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(tqdm(infer_results)):
@@ -44,3 +44,7 @@ class PopQA(QA):
             eval_results.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result
         return np.mean(eval_results)
+
+    def get_instruction(self):
+        pass
+
