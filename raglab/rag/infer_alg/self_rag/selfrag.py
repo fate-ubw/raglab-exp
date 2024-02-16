@@ -33,11 +33,11 @@ class SelfRag(NaiveRag):
         self.realtime_retrieval = args.realtime_retrieval
 
     def inference(self, query=None, mode='interact', task=None):
-        assert mode in ['interact', 'evaluation']
+        assert mode in ['interact', 'evaluation'] 
         if 'interact' == mode:
-            input = f"### Instruction:\n{query}\n\n### Response:\n" # add inference format
+            input = f"### Instruction:\n{query}\n\n### Response:\n" # add inference format 
             source_question = query
-            response, generation_track, do_retrieve = self.generation(input, source_question,evidences, max_new_tokens = self.generate_maxlength, 
+            response, generation_track, do_retrieve = self.short_form_generation(input, source_question,evidences, max_new_tokens = self.generate_maxlength, 
                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                             mode = self.retrieval_mode, 
@@ -67,7 +67,7 @@ class SelfRag(NaiveRag):
                     evidences = []
                 else:
                     _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages and do not use retrieval model in real-time
-                response, generation_track, do_retrieve = self.generation(input, source_question, evidences, max_new_tokens = self.generate_maxlength, 
+                response, generation_track, do_retrieve = self.short_form_generation(input, source_question, evidences, max_new_tokens = self.generate_maxlength, 
                                                         use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                         w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                                                         mode = self.retrieval_mode, 
@@ -104,7 +104,7 @@ class SelfRag(NaiveRag):
         instruction = query
         return instruction
         
-    def generation(self, prompt, source_question, evidences = None, max_new_tokens = 300,
+    def short_form_generation(self, prompt, source_question, evidences = None, max_new_tokens = 300,
                     use_seqscore=False, threshold=0.2,
                     w_rel=1.0, w_sup=1.0, w_use=0.5, mode="adaptive_retrieval", show_specialtokens = True): 
         # args init
@@ -153,7 +153,7 @@ class SelfRag(NaiveRag):
                 utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens, p_idx, ut_score_dict)
                 
                 if use_seqscore is True:
-                    final_score = np.exp(seq_score) + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score
+                    final_score = np.exp(seq_score) + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
                 else:
                     final_score = w_rel * relevance_score +  w_sup * ground_score + w_use * utility_score
                 overall_scores[p_idx] = {"final_score": final_score,
@@ -165,7 +165,7 @@ class SelfRag(NaiveRag):
                                         "ut_score_dict": ut_score_dict} 
                 pred_text = pred.outputs[0].text 
                 if self.realtime_retrieval == True:
-                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": passages[p_idx+1]}
+                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": passages[p_idx+1]} 
                 else:
                     results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": evidences[p_idx]}
         else: 
@@ -188,7 +188,7 @@ class SelfRag(NaiveRag):
             answer2score = {}
             if isinstance(self.EvalData, MultiChoiceQA): #判断是否是 MultiChoiceQA 如果是则使用另一个 rank 的方法
                 '''
-                this Aggregating is for multi-choice question
+                Aggregating for multi-choice question
                 source explaination: For SELF-RAG inference on PubHealth and ARC-C, instead of determining the output with the highest score as in other tasks, 
                                     we aggregate the scores for each option and select the answer option with the highest score.       
                 paper: https://arxiv.org/abs/2310.11511
@@ -227,11 +227,13 @@ class SelfRag(NaiveRag):
         pred_log_probs = preds[0].outputs[0].logprobs 
         score_dict = {}
         for tok, id in ret_tokens.items():
-            if id not in pred_log_probs[0]: #【0】is first token
+            if id not in pred_log_probs[0]: #[0] get the first token
                 score_dict[tok] = -100
             prob = pred_log_probs[0][id] # get the special logprob
-            # score_dict[tok] = np.exp(float(prob)) # 
-            score_dict[tok] = float(prob) # source code calculation 
+            score_dict[tok] = float(prob) 
+            # TODO this code should be: score_dict[tok] = np.exp(float(prob)) 
+            # This bug is from self rag source code [https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_short_form.py#L79]
+            # The correct version of self rag referenced in Raglab's Selfrag-correct 
         results["decide_retrieval_mode"] = preds[0].outputs[0].text 
         ratio = score_dict["[Retrieval]"] / (score_dict["[Retrieval]"] + score_dict["[No Retrieval]"])  
         return float(ratio), results
@@ -249,8 +251,8 @@ class SelfRag(NaiveRag):
             prob = pred_log_probs[0][id] if id in pred_log_probs[0] else -100 # 首先判断{'[Irrelevant]': 32003, '[Relevant]': 32004}是否在 pred 里面，如果在里面就取其对应的 logprob，并且是直接取的 ids
             relevance_score_dict[p_idx][tok] = np.exp(float(prob))
         relevance_score = relevance_score_dict[p_idx]["[Relevant]"] / (np.sum(list(relevance_score_dict[p_idx].values())))
-        return relevance_score.item(), relevance_score_dict
-    
+        return float(relevance_score), relevance_score_dict
+
     def IssupportToken_score(self, pred, grd_tokens, p_idx, grd_score_dict):
         pred_token_ids = pred.outputs[0].token_ids
         pred_log_probs = pred.outputs[0].logprobs
@@ -268,10 +270,9 @@ class SelfRag(NaiveRag):
         if len(grd_score_dict[p_idx]) == 3: #
             gt_sum = np.sum(list(grd_score_dict[p_idx].values()))
             ground_score = (grd_score_dict[p_idx]["[Fully supported]"] / gt_sum) + 0.5 * (grd_score_dict[p_idx]["[Partially supported]"] / gt_sum) # 
-            ground_score = ground_score.item() #numpy -> float
         else:
             ground_score = 0.0 # "If the sentence is labeled as [isRel], then [Issup] will not appear later, resulting in a ground score of 0."
-        return ground_score, grd_score_dict
+        return float(ground_score), grd_score_dict
     
     def UtilityToken_score(self, pred, ut_tokens, p_idx, ut_score_dict):
         pred_token_ids = pred.outputs[0].token_ids
@@ -290,7 +291,6 @@ class SelfRag(NaiveRag):
             ut_sum = np.sum(list(ut_score_dict[p_idx].values()))
             ut_scores = [-1, -0.5, 0, 0.5, 1]
             utility_score = np.sum([ut_scores[i] * (ut_score_dict[p_idx]["[Utility:{}]".format(i+1)] / ut_sum) for i in range(len(ut_scores))])
-            utility_score = utility_score.item()
         else:   
             utility_score = 0.0
-        return utility_score, ut_score_dict
+        return float(utility_score), ut_score_dict
