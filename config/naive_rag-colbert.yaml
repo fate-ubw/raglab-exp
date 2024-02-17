@@ -8,7 +8,7 @@ retrieval_name: colbert
 index_dbPath: /home/wyd/ColBERT/experiments/notebook
 text_dbPath: /home/wyd/data/4-colbert/lotte/lifestyle/dev/collection.tsv
 eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs_10samples.jsonl
-retriever_modelPath: /home/wyd/model/colbertv2.0
+retriever_modelPath: /home/zxw/rag/model/colbertv2.0
 generate_maxlength: 300
 # max length should bigger than the length of input_ids
 n_docs: 1
