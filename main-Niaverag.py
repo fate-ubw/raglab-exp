@@ -6,6 +6,8 @@ import torch
 import numpy as np
 
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
+from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
+
 from utils import over_write_args_from_file
 
 def set_randomSeed(args):
@@ -60,12 +62,12 @@ def get_config():
     parser.add_argument("--w_rel", type=float, default=1.0, help="reward weight for document relevance")
     parser.add_argument("--w_sup", type=float, default=1.0, help="reward weight for generation support (attribution)")
     parser.add_argument("--w_use", type=float, default=1.0,help="reward weight for overall completeness / utility.")
-    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="default", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
+    parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="no_retrieval", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
     parser.add_argument('--show_specialtokens', action="store_true", help='show special tokens or remove all special tokens in outputs')
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
     # config file
     parser.add_argument('--config',type = str, default = "")
-    args = parser.parse_args()
+    args = parser.parse_args() # args最好写在 main 里面
     over_write_args_from_file(args, args.config)
     return args
 
@@ -73,5 +75,7 @@ if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
     rag = NaiveRag(args) 
-    result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
-    print(result)
+    # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
+    # rag = SelfRag_Original(args)
+    eval_result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
+    print(eval_result)

@@ -4,7 +4,25 @@ import jsonlines
 import json
 from ruamel.yaml import YAML
 
-def load_jsonlines(file): # 这个可以当做公共的 utils 
+def load_jsonlines(file:str)-> list[dict]:
     with jsonlines.open(file, 'r') as jsonl_f:
         lst = [obj for obj in jsonl_f]
-    return lst
+    return lst 
+
+def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) -> object:
+    from raglab.dataset.PopQA import PopQA
+    from raglab.dataset.PubHealth import PubHealth
+    from raglab.dataset.ArcChallenge import ArcChallenge
+    from raglab.dataset.TriviaQA import TriviaQA
+    from raglab.dataset.base_dataset.MultiChoiceQA import MultiChoiceQA
+    from raglab.dataset.base_dataset.QA import QA
+    if 'PopQA' == task:
+        EvalData = PopQA(output_dir, llm_path, eval_datapath)
+    elif 'PubHealth' == task:
+        EvalData = PubHealth(output_dir, llm_path, eval_datapath)
+    elif 'ArcChallenge' == task:
+        EvalData = ArcChallenge(output_dir, llm_path, eval_datapath)
+    elif 'TriviaQA' == task:
+        EvalData = TriviaQA(output_dir, llm_path, eval_datapath)
+    return EvalData
+

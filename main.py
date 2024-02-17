@@ -67,7 +67,7 @@ def get_config():
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
     # config file
     parser.add_argument('--config',type = str, default = "")
-    args = parser.parse_args()
+    args = parser.parse_args() # args最好写在 main 里面
     over_write_args_from_file(args, args.config)
     return args
 

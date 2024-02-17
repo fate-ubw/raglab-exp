@@ -1,10 +1,9 @@
 import random
 
 from datasets import load_dataset
-from dspy.datasets.dataset import Dataset
 
 
-class HotPotQA(Dataset):
+class HotPotQA():
     def __init__(self, *args, only_hard_examples=True, keep_details='dev_titles', unofficial_dev=True, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         assert only_hard_examples, "Care must be taken when adding support for easy examples." \

@@ -2,7 +2,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
 
-from raglab.dataset import PopQA, PubHealth, ArcChallenge, TriviaQA, MultiChoiceQA
+from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag_original.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
 from raglab.rag.infer_alg.self_rag_original.utils import PROMPT_DICT, process_data_evidences
@@ -42,16 +42,8 @@ class SelfRag_Original(NaiveRag):
                                                     w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use )
             return response, generation_track, do_retrieve
         elif 'evaluation' == mode:
-            # difine dataset
-            if 'PopQA' == self.task:
-                self.EvalData = PopQA(self.output_dir, self.llm_path, self.eval_datapath)
-            elif 'PubHealth' == self.task:
-                self.EvalData = PubHealth(self.output_dir, self.llm_path, self.eval_datapath)
-            elif 'ArcChallenge' == self.task:
-                self.EvalData = ArcChallenge(self.output_dir, self.llm_path, self.eval_datapath)
-            elif 'TriviaQA' == self.task:
-                self.EvalData = TriviaQA(self.output_dir, self.llm_path, self.eval_datapath)
-            
+            # get dataset
+            self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset()
             #TODO  preprocess data 应该放在每一个 dataset class 方法下面,和具体数据绑定
             self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
@@ -158,9 +150,9 @@ class SelfRag_Original(NaiveRag):
                         if "[Retrieval]" in prev_pred:
                             curr_prompt = prompt + prev_generation # get new prompt
                             curr_preds, curr_scores, overall_score_dict = run_step_generation_batch( 
-                                                                model, curr_prompt, ctxs, max_new_tokens,
-                                                                rel_tokens, ret_tokens=ret_tokens, grd_tokens=grd_tokens, ut_tokens=ut_tokens,
-                                                                threshold=threshold, w_rel=w_rel, w_sup=w_sup, w_use=w_use)
+                                                                        model, curr_prompt, ctxs, max_new_tokens,
+                                                                        rel_tokens, ret_tokens=ret_tokens, grd_tokens=grd_tokens, ut_tokens=ut_tokens,
+                                                                        threshold=threshold, w_rel=w_rel, w_sup=w_sup, w_use=w_use)
                             # set_prediction_tree():
                             prediction_tree, node_id = self.set_predictionTree(curr_depth, parent_node, node_id, curr_preds, curr_scores, curr_prompt, 
                                                                             prev_score, ctxs, prediction_tree, levels ,overall_score_dict)
@@ -171,26 +163,9 @@ class SelfRag_Original(NaiveRag):
                     curr_depth += 1  
                 else:
                     break
-        # 回溯 beamsearch 整个的的东西
-        parent = 0 # 从 0 开始递归
-        best_selections = {}
-        # Traverse from the bottom 
-        levels = {k: v for k, v in levels.items() if len(v) > 0 and k != 0} # remove level 0 in level tree (Pdb) levels = {0: [0], 1: [5, 1]} 后面空的 value 都没有放进来
-        for path_i, node in enumerate(levels[len(levels)]): # 从最后一位开始循环 n 
-            if node == 0:
-                break
-            best_selections[path_i] = [node] # [1] 首先把bottom 的 node 放进来
-            current_node = node # 这个 node 就是指的是tree 中的 node
-            current_level = curr_depth # curr_depth = 7  也就是说这个可以等于 7  
-            if current_node is None:
-                continue
-            while current_level > 0 and current_node is not None:
-                parent = prediction_tree[current_node]["parent"] # 从对底层开始遍历，也就是从node = 5 开始遍历
-                best_selections[path_i] = [parent] + best_selections[path_i] # parent = 0 #这里为什么要以迭代的方式来写呢？ 
-                # (Pdb) best_selections = {0: [0, 5]}
-                current_node = parent # 从 parent 位置继续开始递归 
-                current_level += 1 # 这个逻辑写错了，应该是 current_level -= 1，因为上面构造 tree 的流程走完之后，现在current_level的只是 7，所以按理来说这个应该是
-        # 
+
+        best_selections = self.backtracking_prediction_tree(levels, curr_depth, prediction_tree)
+
         final_prediction = {}
         splitted_sentences = {}
         original_splitted_sentences = {}
@@ -213,25 +188,49 @@ class SelfRag_Original(NaiveRag):
                 "best_selections": best_selections,
                 "ctxs": ctxs,
                 "prediction_tree": prediction_tree}
-
+    
         return final_prediction, result
-      
+
+    def backtracking_prediction_tree(self, levels: dict[int,list[int]], curr_depth: int, prediction_tree: dict[int, dict]) -> dict[int,list[int]]:
+        '''
+        get best tracking from prediction_tree base on levels
+        '''
+        parent = 0 
+        best_selections = {}
+        # Traverse from the bottom 
+        levels = {k: v for k, v in levels.items() if len(v) > 0 and k != 0} # remove empty list in levels
+        for path_i, node in enumerate(levels[len(levels)]):
+            if node == 0:
+                break
+            best_selections[path_i] = [node] 
+            current_node = node 
+            current_level = curr_depth 
+            if current_node is None:
+                continue
+            while current_level > 0 and current_node is not None:
+                parent = prediction_tree[current_node]["parent"]
+                best_selections[path_i] = [parent] + best_selections[path_i] 
+                # (Pdb) best_selections = {0: [0, 5]}
+                current_node = parent 
+                current_level += 1
+        return best_selections
+    
     def set_predictionTree(self, curr_depth, parent_node, node_id,  curr_preds, curr_scores, curr_prompt, prev_score, ctxs, prediction_tree, levels , overall_score_dict):
         retrieval_results = {}
         for i, (curr_pred, p_score) in enumerate(zip(curr_preds, curr_scores)):
             retrieval_results[i] = {"pred": curr_pred, "score": p_score}
-    
+
         for i, result in retrieval_results.items(): 
             node_id += 1 
             node_score = result["score"] * prev_score if prev_score is not None else result["score"]
             curr_pred = result["pred"] 
             prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred, 
-                                        "score": node_score, "ctx": ctxs[i], "parent": parent_node, # 这里的 parent_node 是 parent_node 是从 level 中拿出来的， 而 node_id是 1，
+                                        "score": node_score, "ctx": ctxs[i], "parent": parent_node,
                                         "overall_score_dict": overall_score_dict} 
             
-            if "[Retrieval]" in curr_pred: # 只要pred 中存在[Retrieval] 喔我知道了，也就是说这句话生成了两个 yt，然后就裁切，取到前面 
+            if "[Retrieval]" in curr_pred: 
                 gen_result_index = curr_pred.index("[Retrieval]") 
-                prev_generation = curr_pred[:gen_result_index] # 其实拿到的还是 yt
+                prev_generation = curr_pred[:gen_result_index] 
             else: 
                 prev_generation = curr_pred
             
