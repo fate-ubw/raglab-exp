@@ -22,19 +22,26 @@ class ColbertRetrieve(Retrieve):
         index_name = f'{dataset}.{datasplit}.{self.nbits}bits' # TODO 知识库的名字需要后期再想办法参数化
         collection_path = self.text_dbPath
         collection = Collection(path = collection_path) 
-
-        with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
-            config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
-            indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
-            indexer.index(name = index_name, collection = collection, overwrite='reuse') # set reuse mode
-
-        with Run().context(RunConfig(experiment = self.index_dbPath)): 
-            self.searcher = Searcher(index = index_name)
+        try:
+            # try reuse mode at first. If the index break, 
+            with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
+                config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
+                indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
+                indexer.index(name = index_name, collection = collection, overwrite='reuse') # set reuse mode
+            with Run().context(RunConfig(experiment = self.index_dbPath)): 
+                self.searcher = Searcher(index = index_name)
+        except:
+            with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
+                config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
+                indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
+                indexer.index(name = index_name, collection = collection, overwrite=True) # set reuse mode
+            with Run().context(RunConfig(experiment = self.index_dbPath)): 
+                self.searcher = Searcher(index = index_name)
         
     def search(self, query):
         ids = self.searcher.search(query, k = self.n_docs)
         passages = {}
-        for passage_id, passage_rank, passage_score in zip(*ids): # 这里面的*是用来解耦元素的，将整个 list 全部变成一个单独的个体
+        for passage_id, passage_rank, passage_score in zip(*ids):
             print(f"\t [{passage_rank}] \t\t {passage_score:.1f} \t\t {self.searcher.collection[passage_id]}")
             passages[passage_rank] = {'content': self.searcher.collection[passage_id], 'score':passage_score}
         return passages

@@ -43,9 +43,9 @@ class NaiveRag:
             outputs = self.llm_inference(inputs) 
             return outputs
         elif 'evaluation' == mode:
-            pu.db
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset() # right
+            print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 temp = {}
@@ -60,7 +60,7 @@ class NaiveRag:
             
             self.EvalData.save_result(inference_results)
             eval_result = self.EvalData.eval_acc(inference_results) 
-            print(f'PopQA accuracy: {eval_result}')
+            print(f'{self.task} Accuracy: {eval_result}')
         return eval_result 
     
     def load_llm(self):

@@ -165,7 +165,7 @@ class SelfRag_Original(NaiveRag):
                     break
 
         best_selections = self.backtracking_prediction_tree(levels, curr_depth, prediction_tree)
-
+        # get final_prediction 
         final_prediction = {}
         splitted_sentences = {}
         original_splitted_sentences = {}

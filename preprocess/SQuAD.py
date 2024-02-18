@@ -6,7 +6,7 @@ def change_keys(read_path: str, store_path: str) -> None:
     这个方法是为了将原数据中Answer关键词换成answers, Question关键词换成question
     """
     with open(read_path, 'r', encoding='utf-8') as file:
-        data = json.load(file)
+        data = json.load(file)["data"]
 
     for item in data:
         if 'Answer' in item:

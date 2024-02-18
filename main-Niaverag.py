@@ -77,5 +77,6 @@ if __name__=='__main__':
     rag = NaiveRag(args) 
     # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
     # rag = SelfRag_Original(args)
-    eval_result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
+    # eval_result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
+    eval_result = rag.inference(mode = 'evaluation') 
     print(eval_result)
