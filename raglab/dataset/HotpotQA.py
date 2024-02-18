@@ -1,82 +1,56 @@
-import random
+import os
+import jsonlines
+import json
+from tqdm import tqdm
+from datetime import datetime
+import numpy as np
 
-from datasets import load_dataset
+from raglab.dataset.utils import load_jsonlines
+from raglab.dataset.metric import match
+from raglab.dataset.base_dataset import QA
 
-
-class HotPotQA():
-    def __init__(self, *args, only_hard_examples=True, keep_details='dev_titles', unofficial_dev=True, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        assert only_hard_examples, "Care must be taken when adding support for easy examples." \
-                                   "Dev must be all hard to match official dev, but training can be flexible."
-        
-        hf_official_train = load_dataset("hotpot_qa", 'fullwiki', split='train')
-        hf_official_dev = load_dataset("hotpot_qa", 'fullwiki', split='validation')
-
-        official_train = []
-        for raw_example in hf_official_train:
-            if raw_example['level'] == 'hard':
-                if keep_details is True:
-                    keys = ['id', 'question', 'answer', 'type', 'supporting_facts']
-                elif keep_details == 'dev_titles':
-                    keys = ['question', 'answer', 'supporting_facts']
-                else:
-                    keys = ['question', 'answer']
-
-                example = {k: raw_example[k] for k in keys}
-                
-                if 'supporting_facts' in example:
-                    example['gold_titles'] = set(example['supporting_facts']['title'])
-                    del example['supporting_facts']
-
-                official_train.append(example)
-
-        rng = random.Random(0)
-        rng.shuffle(official_train)
-
-        self._train = official_train[:len(official_train)*75//100]
-
-        if unofficial_dev:
-            self._dev = official_train[len(official_train)*75//100:]
+class HotpotQA(QA):
+    def __init__(self, output_dir, llm_path, eval_datapath):
+        super().__init__(output_dir, llm_path, eval_datapath)
+    
+    def load_dataset(self)-> list[dict]:
+        if self.eval_datapath.endswith(".json"):
+            eval_dataset = json.load(open(self.eval_datapath))
         else:
-            self._dev = None
+            eval_dataset = load_jsonlines(self.eval_datapath)
+        return eval_dataset
 
-        for example in self._train:
-            if keep_details == 'dev_titles':
-                del example['gold_titles']
+    def save_result(self, inference_result: list[dict])-> None: 
+        print('storing result....')
+        if not os.path.exists(self.output_dir): 
+            os.makedirs(self.output_dir)
+        model_name = os.path.basename(self.llm_path)
+        input_filename = os.path.basename(self.eval_datapath)
+        eval_Dataname = os.path.splitext(input_filename)[0]
+        time = datetime.now().strftime('%m%d_%H%M')
+        output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl'
+        output_file = os.path.join(self.output_dir, output_name)
         
-        test = []
-        for raw_example in hf_official_dev:
-            assert raw_example['level'] == 'hard'
-            example = {k: raw_example[k] for k in ['id', 'question', 'answer', 'type', 'supporting_facts']}
-            if 'supporting_facts' in example:
-                example['gold_titles'] = set(example['supporting_facts']['title'])
-                del example['supporting_facts']
-            test.append(example)
+        with jsonlines.open(output_file, 'w') as outfile: 
+            outfile.write(inference_result)
+        print(f'output file path:{output_file}')
+        print('success!')
 
-        self._test = test
+    def eval_acc(self, infer_results: list[dict]) -> float:
+        print('start evaluation!')
+        eval_results = []
+        for idx, data in enumerate(tqdm(infer_results)):
+            metric_result = match(data["generation"], data["answers"])
+            eval_results.append(metric_result)
+        # TODO 这里应该把结果存储下来***.json.eval_result
+        return float(np.mean(eval_results))
+
+    def get_instruction(self):
+        pass
+    
+    def preprecess(self):
+        pass
 
 
-if __name__ == '__main__':
-    from dsp.utils import dotdict
-
-    data_args = dotdict(train_seed=1, train_size=16, eval_seed=2023, dev_size=200*5, test_size=0)
-    dataset = HotPotQA(**data_args)
-
-    print(dataset)
-    print(dataset.train[0].question)
-    print(dataset.train[15].question)
-
-    print(len(dataset.train), len(dataset.dev), len(dataset.test))
-
-    print(dataset.dev[0].question)
-    print(dataset.dev[340].question)
-    print(dataset.dev[937].question)
-
-"""
-What was the population of the city where Woodward Avenue ends in 2010?
-Where did the star , who is also an executive producer, of the Mick begin her carrer? 
-16 1000 0
-Both London and German have seen attacks during war, there was one specific type of attack that Germany called the blitz, what did London call a similar attack?
-Pre-Madonna was a collection of demos by the singer who was a leading presence during the emergence of what network?
-Alan Mills composed the classic folk song that tells the story of what? 
-"""
+    def postprecess(self):
+        pass

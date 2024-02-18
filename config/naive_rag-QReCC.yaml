@@ -1,13 +1,13 @@
 seed: 633
 num_gpu: 1
 output_dir: /home/zxw/raglab-exp/1-eval_output
-task: HotpotQA
+task: QReCC
 llm_path: /home/zxw/rag/model/Llama-2-7b-hf
 # retrieval config
 retrieval_name: colbert
 index_dbPath: /home/zxw/raglab-exp/data/retrieval/colbertv2.0_embedding
 text_dbPath: /home/zxw/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
-eval_datapath: /home/zxw/raglab-exp/data/eval_dataset/2-eval_data/hotpot_dev_processed.json
+eval_datapath: /home/zxw/raglab-exp/data/eval_dataset/2-eval_data/qrecc_test_processed.json
 retriever_modelPath: /home/zxw/rag/model/colbertv2.0
 generate_maxlength: 1000
 # max length should bigger than the length of input_ids

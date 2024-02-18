@@ -1,3 +1,4 @@
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-python /home/wyd/raglab-exp/main-Niaverag.py\
-    --config /home/wyd/raglab-exp/config/naive_rag-HotpotQA.yaml
+export CUDA_VISIBLE_DEVICES=6
+# export COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True
+python -i /home/zxw/raglab-exp/main-Niaverag.py\
+    --config /home/zxw/raglab-exp/config/naive_rag-HotpotQA.yaml
