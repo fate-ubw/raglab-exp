@@ -17,6 +17,7 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) ->
     from raglab.dataset.HotpotQA import HotpotQA
     from raglab.dataset.QReCC import QReCC
     from raglab.dataset.SQuAD import SQuAD
+    from raglab.dataset.ASQA import ASQA
     from raglab.dataset.base_dataset.MultiChoiceQA import MultiChoiceQA
     from raglab.dataset.base_dataset.QA import QA
     if 'PopQA' == task:
@@ -27,6 +28,8 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) ->
         EvalData = ArcChallenge(output_dir, llm_path, eval_datapath)
     elif 'TriviaQA' == task:
         EvalData = TriviaQA(output_dir, llm_path, eval_datapath)
+    elif 'ASQA' == task:
+        EvalData = ASQA(output_dir, llm_path, eval_datapath)
     elif 'HotpotQA' == task:
         EvalData = HotpotQA(output_dir, llm_path, eval_datapath)
     elif 'QReCC' == task:

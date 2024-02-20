@@ -126,7 +126,7 @@ def postprocess_answer_option_conditioned(answer):
     return answer
 
 def process_data_evidences(demonstration, top_n):
-    ctx_key = "ctxs" if "ctxs" in demonstration else "top_contexts"
+    ctx_key = "ctxs" if "ctxs" in demonstration else "docs"
     prompt = PROMPT_DICT["prompt_no_input"].format_map(demonstration)
     evidences = demonstration[ctx_key][:top_n]
     return prompt, evidences

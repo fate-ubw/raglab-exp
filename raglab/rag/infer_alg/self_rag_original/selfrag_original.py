@@ -1,21 +1,35 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
-
+from raglab.dataset.base_dataset import MultiChoiceQA 
 from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag_original.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
 from raglab.rag.infer_alg.self_rag_original.utils import PROMPT_DICT, process_data_evidences
-
+from typing import Any
 import pudb
 from tqdm import tqdm
 
 class SelfRag_Original(NaiveRag):
-    def __init__(self, args):
-        super().__init__(args)
-        self.init(args)
+    '''
 
-    def init(self, args):
+    '''
+    def __init__(self, args):
+        self.task = args.task
+        self.llm_path = args.llm_path
+        self.generate_maxlength = args.generate_maxlength
+        self.use_vllm = args.use_vllm
+        self.eval_datapath = args.eval_datapath
+        self.output_dir = args.output_dir
+        # setup model and database 
+        self.llm, self.tokenizer, self.sampling_params = self.load_llm()
+
+        #retrieval args
+        self.n_docs = args.n_docs
+        # self.retrieval = self.setup_retrieval()
+        # Diff:  we have maintained the original self rag code in slefrag_original.py. As a result, the real-time retrieval functionality has not been implemented.
+        
+        # SelfRag args
         self.download_dir = args.download_dir
         self.world_size = args.world_size
         self.dtype = args.dtype
@@ -30,59 +44,56 @@ class SelfRag_Original(NaiveRag):
         self.w_use = args.w_use
         self.retrieval_mode = args.retrieval_mode
         self.show_specialtokens = args.show_specialtokens
-        self.realtime_retrieval = args.realtime_retrieval
+        self.inference_form = args.inference_form
+        self.ignore_cont = args.ignore_cont
 
-    def inference(self, query=None, mode='interact', task=None):
-        assert mode in ['interact', 'evaluation'] 
-        if 'interact' == mode:
-            input = f"### Instruction:\n{query}\n\n### Response:\n" # add inference format 
-            source_question = query
-            response, generation_track, do_retrieve = self.short_form_generation(input, source_question, evidences,
-                                                    use_seqscore = self.use_seqscore, threshold = self.threshold,
-                                                    w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use )
-            return response, generation_track, do_retrieve
-        elif 'evaluation' == mode:
-            # get dataset
-            self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
-            self.eval_dataset = self.EvalData.load_dataset()
-            #TODO  preprocess data 应该放在每一个 dataset class 方法下面,和具体数据绑定
-            self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
-            inference_results = []
-            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                temp = {}
-                source_question = eval_data['question'] 
-                input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) # get instruction 
+    def inference(self, mode='evaluation'):
+        assert mode in ['evaluation'] 
+        # get dataset
+        self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
+        self.eval_dataset = self.EvalData.load_dataset()
+        #TODO  preprocess data 应该放在每一个 dataset class 方法下面,和具体数据绑定
+        self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
+        inference_results = []
+        for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+            temp = {}
+            source_question = eval_data['question'] 
+            input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) # get instruction 
 
-                if self.realtime_retrieval == True:
-                    evidences = []
-                else:
-                    _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages and do not use retrieval model in real-time
-                response, generation_track, do_retrieve = self.short_form_generation(input, source_question, evidences,
+            _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages from the eval_data file
+            
+            # 这个位置定义long form generation 
+            if 'short' == self.inference_form:
+                response, generation_track, do_retrieve = self.short_form_generation(input, source_question, evidences=evidences,
                                                         use_seqscore = self.use_seqscore, threshold = self.threshold,
-                                                        w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use )
-                print(f'source question:{source_question}')
-                print(f'response: {response}')
-                if "SUPPORTS" in response: # the trick in self rag source code. In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
-                    response = "true" 
-                elif "REFUTES" in response: 
-                    response = "false"
+                                                        w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use)
+            elif 'long' == self.inference_form:
+                final_prediction, result = self.long_form_generation(input, source_question, evidences, 
+                                                   self.beam_width, self.max_depth, 
+                                                   self.w_rel, self.w_sup, self.w_use, self.ignore_cont)
+            print(f'source question:{source_question}')
+            print(f'response: {response}')
+            if "SUPPORTS" in response: # the trick in self rag source code. In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
+                response = "true" 
+            elif "REFUTES" in response: 
+                response = "false"
 
-                temp['question'] = source_question
-                temp['answers'] = eval_data['answers']
-                temp['generation'] = response
-                temp['instruction'] = input
-                temp['generation_track'] = generation_track
-                inference_results.append(temp)
-                # calculate the error in each step
-                eval_result = self.EvalData.eval_acc(inference_results)
-                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
-            # end of for loop
-            self.EvalData.save_result(inference_results)
+            temp['question'] = source_question
+            temp['answers'] = eval_data['answers']
+            temp['generation'] = response
+            temp['instruction'] = input
+            temp['generation_track'] = generation_track
+            inference_results.append(temp)
+            # calculate the error in each step
             eval_result = self.EvalData.eval_acc(inference_results)
-            print(f'Final {self.task} accuracy: {eval_result}')
-            return eval_result
+            print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+        # end of for loop
+        self.EvalData.save_result(inference_results)
+        eval_result = self.EvalData.eval_acc(inference_results)
+        print(f'Final {self.task} accuracy: {eval_result}')
+        return eval_result
 
-    def load_llm(self): 
+    def load_llm(self):
         llm = LLM(model=self.llm_path)
         sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
@@ -93,20 +104,22 @@ class SelfRag_Original(NaiveRag):
         return instruction
         
 
-    def long_form_generation(prompt, query, evidence=None, max_new_tokens=300,                               
+    def long_form_generation(self, prompt: str, query: str, ctxs=None,                              
                                      beam_width=2, max_depth=7,
                                      w_rel=1.0, w_sup=1.0, w_use=0.5, ignore_cont = None): # orignal version of self rag longform
         if "## Input:\n\n" in query:
             query = query.split("## Input:\n\n")[1]
         #prompt 放到外面去管理
-        ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(
-                                self.tokenizer, use_grounding=self.use_grounding, use_utility=self.use_utility)
+        pu.db
+        ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(self.tokenizer, 
+                                                                            use_grounding=self.use_groundness, 
+                                                                            use_utility=self.use_utility)
+        
         special_tokens = [] 
-
         if rel_tokens is not None:
             special_tokens = list(rel_tokens.keys())
         if ret_tokens is not None:
-            special_tokens += list(ret_tokens.keys())
+            special_tokens += list(ret_tokens.keys())#Diff: this code delete in  selfrag_reproduction, because the variable 'special tokens' is not referenced later on.
 
         if  "no_retrieval" == self.mode: 
             prompt += "[No Retrieval]" 
@@ -142,17 +155,17 @@ class SelfRag_Original(NaiveRag):
                 levels[curr_depth] = []
                 if curr_depth-1 in levels and terminated is False:
                     for parent_node in levels[curr_depth-1]:
-                        # 这里可以给一个函数，get_lastTurn_generation(parent_node, prediction_tree):
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
                         if prev_pred == "</s>":
                             terminated = True
                             continue
                         if "[Retrieval]" in prev_pred:
                             curr_prompt = prompt + prev_generation # get new prompt
-                            curr_preds, curr_scores, overall_score_dict = run_step_generation_batch( 
-                                                                        model, curr_prompt, ctxs, max_new_tokens,
-                                                                        rel_tokens, ret_tokens=ret_tokens, grd_tokens=grd_tokens, ut_tokens=ut_tokens,
-                                                                        threshold=threshold, w_rel=w_rel, w_sup=w_sup, w_use=w_use)
+                            curr_preds, curr_scores, overall_score_dict = self.run_step_generation_batch(curr_prompt, ctxs,
+                                                                                                         rel_tokens, 
+                                                                                                         ret_tokens=ret_tokens, 
+                                                                                                         grd_tokens=grd_tokens, ut_tokens=ut_tokens,
+                                                                                                         w_rel=w_rel, w_sup=w_sup, w_use=w_use)
                             # set_prediction_tree():
                             prediction_tree, node_id = self.set_predictionTree(curr_depth, parent_node, node_id, curr_preds, curr_scores, curr_prompt, 
                                                                             prev_score, ctxs, prediction_tree, levels ,overall_score_dict)
@@ -188,8 +201,106 @@ class SelfRag_Original(NaiveRag):
                 "best_selections": best_selections,
                 "ctxs": ctxs,
                 "prediction_tree": prediction_tree}
+ 
     
         return final_prediction, result
+
+    def run_step_generation_batch(self, prompt, paragraphs,
+                                  rel_tokens=None, grd_tokens=None, ret_tokens=None, ut_tokens=None,
+                                  w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore=False):
+        if paragraphs is not None:# 这里拼接 5 个 passages，然后进行并行推理
+            aug_prompts = [prompt + "[Retrieval]" + "<paragraph>{}</paragraph>".format(
+                paragraph["title"] + "\n" + paragraph["text"]) for paragraph in paragraphs] # 一样的操作，都是给 prompt cat 一个 [retrieval] 
+        else:
+            aug_prompts = [prompt]
+
+        preds = self.llm.generate(aug_prompts, self.sampling_params)
+        relevance_score_dict = {}
+        grd_score_dict = {}
+        ut_score_dict = {}
+        overall_scores = {}
+        final_preds = []
+        for p_idx, pred in enumerate(preds): 
+            pred_text = pred.outputs[0].text # '[Relevant]Pelé, a Brazilian footballer, has the highest goals in world football.[No support / Contradictory][Utility:5]</s>'
+            print(f'output_text"{pred_text}')
+            # 首先计算 seq score
+            seq_score = self.sequence_score(pred)
+            # init dict in each loop
+            relevance_score_dict.setdefault(p_idx, {}) 
+            grd_score_dict.setdefault(p_idx, {})
+            ut_score_dict.setdefault(p_idx, {})
+            # relevance score 
+            relevance_score, relevance_score_dict = self.relevanceToken_score(pred, rel_tokens, p_idx, relevance_score_dict)
+            # Issupport score
+            ground_score, grd_score_dict = self.IssupportToken_score(pred, grd_tokens, p_idx, grd_score_dict)
+            # Utility score
+            utility_score, ut_score_dict = self.UtilityToken_score_longform(pred, ut_tokens, p_idx, ut_score_dict) #Diff:  selfrag_reproduction.py we use self.UtilityToken_score() calculate the correct utility_score
+            if use_seqscore is True:
+                final_score = np.exp(seq_score) + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
+            else:
+                final_score = w_rel * relevance_score +  w_sup * ground_score + w_use * utility_score
+            
+            overall_scores[p_idx] = {"final_score": final_score, # 记录每一个 yt 的分数，
+                                    "relevance_score": relevance_score,
+                                    "ground_score": ground_score,
+                                    "utility_score": utility_score,
+                                    "relevance_score_dict": relevance_score_dict, # special token 中不同token 对应的概率都要存储下来
+                                    "grd_score_dict": grd_score_dict,
+                                    "ut_score_dict": ut_score_dict}
+
+
+            if "[No Retrieval]" in pred_text: 
+                pred_text = self.modify_NoRetrieval_into_Retrieval(pred, ret_tokens)
+                #Diff: this operation 在论文和 short form inference中没有出现，在selfrag_reproduction.py 以论文为标准，没有添加这一段代码，目的是更加准确的评估 self rag 在 long from inference 的表现
+                final_preds.append(pred_text)
+            else:
+                final_preds.append(pred_text)
+        # end of the "for p_idx, pred in enumerate(preds): "
+        preds = final_preds
+        scores = [overall_scores[p_idx]["final_score"] for p_idx in overall_scores] # scores就是 final score，也就是每个句子的总体分数
+        return preds, scores, overall_scores
+
+    def modify_NoRetrieval_into_Retrieval(self,pred, ret_tokens)-> str:
+        '''
+        check the ratio of ([Retrieval] + [Continue to Use Evidence])/([Retrieval] + [Continue to Use Evidence] + [No Retrieval] )
+        if the ratio > threshold modify [No Retrieval] -> [Retrieval]
+        '''
+        pred_text = pred.outputs[0].text
+        pred_log_probs = pred.outputs[0].logprobs 
+        pred_token_ids = pred.outputs[0].token_ids
+        ret_token_appear_indices = []
+        substrings = pred_text.split("[No Retrieval]")
+        for tok_idx, tok in enumerate(pred_token_ids):
+            if tok == ret_tokens["[No Retrieval]"]:
+                ret_token_appear_indices.append(tok_idx) # 找到全部的[No Retrieval]的 idx
+                substrings
+                print("retrieval_tokens")
+
+        ret_token_score_dict = {}
+        retrieval_remap = {}
+        for order, idx in enumerate(ret_token_appear_indices): # 如果在句子中间出现了[No Retrieval]
+            ret_token_score_dict.setdefault(order, {})
+            for tok, tok_id in ret_tokens.items(): # 这里面貌似还是计算3 个【retrieval】token的 prob
+                prob = pred_log_probs[idx][tok_id] if tok_id in pred_log_probs[idx] else -100
+                ret_token_score_dict[order][tok] = np.exp(prob)
+            # 如果句子中间意外的出现了[No Retrieval]那么这里要计算一下 ratio 了
+            if ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[No Retrieval]"] != 0.0: 
+                do_retrieve = (ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[Continue to Use Evidence]"]) / (
+                    ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[No Retrieval]"]) > self.threshold
+            else:
+                do_retrieve = 0.0
+            if do_retrieve > self.threshold:
+                retrieval_remap[order] = True
+            else:
+                retrieval_remap[order] = False
+        processed_pred = ""
+        for substr_i, substring in enumerate(iterable=substrings):
+            if substr_i in retrieval_remap and retrieval_remap[substr_i] is True:
+                processed_pred += substring + "[Retrieval]" 
+            else:
+                processed_pred += substring + "[No Retrieval]"
+        return pred_text
+
 
     def backtracking_prediction_tree(self, levels: dict[int,list[int]], curr_depth: int, prediction_tree: dict[int, dict]) -> dict[int,list[int]]:
         '''
@@ -262,12 +373,8 @@ class SelfRag_Original(NaiveRag):
             do_retrieve = ratio > threshold
         # "do retrieval or not retrieval
         if do_retrieve is True:             
-            if self.realtime_retrieval == True:
-                passages = self.retrieval.search(source_question) # attention: you need source question as retrieval input
-                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(
-                passage["title"], passage["content"]) for rank, passage in passages.items()]
-            else:
-                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in evidences] 
+
+            evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in evidences] 
             
             preds = self.llm.generate(evidence_augmented_inputs, self.sampling_params)
             # calculate score of each candidate
@@ -301,10 +408,7 @@ class SelfRag_Original(NaiveRag):
                                         "grd_score_dict": grd_score_dict,
                                         "ut_score_dict": ut_score_dict} 
                 pred_text = pred.outputs[0].text 
-                if self.realtime_retrieval == True:
-                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": passages[p_idx+1]} 
-                else:
-                    results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": evidences[p_idx]}
+                results["retrieval_{}".format(p_idx)] = {"pred": pred_text, "score": float(final_score), "ctx": evidences[p_idx]}
         else: 
             # no retrieval generation
             prompt += "[No Retrieval]"
@@ -401,7 +505,7 @@ class SelfRag_Original(NaiveRag):
         score = pred.outputs[0].cumulative_logprob / max(len(pred.outputs[0].token_ids), 1)
         return score
 
-    def relevanceToken_score(self, pred, rel_tokens, p_idx, relevance_score_dict):
+    def relevanceToken_score(self, pred, rel_tokens, p_idx, relevance_score_dict) -> tuple[float, dict]:
         pred_log_probs = pred.outputs[0].logprobs
         for tok, id in rel_tokens.items(): 
             prob = pred_log_probs[0][id] if id in pred_log_probs[0] else -100 # 首先判断{'[Irrelevant]': 32003, '[Relevant]': 32004}是否在 pred 里面，如果在里面就取其对应的 logprob，并且是直接取的 ids
@@ -410,7 +514,7 @@ class SelfRag_Original(NaiveRag):
         relevance_score = relevance_score_dict[p_idx]["[Relevant]"] / (np.sum(list(relevance_score_dict[p_idx].values())))
         return float(relevance_score), relevance_score_dict
 
-    def IssupportToken_score(self, pred, grd_tokens, p_idx, grd_score_dict):
+    def IssupportToken_score(self, pred, grd_tokens, p_idx, grd_score_dict) -> tuple[float, dict]:
         pred_token_ids = pred.outputs[0].token_ids
         pred_log_probs = pred.outputs[0].logprobs
         groundness_token_appear_indices = []
@@ -432,7 +536,7 @@ class SelfRag_Original(NaiveRag):
             ground_score = 0.0 # "If the sentence is labeled as [isRel], then [Issup] will not appear later, resulting in a ground score of 0."
         return float(ground_score), grd_score_dict
     
-    def UtilityToken_score(self, pred, ut_tokens, p_idx, ut_score_dict):
+    def UtilityToken_score(self, pred, ut_tokens, p_idx, ut_score_dict) -> tuple[float, dict]:
         pred_token_ids = pred.outputs[0].token_ids
         pred_log_probs = pred.outputs[0].logprobs
         utility_token_appear_indices = []
@@ -453,3 +557,24 @@ class SelfRag_Original(NaiveRag):
             utility_score = 0.0
         return float(utility_score), ut_score_dict
     
+    def UtilityToken_score_longform(self, pred, ut_tokens, grd_tokens, p_idx, ut_score_dic) -> tuple[float, dict]:
+        pred_token_ids = pred.outputs[0].token_ids
+        pred_log_probs = pred.outputs[0].logprobs
+        utility_token_appear_indices = []
+        for tok_idx, tok in enumerate(pred_token_ids):
+            if tok in list(ut_tokens.values()):
+                utility_token_appear_indices.append(tok_idx)
+        if len(utility_token_appear_indices) > 0:
+            idx = utility_token_appear_indices[0] # position of ut_token [Utility:1-5]
+            for token, token_id in grd_tokens.items(): # Diff: grd_tokens should be ut_tokens. In the selfrag_reproduction.py we fix this problem.
+                # souce code: https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_long_form_static.py#L68
+                prob = pred_log_probs[idx][token_id] if token_id in pred_log_probs[idx] else -100
+                ut_score_dict[p_idx][token] = np.exp(float(prob))
+
+        if len(ut_score_dict[p_idx]) == 5: 
+            ut_sum = np.sum(list(ut_score_dict[p_idx].values()))
+            ut_scores = [-1, -0.5, 0, 0.5, 1]
+            utility_score = np.sum([ut_scores[i] * (ut_score_dict[p_idx]["[Utility:{}]".format(i+1)] / ut_sum) for i in range(len(ut_scores))])
+        else:   
+            utility_score = 0.0
+        return float(utility_score), ut_score_dict
