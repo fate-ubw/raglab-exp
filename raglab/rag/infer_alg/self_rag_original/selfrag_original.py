@@ -110,7 +110,6 @@ class SelfRag_Original(NaiveRag):
         if "## Input:\n\n" in query:
             query = query.split("## Input:\n\n")[1]
         #prompt 放到外面去管理
-        pu.db
         ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(self.tokenizer, 
                                                                             use_grounding=self.use_groundness, 
                                                                             use_utility=self.use_utility)
@@ -121,15 +120,15 @@ class SelfRag_Original(NaiveRag):
         if ret_tokens is not None:
             special_tokens += list(ret_tokens.keys())#Diff: this code delete in  selfrag_reproduction, because the variable 'special tokens' is not referenced later on.
 
-        if  "no_retrieval" == self.mode: 
+        if  "no_retrieval" == self.retrieval_mode: 
             prompt += "[No Retrieval]" 
             preds = self.llm.generate([prompt], self.sampling_params)
             preds = [pred.outputs[0].text.split("\n\n")[0] for pred in preds]
             return preds[0]
 
-        elif "always_retrieve" == self.mode:
+        elif "always_retrieve" == self.retrieval_mode:
             do_retrieve = True
-        elif 'adaptive_retrieval' == self.mode: 
+        elif 'adaptive_retrieval' == self.retrieval_mode: 
             do_retrieve = self.firstToken_retrievalRatio_longForm(prompt, ret_tokens)
 
         if do_retrieve is False:
@@ -154,6 +153,7 @@ class SelfRag_Original(NaiveRag):
                 # 构建整个树
                 levels[curr_depth] = []
                 if curr_depth-1 in levels and terminated is False:
+                    pu.db
                     for parent_node in levels[curr_depth-1]:
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
                         if prev_pred == "</s>":
@@ -236,7 +236,7 @@ class SelfRag_Original(NaiveRag):
             # Utility score
             utility_score, ut_score_dict = self.UtilityToken_score_longform(pred, ut_tokens, p_idx, ut_score_dict) #Diff:  selfrag_reproduction.py we use self.UtilityToken_score() calculate the correct utility_score
             if use_seqscore is True:
-                final_score = np.exp(seq_score) + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
+                final_score = seq_score + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
             else:
                 final_score = w_rel * relevance_score +  w_sup * ground_score + w_use * utility_score
             
@@ -349,7 +349,7 @@ class SelfRag_Original(NaiveRag):
             levels[curr_depth].append(node_id)
         return prediction_tree, node_id
 
-    def get_lastTurn_generation(parent_node, prediction_tree):
+    def get_lastTurn_generation(self, parent_node, prediction_tree):
         # get previous information
         prev_pred = prediction_tree[parent_node]["pred"]
         prev_prompt = prediction_tree[parent_node]["prompt"]
@@ -397,7 +397,7 @@ class SelfRag_Original(NaiveRag):
                 utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens, p_idx, ut_score_dict)
                 
                 if use_seqscore is True:
-                    final_score = np.exp(seq_score) + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
+                    final_score = seq_score + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score # 涉及不同类型数据转化的一定要涉及类型的转换和精度问题
                 else:
                     final_score = w_rel * relevance_score +  w_sup * ground_score + w_use * utility_score
                 overall_scores[p_idx] = {"final_score": final_score,
@@ -483,7 +483,7 @@ class SelfRag_Original(NaiveRag):
         preds = self.llm.generate([prompt], self.sampling_params)
         pred_log_probs = preds[0].outputs[0].logprobs 
         preds = [pred.outputs[0].text.split("\n\n")[0] for pred in preds]
-        if "[Retrieval]" not in preds[0]:
+        if "[Retrieval]" not in preds[0]: # Diff: the algotithm of decide retrieval or no retrieval is different to paper and short form inferene code. We reproduce the code and rewrite this part of code. 
             do_retrieve = False
         else:
             if self.threshold is None:
@@ -498,17 +498,17 @@ class SelfRag_Original(NaiveRag):
                 do_retrieve = True if retrieve_prob > self.threshold else False
         return  do_retrieve
 
-    def sequence_score(self,pred):
+    def sequence_score(self,pred) ->float:
         '''
         average prob of generated sentence
         '''
-        score = pred.outputs[0].cumulative_logprob / max(len(pred.outputs[0].token_ids), 1)
-        return score
+        score = np.exp(pred.outputs[0].cumulative_logprob) / max(len(pred.outputs[0].token_ids), 1)
+        return float(score)
 
     def relevanceToken_score(self, pred, rel_tokens, p_idx, relevance_score_dict) -> tuple[float, dict]:
         pred_log_probs = pred.outputs[0].logprobs
         for tok, id in rel_tokens.items(): 
-            prob = pred_log_probs[0][id] if id in pred_log_probs[0] else -100 # 首先判断{'[Irrelevant]': 32003, '[Relevant]': 32004}是否在 pred 里面，如果在里面就取其对应的 logprob，并且是直接取的 ids
+            prob = pred_log_probs[0][id] if id in pred_log_probs[0] else -100
             relevance_score_dict[p_idx][tok] = np.exp(float(prob))
         # calculate score
         relevance_score = relevance_score_dict[p_idx]["[Relevant]"] / (np.sum(list(relevance_score_dict[p_idx].values())))
