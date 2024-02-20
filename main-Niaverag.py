@@ -6,8 +6,6 @@ import torch
 import numpy as np
 
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
-from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
-
 from utils import over_write_args_from_file
 
 def set_randomSeed(args):

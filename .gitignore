@@ -2,6 +2,10 @@
 data/
 test/
 1-eval_output/
+raglab/rag/infer_alg/dsp/scripts/cache/
+raglab/rag/infer_alg/dsp/openai-0.28.1/
+run/cache/
+model/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
