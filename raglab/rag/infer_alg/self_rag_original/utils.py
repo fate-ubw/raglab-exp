@@ -1,3 +1,5 @@
+import re
+
 PROMPT_DICT = {
     "prompt_input": (
         "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:\n"
@@ -130,3 +132,21 @@ def process_data_evidences(demonstration, top_n):
     prompt = PROMPT_DICT["prompt_no_input"].format_map(demonstration)
     evidences = demonstration[ctx_key][:top_n]
     return prompt, evidences
+
+def postprocess(pred) -> str: # remove all special tokens 
+    special_tokens = ["[Fully supported]", "[Partially supported]", "[No support / Contradictory]", "[No Retrieval]", "[Retrieval]",
+                      "[Irrelevant]", "[Relevant]", "<paragraph>", "</paragraph>", "[Utility:1]", "[Utility:2]", "[Utility:3]", "[Utility:4]", "[Utility:5]"]
+    for item in special_tokens:
+        pred = pred.replace(item, "")
+    pred = pred.replace("</s>", "")
+
+    if len(pred) == 0:
+        return ""
+    if pred[0] == " ":
+        pred = pred[1:]
+    return pred
+
+def fix_spacing(input_text):
+    # Add a space after periods that lack whitespace
+    output_text = re.sub(r'(?<=\w)([.!?])(?=\w)', r'\1 ', input_text)
+    return output_text

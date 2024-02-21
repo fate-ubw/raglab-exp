@@ -42,6 +42,7 @@ class SelfRag_Reproduction(NaiveRag):
                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, 
                             mode = self.retrieval_mode, 
                             show_specialtokens = self.show_specialtokens) 
+            # long form inference 的时候可以生成引用的文章，这块也应该书写添加引用的功能。并且最后 output 的时候。可以写一个 format 来拿到最后文章 id 还有内容啥的，尤其是多轮 retrieval 这部分
             return response, generation_track, do_retrieve
         elif 'evaluation' == mode:
             # difine dataset
