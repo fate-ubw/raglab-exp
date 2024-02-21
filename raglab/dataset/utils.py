@@ -18,6 +18,7 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) ->
     from raglab.dataset.QReCC import QReCC
     from raglab.dataset.SQuAD import SQuAD
     from raglab.dataset.ASQA import ASQA
+    from raglab.dataset.Factscore import Factscore
     from raglab.dataset.base_dataset.MultiChoiceQA import MultiChoiceQA
     from raglab.dataset.base_dataset.QA import QA
     if 'PopQA' == task:
@@ -30,12 +31,13 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) ->
         EvalData = TriviaQA(output_dir, llm_path, eval_datapath)
     elif 'ASQA' == task:
         EvalData = ASQA(output_dir, llm_path, eval_datapath)
+    elif 'Factscore' == task:
+        EvalData = Factscore(output_dir, llm_path, eval_datapath)
     elif 'HotpotQA' == task:
         EvalData = HotpotQA(output_dir, llm_path, eval_datapath)
     elif 'QReCC' == task:
         EvalData = QReCC(output_dir, llm_path, eval_datapath)
     elif 'SQuAD' == task:
         EvalData = SQuAD(output_dir, llm_path, eval_datapath)
-    
     return EvalData
 

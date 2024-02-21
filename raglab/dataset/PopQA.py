@@ -8,6 +8,7 @@ import numpy as np
 from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metric import match
 from raglab.dataset.base_dataset import QA
+
 class PopQA(QA):
     def __init__(self, output_dir, llm_path, eval_datapath):
         super().__init__(output_dir, llm_path, eval_datapath)
