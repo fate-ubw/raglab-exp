@@ -21,7 +21,7 @@ def get_config():
     parser.add_argument('-seed', type=int, default = 663, help='random  seed')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
-    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'HotpotQA', 'QReCC', 'SQuAD'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
+    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 'HotpotQA', 'QReCC', 'SQuAD'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
@@ -64,6 +64,7 @@ def get_config():
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
     parser.add_argument('--inference_form', type=str, default='long', choices=['long', 'short'], help='self rag includes short form inference and long form inference')
     parser.add_argument("--ignore_cont", action="store_true", help="filter out sentences that include [No support / Contradictory] ") 
+    parser.add_argument('--use_citation',  action="store_true", help='add citation for responses')
     # config file
     parser.add_argument('--config',type = str, default = "")
     args = parser.parse_args() # args最好写在 main 里面
