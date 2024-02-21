@@ -180,8 +180,8 @@ class SelfRag_Original(NaiveRag):
             final_prediction = {0:preds_text[0]} 
             generation_track = {"original_splitted_sentences": {0:preds_text}}
             return final_prediction, generation_track, do_retrieve
-
-        elif "always_retrieve" == self.retrieval_mode:
+        
+        elif "always_retrieval" == self.retrieval_mode:
             do_retrieve = True
         elif 'adaptive_retrieval' == self.retrieval_mode:
             do_retrieve = self.firstToken_retrievalRatio_longForm(prompt, ret_tokens)
