@@ -1,0 +1,33 @@
+seed: 633
+# GPU config
+num_gpu: 2
+# eval config
+eval_datapath: ./data/eval_datasets/factscore_unlabeled_alpaca_13b_retrieval_without_idx62.jsonl
+task: "Factscore"
+output_dir: ./1-eval_output/
+# llm config
+llm_path: ./model/selfrag_llama2_7b/
+generate_maxlength: 200
+use_vllm: True
+# retrieval common config
+n_docs: 10
+# self rag 
+download_dir: ".cache"
+world_size: 1
+dtype: "half"
+threshold: 0.2  
+use_seqscore: True
+use_groundness: True
+use_utility: True
+beam_width: 2
+max_depth: 7
+w_rel: 1.0
+w_sup: 1.0
+w_use: 0.5
+retrieval_mode: "adaptive_retrieval"
+show_specialtokens: True
+inference_form: 'long'
+ignore_cont: False
+use_citation: False 
+
+
