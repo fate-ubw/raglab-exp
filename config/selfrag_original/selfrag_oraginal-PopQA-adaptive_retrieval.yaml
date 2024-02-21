@@ -21,7 +21,7 @@ use_seqscore: True
 use_groundness: True
 use_utility: True
 beam_width: 2
-max_depth: 2
+max_depth: 7
 w_rel: 1.0
 w_sup: 1.0
 w_use: 0.5
