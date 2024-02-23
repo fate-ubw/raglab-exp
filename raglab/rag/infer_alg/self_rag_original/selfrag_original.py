@@ -5,7 +5,7 @@ from raglab.dataset.base_dataset import MultiChoiceQA
 from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag_original.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
-from raglab.rag.infer_alg.self_rag_original.utils import PROMPT_DICT, process_data_evidences, postprocess, fix_spacing
+from raglab.rag.infer_alg.self_rag_original.utils import PROMPT_DICT, TASK_INST,process_data_evidences, postprocess, fix_spacing
 from typing import Any
 import pudb
 from tqdm import tqdm
@@ -61,11 +61,12 @@ class SelfRag_Original(NaiveRag):
         inference_results = []
         for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
             temp = {}
-            source_question = eval_data['question'] 
-            input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) # get instruction 
+            source_question = eval_data['question']
             _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages from the eval_data.jsonl
             
             if 'short' == self.inference_form:
+                
+                input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) 
                 response, generation_track, do_retrieve = self.short_form_generation(prompt=input, source_question=source_question, evidences=evidences,
                                                         use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                         w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use)
@@ -86,16 +87,19 @@ class SelfRag_Original(NaiveRag):
                 eval_result = self.EvalData.eval_acc(inference_results)
                 print(f'{self.task} Accuracy in {instance_idx} turn: {eval_result}')
             elif 'long' == self.inference_form:
+                instructions = TASK_INST[self.task]
+                prompt = instructions + "## Input:\n\n" + source_question # 这个地方的format 应该严格对齐，等 reproductiond 的时候可以重新写
+                input = PROMPT_DICT["prompt_no_input"].format_map({"instruction": prompt})
                 final_prediction, generation_track, do_retrieve_flag = self.long_form_generation(prompt=input, query=source_question, ctxs=evidences, 
                                                    beam_width=self.beam_width, max_depth=self.max_depth, 
                                                    w_rel=self.w_rel, w_sup=self.w_sup, w_use=self.w_use, use_seqscore=self.use_seqscore,ignore_cont=self.ignore_cont)
-
+                
                 final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)                
                 response_id = 0
                 inference_results = self.EvalData.record_result(eval_data, final_prediction_with_citation, 
                                                         catation_docs, response_id, generation_track,
                                                         inference_results)
-        # end of for loop   
+        # end of for loop
         self.EvalData.save_result(inference_results) 
         if 'short' == self.inference_form:
             eval_result = self.EvalData.eval_acc(inference_results)
@@ -109,10 +113,6 @@ class SelfRag_Original(NaiveRag):
         sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
         return llm, tokenizer, sampling_params
-
-    def get_instruction(self, query):
-        instruction = query
-        return instruction
     
     def aggregate_response_with_citation(self, final_predictions: dict[int,str], generation_track: dict[str, Any], add_citation = True)-> tuple[dict, dict]:
         '''
@@ -550,7 +550,6 @@ class SelfRag_Original(NaiveRag):
                 for tok, tok_id in ret_tokens.items():
                     prob = pred_log_probs[0][tok_id] 
                     ret_token_score_dict[tok] = np.exp(prob)
-
                 retrieve_prob = ret_token_score_dict["[Retrieval]"] / (ret_token_score_dict["[Retrieval]"] + ret_token_score_dict["[No Retrieval]"])
                 do_retrieve = True if retrieve_prob > self.threshold else False
         return  do_retrieve

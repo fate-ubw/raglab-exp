@@ -3,7 +3,6 @@ import jsonlines
 from raglab.dataset.PopQA import  PopQA
 from datetime import datetime
 
-
 class ASQA(PopQA):
     def __init__(self, output_dir, llm_path, eval_datapath):
         super().__init__(output_dir, llm_path, eval_datapath)
@@ -23,7 +22,7 @@ class ASQA(PopQA):
             outfile.write(new_results)
         print(f'output file path:{output_file}')
         print('success!')
-    
+
     def record_result(self, eval_data, final_prediction_with_citation, catation_docs, response_id, generation_track, inference_results):
         eval_data["output"] = final_prediction_with_citation[response_id]
         eval_data["docs"] = catation_docs[response_id] # list[dict]

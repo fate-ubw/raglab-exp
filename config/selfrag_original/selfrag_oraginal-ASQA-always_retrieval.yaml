@@ -2,20 +2,20 @@ seed: 633
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: ./data/eval_datasets/asqa_eval_gtr_top100_10sapmles.json
+eval_datapath: ./data/eval_datasets/asqa_eval_gtr_top100.json
 task: ASQA
 output_dir: ./1-eval_output/
 # llm config
 llm_path: ./model/selfrag_llama2_7b/
-generate_maxlength: 100
+generate_maxlength: 300 # diff: selfrag_oragnal set 300, but set 100 in selfrag_reproduction base on paper(https://arxiv.org/abs/2310.11511)
 use_vllm: True
 # retrieval common config
-n_docs: 10
+n_docs: 5
 # self rag 
 download_dir: ".cache"
 world_size: 1
 dtype: "half"
-threshold: 0.2  
+threshold: 0.2
 use_seqscore: True
 use_groundness: True
 use_utility: True
@@ -28,6 +28,4 @@ retrieval_mode: "always_retrieval"
 show_specialtokens: True
 inference_form: 'long'
 ignore_cont: False
-use_citation: True 
-
-
+use_citation: True

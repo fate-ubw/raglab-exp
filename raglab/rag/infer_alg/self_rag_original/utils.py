@@ -35,7 +35,7 @@ TASK_INST = {"wow": "Given a chat history separated by new lines, generates an i
              "arc_easy": "Given four answer candidates, A, B, C and D, choose the best answer choice.",
              "ArcChallenge": "Given four answer candidates, A, B, C and D, choose the best answer choice.",
              "trex": "Given the input format 'Subject Entity [SEP] Relationship Type,' predict the target entity.",
-             "asqa": "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers.",
+             "ASQA": "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers.",
              "PubHealth": "Is the following statement correct or not? Say true if it's correct; otherwise say false."}
 # fever is the task name of PubHealth
 
@@ -74,7 +74,7 @@ def preprocess_input_data(dataset, task=None):
                     answer_labels["D"] = text
                 if answer_key in ["A", "B", "C", "D"]:
                     answer_labels[answer_key] = text
-
+            
             if "D" not in answer_labels:
                 answer_labels["D"] = ""
             choices = "\nA: {0}\nB: {1}\nC: {2}\nD: {3}".format(
@@ -87,7 +87,7 @@ def preprocess_input_data(dataset, task=None):
         else:
             prompt = instruction + "\n\n## Input:\n\n" + \
                 item["question"] if instruction is not None else item["question"]
-            item["instruction"] = prompt  
+            item["instruction"] = prompt
         new_data.append(item)
     
     return new_data

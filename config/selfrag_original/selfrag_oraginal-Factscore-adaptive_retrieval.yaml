@@ -10,7 +10,7 @@ llm_path: ./model/selfrag_llama2_7b/
 generate_maxlength: 200
 use_vllm: True
 # retrieval common config
-n_docs: 10
+n_docs: 5
 # self rag 
 download_dir: ".cache"
 world_size: 1
