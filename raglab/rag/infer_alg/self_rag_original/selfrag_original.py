@@ -22,20 +22,18 @@ class SelfRag_Original(NaiveRag):
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
         # setup model and database 
+        self.dtype = args.dtype
+        self.world_size = args.world_size
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
-
         #retrieval args
         self.n_docs = args.n_docs
         # self.retrieval = self.setup_retrieval()
         '''
         Diff:  we have maintained the original self rag code in slefrag_original.py. 
         As a result, the real-time retrieval functionality has not been implemented.
-        
         '''
         # SelfRag args
         self.download_dir = args.download_dir
-        self.world_size = args.world_size
-        self.dtype = args.dtype
         self.threshold = args.threshold
         self.use_seqscore = args.use_seqscore
         self.use_groundness = args.use_groundness
@@ -109,7 +107,7 @@ class SelfRag_Original(NaiveRag):
             return 'Inference completion'
     
     def load_llm(self):
-        llm = LLM(model=self.llm_path)
+        llm = LLM(model=self.llm_path, dtype=self.dtype)
         sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
         return llm, tokenizer, sampling_params
