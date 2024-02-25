@@ -3,10 +3,32 @@ import jsonlines
 from raglab.dataset.PopQA import  PopQA
 from datetime import datetime
 
+class InputStruction:
+    qeustion:str
+    answer:str
+    topic:str
+
+class OutputStruction:
+    question:str
+    output:str
+    topic:str
+
+input_strction = {'qeustion': 'query','answer':"answers"}
 
 class Factscore(PopQA):
     def __init__(self, output_dir, llm_path, eval_datapath):
         super().__init__(output_dir, llm_path, eval_datapath)
+        self.set_data_struction()
+
+    # @abstruct 这个类是必须重写的
+    def set_data_struction(self):
+        # if task == 'PopQA':
+        self.inputStrction = InputStruction
+        self.inputStrction.question = 'query'
+        self.inputStrction.answer = 'answer'
+        self.outputStrction = OutputStruction
+        self.outputStruction.question = 'quesiton'
+        self.outputStruction.answer = 'output'
 
     def record_result(self, eval_data, final_prediction_with_citation, catation_docs, response_id, generation_track, inference_results):
         postprocessed_result = final_prediction_with_citation[response_id]
