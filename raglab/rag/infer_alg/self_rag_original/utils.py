@@ -93,8 +93,7 @@ def preprocess_input_data(dataset, task=None):
     return new_data
 
 def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
-    ret_tokens = {token: tokenizer.convert_tokens_to_ids(
-        token) for token in retrieval_tokens_names}
+    ret_tokens = {token: tokenizer.convert_tokens_to_ids(token) for token in retrieval_tokens_names}
     rel_tokens = {}
     for token in ["[Irrelevant]", "[Relevant]"]:
         rel_tokens[token] = tokenizer.convert_tokens_to_ids(token)

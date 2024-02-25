@@ -1,14 +1,15 @@
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import numpy as np
+from typing import Any
+from tqdm import tqdm
+import pudb
+
 from raglab.dataset.base_dataset import MultiChoiceQA 
 from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 from raglab.rag.infer_alg.self_rag_original.utils import load_special_tokens, postprocess_answer_option_conditioned, preprocess_input_data
 from raglab.rag.infer_alg.self_rag_original.utils import PROMPT_DICT, TASK_INST,process_data_evidences, postprocess, fix_spacing
-from typing import Any
-import pudb
-from tqdm import tqdm
 
 class SelfRag_Original(NaiveRag):
     '''
