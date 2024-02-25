@@ -13,3 +13,19 @@ class Factscore(PopQA):
         inference_results.append({"input": eval_data["input"], "output": postprocessed_result, "topic": eval_data["topic"],
                         "cat": eval_data["cat"], "intermediate": generation_track["original_splitted_sentences"][response_id]}) 
         return inference_results
+
+    def save_result(self, inference_result: list[dict])-> None: 
+        print('storing result....')
+        if not os.path.exists(self.output_dir): 
+            os.makedirs(self.output_dir)
+        model_name = os.path.basename(self.llm_path)
+        input_filename = os.path.basename(self.eval_datapath)
+        eval_Dataname = os.path.splitext(input_filename)[0]
+        time = datetime.now().strftime('%m%d_%H%M')
+        output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl'
+        output_file = os.path.join(self.output_dir, output_name)
+        
+        with jsonlines.open(output_file, 'w') as outfile: 
+            outfile.write_all(inference_result)
+        print(f'output file path:{output_file}')
+        print('success!')

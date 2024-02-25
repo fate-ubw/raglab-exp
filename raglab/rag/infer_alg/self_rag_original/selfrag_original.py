@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 class SelfRag_Original(NaiveRag):
     '''
-
+    Orignal self rag algorithm. Raglab rewrite the self rag algorithm.
     '''
     def __init__(self, args):
         self.task = args.task
@@ -85,8 +85,12 @@ class SelfRag_Original(NaiveRag):
                 eval_result = self.EvalData.eval_acc(inference_results)
                 print(f'{self.task} Accuracy in {instance_idx} turn: {eval_result}')
             elif 'long' == self.inference_form:
-                instructions = TASK_INST[self.task]
-                prompt = instructions + "## Input:\n\n" + source_question # 这个地方的format 应该严格对齐，等 reproductiond 的时候可以重新写
+                pu.db
+                if self.task in TASK_INST:
+                    instructions = TASK_INST[self.task]
+                    prompt = instructions + "## Input:\n\n" + source_question # 这个地方的format 应该严格对齐，等 reproductiond 的时候可以重新写
+                elif self.task == 'Factscore':
+                    prompt = eval_data['input']
                 input = PROMPT_DICT["prompt_no_input"].format_map({"instruction": prompt})
                 final_prediction, generation_track, do_retrieve_flag = self.long_form_generation(prompt=input, query=source_question, ctxs=evidences, 
                                                    beam_width=self.beam_width, max_depth=self.max_depth, 

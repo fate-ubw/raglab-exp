@@ -10,15 +10,17 @@ from utils import over_write_args_from_file
 
 def set_randomSeed(args):
     # random seed
-    random.seed(args.seed)
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
-    torch.cuda.manual_seed_all(args.seed)
-    torch.backends.cudnn.deterministic = True
+    if args.use_seed == True:
+        random.seed(args.seed)
+        torch.manual_seed(args.seed)
+        np.random.seed(args.seed)
+        torch.cuda.manual_seed_all(args.seed)
+        torch.backends.cudnn.deterministic = True
 
 def get_config():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-seed', type=int, default = 663, help='random  seed')
+    parser.add_argument('-seed', type=int, default = 633, help='random  seed')
+    parser.add_argument('--use_seed', action= 'store_true', help='this args will control all random seed of torch, numpy and pyhthon operation')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
     parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 'HotpotQA', 'QReCC', 'SQuAD'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
@@ -48,7 +50,7 @@ def get_config():
     # self rag config
     parser.add_argument('--download_dir', type=str, default=".cache",help="specify vllm model download dir")
     parser.add_argument("--world_size",  type=int, default=1,help="world size to use multiple GPUs.")
-    parser.add_argument("--dtype",  type=str, default="half",help="We use bfloat16 for training. If you run inference on GPUs that do not support BF16, please set this to be `half`.")
+    parser.add_argument("--dtype", type=str, default= "half", help="We use bfloat16 for training. If you run inference on GPUs that do not support BF16, please set this to be `half`.")
         # Decoding hyperparams
     parser.add_argument('--threshold', type=float, default=None, help="Adaptive threshold.")
     parser.add_argument("--use_seqscore", action="store_true")
