@@ -164,9 +164,7 @@ class SelfRag_Original(NaiveRag):
     def long_form_generation(self, prompt: str, query: str, ctxs=None,                              
                                      beam_width=2, max_depth=7,
                                      w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore = True,ignore_cont = None) -> tuple[dict[int,str], dict, bool]: # orignal version of self rag longform
-        if "## Input:\n\n" in query:
-            query = query.split("## Input:\n\n")[1]
-            
+        
         ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(self.tokenizer, 
                                                                             use_grounding=self.use_groundness, 
                                                                             use_utility=self.use_utility)
