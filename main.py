@@ -5,7 +5,7 @@ import random
 import torch
 import numpy as np
 from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
-
+from raglab.rag.infer_alg.self_rag_reproduction import SelfRag_Reproduction
 from utils import over_write_args_from_file
 
 def set_randomSeed(args):
@@ -63,7 +63,7 @@ def get_config():
     parser.add_argument("--w_use", type=float, default=1.0,help="reward weight for overall completeness / utility.")
     parser.add_argument('--retrieval_mode', type=str, help="mode to control retrieval.", default="no_retrieval", choices=['adaptive_retrieval', 'no_retrieval', 'always_retrieval']) 
     parser.add_argument('--show_specialtokens', action="store_true", help='show special tokens or remove all special tokens in outputs')
-    parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages') # this setting ami to reproduce the results of the experiment
+    parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages(only)') # this setting ami to reproduce the results of the experiment
     parser.add_argument('--inference_form', type=str, default='long', choices=['long', 'short'], help='self rag includes short form inference and long form inference')
     parser.add_argument("--ignore_cont", action="store_true", help="filter out sentences that include [No support / Contradictory] ") 
     parser.add_argument('--use_citation',  action="store_true", help='add citation for responses')
@@ -77,7 +77,11 @@ if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
     # rag = NaiveRag(args) 
-    # result = rag.inference( "What is Henry Feilden's occupation?",mode = 'interact')
-    rag = SelfRag_Original(args)
-    eval_result = rag.inference(mode = 'evaluation') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
-    print(eval_result)
+    # result = rag.inference("What is Henry Feilden's occupation?",mode = 'interact')
+    # rag = SelfRag_Original(args)
+    # eval_result = rag.inference(mode = 'evaluation') # TODO SelfRag定义好之后，其实可以多次调用 rag.inference(task = 'factscore) 评测不同的
+    rag = SelfRag_Reproduction(args)
+    result, generation_track = rag.inference("What is Henry Feilden's occupation?",mode = 'interact')
+    print(result)
+    print(generation_track)
+
