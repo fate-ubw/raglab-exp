@@ -1,0 +1,47 @@
+use_seed: True
+seed: 633
+# GPU config
+num_gpu: 2
+# eval config
+output_dir: ./1-eval_output/
+# llm config
+llm_path: ./model/selfrag_llama2_7b/
+generate_maxlength: 500
+use_vllm: True
+
+# retrieval common config
+retrieval_name: contriever
+index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
+text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
+retriever_modelPath: ./model/contriever-msmarco
+n_docs: 5
+# colbert config
+nbits: 2
+# contriever config
+projection_size: 768
+indexing_batch_size: 1000000
+n_bits: 8
+n_subquantizers: 0
+per_gpu_batch_size: 64
+question_maxlength: 512 # Maximum number of tokens in a question
+# self rag 
+download_dir: ".cache"
+world_size: 1
+dtype: "half"
+  # decoding args
+threshold: 0.2
+use_seqscore: True
+use_groundness: True
+use_utility: True
+beam_width: 2
+max_depth: 7
+w_rel: 1.0
+w_sup: 1.0
+w_use: 0.5
+  # mode and 
+inference_form: 'short'
+retrieval_mode: "always_retrieval"
+realtime_retrieval: True
+show_specialtokens: True
+ignore_cont: False
+use_citation: True
