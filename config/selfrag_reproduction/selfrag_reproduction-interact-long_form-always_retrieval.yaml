@@ -39,8 +39,8 @@ w_rel: 1.0
 w_sup: 1.0
 w_use: 0.5
   # mode and 
-inference_form: 'short'
-retrieval_mode: "no_retrieval"
+inference_form: 'long_form'
+retrieval_mode: "always_retrieval"
 realtime_retrieval: True
 show_specialtokens: True
 ignore_cont: False
