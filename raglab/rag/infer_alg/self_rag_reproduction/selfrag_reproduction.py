@@ -41,6 +41,7 @@ class SelfRag_Reproduction(NaiveRag):
         self.inference_form = args.inference_form
         self.ignore_cont = args.ignore_cont
         self.use_citation = args.use_citation
+        assert self.beam_width < self.n_docs, "The beam width should be less than the number of documents."
 
     def inference(self, query: Optional[str], mode='interact', task=None):
         assert mode in ['interact', 'evaluation']
@@ -52,9 +53,7 @@ class SelfRag_Reproduction(NaiveRag):
                 final_prediction, generation_track, do_retrieve = self.short_form_generation(input, source_question, pregiven_passages,
                                                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, mode = mode)
-                pdb.set_trace()
-                # 不行因为final_prediction 是一个字符串，需要整合成 long form 那种才能添加引用
-
+                # TODO 不行因为 final_prediction 是一个字符串，需要整合成 long form 那种才能添加引用
                 final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation) 
                 # 其实可以给short form 也加上citation
                 return final_prediction, catation_docs, generation_track
@@ -63,11 +62,11 @@ class SelfRag_Reproduction(NaiveRag):
                                                             beam_width=self.beam_width, max_depth=self.max_depth, 
                                                             w_rel=self.w_rel, w_sup=self.w_sup, w_use=self.w_use, 
                                                             use_seqscore=self.use_seqscore,ignore_cont=self.ignore_cont)
-                pdb.set_trace()
                 final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)      
-                return  final_prediction_with_citation, catation_docs,generation_track
-
-
+                return  final_prediction_with_citation, catation_docs, generation_track
+        elif 'evaluation' == mode:
+            pass
+    
     def load_llm(self):
         llm = LLM(model=self.llm_path, dtype=self.dtype)
         sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
@@ -124,7 +123,7 @@ class SelfRag_Reproduction(NaiveRag):
                                         "utility_score": utility_score,
                                         "relevance_score_dict": relevance_score_dict, 
                                         "grd_score_dict": grd_score_dict,
-                                        "ut_score_dict": ut_score_dict} # 考虑直接删除这个没有什么太大用处的代码
+                                        "ut_score_dict": ut_score_dict} #TODO 考虑删除这段代码的必要性
                 pred_text = pred.outputs[0].text
                 if self.realtime_retrieval == True:
                     generation_track["retrieval_{}".format(p_idx+1)] = {"pred": pred_text, "score": float(final_score), "ctx": passages[p_idx+1]}
@@ -140,7 +139,7 @@ class SelfRag_Reproduction(NaiveRag):
         # Aggregating answers
         if len(generation_track) <= 2: 
             # post process for no retrieval
-            if True == self.show_specialtokens: # specialtokens 其实就是很普通的
+            if True == self.show_specialtokens:
                 return pred, generation_track, do_retrieve
             else:
                 # remove all sprcial tokens 
@@ -191,6 +190,10 @@ class SelfRag_Reproduction(NaiveRag):
             generation_track = {"original_splitted_sentences": {0:preds_text}}
             return final_prediction, generation_track
         elif 'always_retrieval' == self.retrieval_mode:
+            '''
+            Diff: The logic of adaptive retrieval is based on paper and GitHub issue, which is different from the self RAG source code (run_long_form_static.py). 
+            Raglab has truly implemented the multi-turn retrieval proposed in the self rag paper for the first time.
+            '''
             curr_depth = 1
             node_id = 0
             prediction_tree = {}
@@ -204,10 +207,6 @@ class SelfRag_Reproduction(NaiveRag):
                 if curr_depth - 1 in levels:
                     for parent_node in levels[curr_depth-1]:
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
-                        '''
-                        diff: the logic of always retrieval is base on paper and github issue which is different from self rag source code (run_long_form_static.py)
-                        Raglab 首次真正的实现了 self rag 论文中提出的多轮 retrieval
-                        '''
                         curr_prompt = prompt + postprocess(prev_generation)
                         # BUG 这块有问题，因为多轮之后
                         # prompt其实一致是不断拼接起来的，因为要往后面的句子预测
@@ -222,9 +221,7 @@ class SelfRag_Reproduction(NaiveRag):
                         curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.run_step_generation_batch(curr_prompt, current_retrieval_input , pregiven_passages,
                                                                                                     rel_tokens, ret_tokens, grd_tokens, ut_tokens=ut_tokens,
                                                                                                     w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
-                        # 其实直接在这里实现就可以的
-                        # run_step_generation_batch 干的功能
-                        #   retrieval passages-然后进行并行推理，然后是计算分数，让
+                        
                         prediction_tree, node_id, levels = self.set_predictionTree(curr_depth, parent_node, node_id, 
                                                                            curr_preds, curr_scores, curr_prompt,
                                                                            prev_score, retrieval_docs, prediction_tree, levels ,overall_score_dict)
@@ -265,24 +262,24 @@ class SelfRag_Reproduction(NaiveRag):
             return final_prediction, generation_track
         # the of elif 'always_retrieval' == self.retrieval_mode:
         elif 'adaptive_retrieval' == self.retrieval_mode:
+            '''
+            diff: The logic of adaptive retrieval is based on paper and GitHub issue, which is different from the self RAG source code (run_long_form_static.py). 
+            Raglab has truly implemented the multi-turn retrieval proposed in the self rag paper for the first time.
+            '''
             curr_depth = 1
             node_id = 0
             prediction_tree = {}
             levels = {}
             prediction_tree[node_id] = {"prompt": prompt, "pred": "", 
                                         "processed_pred": "", "score": None, "ctx": None, "parent": None} # [First retrieve flag] means 
-            
             levels[0] = [0]
+            level_tmp = [] # level_tmp is used to store the node when [No retrieval], and then after the entire tree is maintained, all nodes in level_tmp are merged into the tree. 
             while curr_depth < max_depth:
                 # bulid tree
-                levels[curr_depth]= []
-                if curr_depth - 1 in levels:
+                if curr_depth - 1 in levels and len(levels[curr_depth-1])!=0: #nnd 应该是不等于0，等于 0 直接就是空的了
+                    levels[curr_depth]= []
                     for parent_node in levels[curr_depth-1]:
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
-                        '''
-                        diff: the logic of always retrieval is base on paper and github issue which is different from self rag source code (run_long_form_static.py)
-                        Raglab 首次真正的实现了 self rag 论文中提出的多轮 retrieval
-                        '''
                         curr_prompt = prompt + postprocess(prev_generation)
                         # BUG Meet，讨论一下curr_prompt 和 current_retrieval_input 是什么
                         previous_sentence = postprocess(prev_pred) # prev_pred 正好是上一次生成的一个句子，不包括之前生成的句子
@@ -290,29 +287,49 @@ class SelfRag_Reproduction(NaiveRag):
                         '''
                         这里是按照樱花妹论文里面写的方法实现的，每一次 retrieval 的 input 都是 source qeustion + 上一次生成的句子，并且按照道理讲，这个句子应该是remove special tokens 的句子，这样再检索的时候才能更加的准确
                         '''
-                        ratio, _ = self.firstToken_retrievalRatio(curr_prompt, ret_tokens,None)
+                        ratio, _ = self.firstToken_retrievalRatio(curr_prompt, ret_tokens, None)
                         if ratio > self.threshold:
                             curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.run_step_generation_batch(curr_prompt, current_retrieval_input , pregiven_passages,
                                                                                                         rel_tokens, ret_tokens, grd_tokens, ut_tokens=ut_tokens,
                                                                                                         w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
+                            prediction_tree, node_id, levels = self.set_predictionTree(curr_depth, parent_node, node_id,curr_preds, 
+                                                                                       curr_scores, curr_prompt,prev_score, retrieval_docs, 
+                                                                                       prediction_tree, levels ,overall_score_dict)
                         else:
-                            curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.generation_without_retrieval(curr_prompt) # 其实这部分完全和 no retrieval 一样
-                            # 这些返回的变量必须存在，这样在 for loop 进行 citation 的时候才能实现,很简单全部都返回空的就完了，只需要保证每一个变量的类型和run_step_generation_batch保持一致即可
-                            
-                        prediction_tree, node_id, levels = self.set_predictionTree(curr_depth, parent_node, node_id, 
-                                                                           curr_preds, curr_scores, curr_prompt,
-                                                                           prev_score, retrieval_docs, prediction_tree, levels ,overall_score_dict)
+                            curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.generation_without_retrieval(curr_prompt)
+                            prediction_tree, node_id, level_tmp = self.set_predictionTree_NoRetrieval(curr_depth, parent_node, node_id, curr_preds, 
+                                                                                                    curr_scores, curr_prompt, retrieval_docs, 
+                                                                                                    prediction_tree, overall_score_dict, level_tmp)
+
                     # end of the for loop 
-                    current_rank = levels[curr_depth]
-                    #get the top-2 score
+                    current_rank = levels[curr_depth] 
+                    #get the top-k node based on sentence final score
                     node2score = {node_id: prediction_tree[node_id]['score'] for node_id in current_rank} #
-                    top_nodes = sorted(node2score.items(), key=lambda x: x[1], reverse=True)[:beam_width] # 取 top2 结果
+                    top_nodes = sorted(node2score.items(), key=lambda x: x[1], reverse=True) # 
+                    top_nodes = top_nodes[:(beam_width - len(level_tmp))] 
                     levels[curr_depth] = [node[0] for node in top_nodes] 
-                    curr_depth += 1  
+                    curr_depth += 1
                 else:
                     break
             # end of the while curr_depth < max_depth:
+            # Complete the tree(variable:levels)
+                # The purpose of below snippet code is only to complete the logic of building tree(variable:levels), and it is not helpful for building the best response
+            for no_retrieval_node in level_tmp:
+                depth = no_retrieval_node['curr_depth']
+                node_id = no_retrieval_node['node_id']
+                levels[depth] = levels[depth] + [node_id]
+            
+            # {0: [0], 1: [1, 3], 2: [9, 11], 3: [15], 4: [19], 5: [23], 6: [28]}
+
+            # backtraking the levels get the best answer
             best_selections = self.backtracking_prediction_tree(levels, curr_depth, prediction_tree)
+            if len(best_selections) < self.beam_width:
+                # get the last path_id in best_selections
+                for path_id, best_selection in best_selections.items():
+                    path_id = path_id
+                
+                best_selections = self.backtracking_prediction_tree_noRetrieval(best_selections, prediction_tree, level_tmp, path_id)
+
             # get final_prediction
             final_prediction = {}
             splitted_sentences = {}
@@ -337,7 +354,19 @@ class SelfRag_Reproduction(NaiveRag):
                     "prediction_tree": prediction_tree}
         
             return final_prediction, generation_track
-  
+    
+    def generation_without_retrieval(self, prompt):
+        '''
+        # without retrieval and retruen one response
+        '''
+        prompt += "[No Retrieval]" 
+        preds = self.llm.generate([prompt], self.sampling_params)
+        curr_prediction = [pred.outputs[0].text.split("\n\n")[0] for pred in preds]
+        scores = [1] # The score of [No retrieval] output is 1. And the [No retrieval] outputs will not be sorted by score in rank process
+        overall_scores = {0:None}
+        retrieval_docs = {1:None}
+        return curr_prediction, scores, overall_scores, retrieval_docs
+    
     def aggregate_response_with_citation(self, final_predictions: dict[int,str], generation_track: dict[str, Any], add_citation = True)-> tuple[dict, dict]:
         '''
         # Aggregate response for response. If the response generate by no_retrieval mode. There is no need to add citation. 
@@ -353,28 +382,30 @@ class SelfRag_Reproduction(NaiveRag):
                 catation_doc[response_idx] = docs
             else:
                 if len(postprocess(generated_response)) == 0:
+                    pdb.set_trace()
                     generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx] = generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx] 
                 # 上面这条我感觉大概率也不会用到
                 for cite_idx, (sentence, doc) in enumerate(iterable=zip(generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx])):
                     if len(sentence) == 0:
                         continue
-                    sentence = postprocess(sentence) # 原来如此，樱花妹其实已经把[Continue to Use Evidence] 的情况想到了
+                    sentence = postprocess(sentence) 
                     # remove the loopping sentence
                     if sentence in previous_generations: 
                         continue
                     else:
                         previous_generations.append(sentence)
-                    if add_citation == True:
-                        # 优先替换[Continue to Use Evidence] 
+
+                    if add_citation == True and doc is not None: 
                         sentence = sentence.replace(".[Continue to Use Evidence]", f" [{cite_idx}]. ")
-                        final_output += sentence[:-1] + " [{}]".format(cite_idx) + ". " # 不行 tm 的这块还不能这么写，因为最后生成每次都有其他 special token， 不能取最后一个需要使用 re.match 来实现了
+                        final_output += sentence[:-1] + " [{}]".format(cite_idx) + ". " 
                         final_output = final_output.replace(f". [{cite_idx}] ", f" [{cite_idx}]. ")
+                        docs.append(doc) # docs -> list[dict]
                         '''
-                        #Diff: selfrag_reproduction.py 实现了多轮 retrieval 情况下的 citation 功能，这部分的编写逻辑和 selfrag_orignal.py 并不相同
+                        # Diff: selfrag_reproduction.py implements the citation function under multiple rounds of retrieval, which is different from the logic of selfrag_orignal.py                        
                         '''
                     else:
-                        final_output += sentence # 这里还有个问题就是如果是不添加citation的话，得到的response里面就存在cintinue to use evidence
-                    docs.append(doc) # docs -> list[dict]
+                        final_output += sentence
+                        # [No retrieval] do not cite doc
                 if len(final_output) == 0:
                     final_output = fix_spacing(final_output)  
                 if len(final_output) > 0 and final_output[-1] == " ":
@@ -393,7 +424,7 @@ class SelfRag_Reproduction(NaiveRag):
         best_selections = {}
         # Traverse from the bottom 
         levels = {k: v for k, v in levels.items() if len(v) > 0 and k != 0} # remove empty list in levels
-        for path_i, node in enumerate(levels[len(levels)]):
+        for path_i, node in enumerate(levels[len(levels)]): # beam search 
             if node == 0:
                 break
             best_selections[path_i] = [node] 
@@ -405,32 +436,55 @@ class SelfRag_Reproduction(NaiveRag):
                 parent = prediction_tree[current_node]["parent"]
                 best_selections[path_i] = [parent] + best_selections[path_i] 
                 current_node = parent 
-                current_level += 1
+                current_level -= 1
+        
         return best_selections
+
+    def backtracking_prediction_tree_noRetrieval(self, best_selections:dict[int,list], prediction_tree, level_tmp:list[dict], next_path_id:int):
+        '''
+        # back tracking the node in level_tmp 
+        - level_tmp is generated by [No retrieval] inference process
+        - this function is only used in adaptive retrieval in long form inference
+        '''
+        for no_retrieval_node in level_tmp:
+            curr_depth = no_retrieval_node['curr_depth']
+            node = no_retrieval_node['node_id']
+            next_path_id += 1
+            best_selections[next_path_id] = [node]
+            current_node = node 
+            current_level = curr_depth 
+            if current_node is None:
+                continue
+            while current_level > 0 and current_node is not None:
+                parent = prediction_tree[current_node]['parent']
+                best_selections[next_path_id] = [parent] + best_selections[next_path_id]
+                current_node = parent
+                current_level -= 1
+        return best_selections
+    
 
     def set_predictionTree(self, curr_depth, parent_node, node_id:int,  curr_preds:list[str], curr_scores:list[float], curr_prompt:str, prev_score, retrieval_docs, prediction_tree, levels , overall_score_dict):
         retrieval_results = {}
-        for i, (curr_pred, p_score) in enumerate(zip(curr_preds, curr_scores)):
+        for i, (curr_pred, p_score) in enumerate(zip(curr_preds, curr_scores)): 
             retrieval_results[i] = {"pred": curr_pred, "score": p_score}
-        
         for i, result in retrieval_results.items(): 
             node_id += 1 
             node_score = result["score"] * prev_score if prev_score is not None else result["score"]
             curr_pred = result["pred"] 
-
             if self.realtime_retrieval == True:
                 # the index of real time retrieved passages begin from 1, but the index of pre-given passages begin from 0.
-                prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred, 
+                prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred,
                                             "score": node_score, "ctx": retrieval_docs[i+1], "parent": parent_node,
                                             "overall_score_dict": overall_score_dict} # TODO 后续评估一下overall_score_dict的用处，貌似不需要保存下来
             else:
-                prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred, 
+                prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred,
                                             "score": node_score, "ctx": retrieval_docs[i], "parent": parent_node,
-                                            "overall_score_dict": overall_score_dict} 
-            if "[Retrieval]" in curr_pred: 
-                gen_result_index = curr_pred.index("[Retrieval]") 
-                prev_generation = curr_pred[:gen_result_index] 
-            else: 
+                                            "overall_score_dict": overall_score_dict}
+            # Meet:
+            if "[Retrieval]" in curr_pred:
+                gen_result_index = curr_pred.index("[Retrieval]")
+                prev_generation = curr_pred[:gen_result_index]
+            else:
                 prev_generation = curr_pred
             '''
             Diff: check wrong pattern and cutting the wrong pattern in curr_pred.
@@ -438,6 +492,27 @@ class SelfRag_Reproduction(NaiveRag):
             prediction_tree[node_id]["processed_pred"] = prev_generation 
             levels[curr_depth].append(node_id)
         return prediction_tree, node_id, levels
+    
+    def set_predictionTree_NoRetrieval(self, curr_depth, parent_node, node_id, curr_pred, curr_score, curr_prompt, retrieval_docs, prediction_tree, overall_score_dict, level_tmp):
+        curr_pred = curr_pred[0]
+        node_id += 1
+        if self.realtime_retrieval == True:
+            prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred, 
+                                        "score": curr_score[0], "ctx": retrieval_docs[1], "parent": parent_node,
+                                        "overall_score_dict": overall_score_dict} 
+        else:
+            prediction_tree[node_id] = {"prompt": curr_prompt, "pred": curr_pred, 
+                                        "score": curr_score[0], "ctx": retrieval_docs[0], "parent": parent_node,
+                                        "overall_score_dict": overall_score_dict} 
+        # Meet:
+        if "[Retrieval]" in curr_pred:
+            gen_result_index = curr_pred.index("[Retrieval]")
+            prev_generation = curr_pred[:gen_result_index]
+        else:
+            prev_generation = curr_pred
+        prediction_tree[node_id]["processed_pred"] = prev_generation
+        level_tmp.append({'curr_depth':curr_depth, 'node_id':node_id})
+        return prediction_tree, node_id, level_tmp
 
     def run_step_generation_batch(self, prompt, current_retrieval_input, pregiven_passages:Optional[list[dict]],
                                   rel_tokens=None, grd_tokens=None, ret_tokens=None, ut_tokens=None,
@@ -468,13 +543,15 @@ class SelfRag_Reproduction(NaiveRag):
             # Issupport score
             ground_score, grd_score_dict = self.IssupportToken_score(pred, grd_tokens, p_idx, grd_score_dict)
             # Utility score
-            utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens,p_idx, ut_score_dict) #Diff:  selfrag_reproduction.py we use self.UtilityToken_score() calculate the correct utility_score
+            utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens,p_idx, ut_score_dict) 
+            '''
+            Diff: selfrag_reproduction.py use self.UtilityToken_score() calculate the correct utility_score, which is different from the logic of selfrag_orignal.py
+            '''
             if self.use_seqscore is True:
                 final_score = seq_score + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score
             else:
                 final_score = w_rel * relevance_score +  w_sup * ground_score + w_use * utility_score
-            #TODO 其实这里不需要存储那么多数据，因为generation_track 是不需要看的，其实直接存储
-            overall_scores[p_idx] = {"final_score": final_score}
+            overall_scores[p_idx] = {"final_score": final_score} 
 
             if "[No Retrieval]" in pred_text:
                 pred_text = self.modify_NoRetrieval_into_Retrieval(pred, ret_tokens)
@@ -509,7 +586,13 @@ class SelfRag_Reproduction(NaiveRag):
         '''
         calculate the ratio of retrieval base on first token logits
         '''
-        preds = self.llm.generate([prompt], self.sampling_params)
+        sampling_params = SamplingParams(temperature=0.0, top_p=1.0, max_tokens=1, logprobs=32000, skip_special_tokens = False)
+        '''
+        Diff: According to self rag's paper, when calculating the ratio, language model only to predict the next token logits.
+              Source code max_tokens is often set to 50, 100 or even 300, which greatly wastes computing resources. 
+              Raglab optimizes the process of self-rag inference in selfrag_reproduction.py , improves the speed of reasoning and saves a lot of computing resources
+        '''
+        preds = self.llm.generate([prompt], sampling_params) 
         pred_log_probs = preds[0].outputs[0].logprobs 
         score_dict = {}
         for tok, id in ret_tokens.items():
@@ -518,10 +601,10 @@ class SelfRag_Reproduction(NaiveRag):
             prob = pred_log_probs[0][id] 
             score_dict[tok] = np.exp(prob)
             '''
-            Diff: Raglab selfrag_reproduction.py fix the bug of "score_dict[tok] = float(prob)" and calculate the right ratio
-            This bug is from self rag source code [https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_short_form.py#L79]
+            Diff: Raglab selfrag_reproduction.py fix the bug of "score_dict[tok] = float(prob)" and calculate the right ratio.
+            Th bug is from self rag source code [https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_short_form.py#L79]
             '''
-        if "short_form" == self.inference:
+        if "short_form" == self.inference_form:
             generation_track["decide_retrieval_mode"] = preds[0].outputs[0].text 
         ratio = score_dict["[Retrieval]"] / (score_dict["[Retrieval]"] + score_dict["[No Retrieval]"])  
         return float(ratio), generation_track
