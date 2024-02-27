@@ -21,7 +21,7 @@ class SelfRag_Reproduction(NaiveRag):
         # load llm args
         self.download_dir = args.download_dir
         self.world_size = args.world_size
-        self.dtype = args.dtype #
+        self.dtype = args.dtype
 
         # decoding args
         self.threshold = args.threshold
@@ -43,19 +43,17 @@ class SelfRag_Reproduction(NaiveRag):
         self.use_citation = args.use_citation
         assert self.beam_width < self.n_docs, "The beam width should be less than the number of documents."
 
-    def inference(self, query: Optional[str], mode='interact', task=None):
+    def inference(self, query: Optional[str]=None, mode='interact', task=None):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
             input = f"### Instruction:\n{query}\n\n### Response:\n"
             source_question = query
             pregiven_passages = []
             if 'short_form' == self.inference_form:
-                final_prediction, generation_track, do_retrieve = self.short_form_generation(input, source_question, pregiven_passages,
+                final_prediction, generation_track = self.short_form_generation(input, source_question, pregiven_passages,
                                                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, mode = mode)
-                # TODO 不行因为 final_prediction 是一个字符串，需要整合成 long form 那种才能添加引用
-                final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation) 
-                # 其实可以给short form 也加上citation
+                catation_docs = {0:None}
                 return final_prediction, catation_docs, generation_track
             elif 'long_form' == self.inference_form:
                 final_prediction, generation_track = self.long_form_generation(input, source_question, pregiven_passages, 
@@ -65,7 +63,48 @@ class SelfRag_Reproduction(NaiveRag):
                 final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)      
                 return  final_prediction_with_citation, catation_docs, generation_track
         elif 'evaluation' == mode:
-            pass
+            self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
+            self.eval_dataset = self.EvalData.load_dataset()
+            inference_results = []
+            for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                eval_data = self.EvalData.preprocess(eval_data) # 其实只有 arc challenge 需要将数据 preprocess 一下
+                input = self.EvalData.get_instruction(eval_data[self.EvalData.inputStruction.question]) # 仅仅实现每个数据集合的 instrction 
+                source_question = eval_data[self.EvalData.inputStruction.question]
+                if self.realtime_retrieval == True:
+                    pregiven_passages = []
+                else:
+                    # get the pregiven passages form local eval datasets
+                    pregiven_passages = eval_data[self.EvalData.inputStruction.pregiven_passages][:self.n_docs]
+                
+                if 'short_form' == self.inference_form:
+                    final_prediction, generation_track = self.short_form_generation(input, source_question, pregiven_passages,
+                                                                            use_seqscore = self.use_seqscore, threshold = self.threshold,
+                                                                            w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, mode = mode)
+                    if "SUPPORTS" in final_prediction: # In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
+                        final_prediction = "true" 
+                    elif "REFUTES" in final_prediction:
+                        final_prediction = "false"
+                    inference_results = self.EvalData.record_result(eval_data, final_prediction, inference_results)
+                    eval_result = self.EvalData.eval_acc(inference_results)
+                    print(f'{self.task} Accuracy in {instance_idx} turn: {eval_result}')
+                elif 'long_form' == self.inference_form:
+                    final_prediction, generation_track = self.long_form_generation(input, source_question, pregiven_passages, 
+                                                                beam_width=self.beam_width, max_depth=self.max_depth, 
+                                                                w_rel=self.w_rel, w_sup=self.w_sup, w_use=self.w_use, 
+                                                                use_seqscore=self.use_seqscore,ignore_cont=self.ignore_cont)
+                    final_prediction_with_citation, catation_docs = self.aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)  
+                    response_id = 0
+                    inference_results = self.EvalData.record_result(eval_data, final_prediction_with_citation,
+                                                                    catation_docs, response_id, generation_track,
+                                                                    inference_results)
+                    # end of for loop
+            self.EvalData.save_result(inference_results) 
+            if 'short' == self.inference_form:
+                eval_result = self.EvalData.eval_acc(inference_results)
+                print(f'Final {self.task} accuracy: {eval_result}')
+                return eval_result
+            elif 'long' == self.inference_form:
+                return 'Inference completion'
     
     def load_llm(self):
         llm = LLM(model=self.llm_path, dtype=self.dtype)
@@ -140,11 +179,11 @@ class SelfRag_Reproduction(NaiveRag):
         if len(generation_track) <= 2: 
             # post process for no retrieval
             if True == self.show_specialtokens:
-                return pred, generation_track, do_retrieve
+                return pred, generation_track
             else:
                 # remove all sprcial tokens 
                 postprocessed_pred = postprocess_answer_option_conditioned(pred) 
-                return postprocessed_pred, generation_track, do_retrieve 
+                return postprocessed_pred, generation_track 
         else:
             answer2score = {}
             if 'evaluation' == mode and isinstance(self.EvalData, MultiChoiceQA) == True:
@@ -173,7 +212,7 @@ class SelfRag_Reproduction(NaiveRag):
                 else:
                     # remove all special token 
                     best_option = postprocess_answer_option_conditioned(best_option)
-        return best_option, generation_track, do_retrieve 
+        return best_option, generation_track 
 
     def long_form_generation(self, prompt: str, source_question: str, pregiven_passages:Optional[dict],
                              beam_width=2, max_depth=7,w_rel=1.0, w_sup=1.0, w_use=0.5, 
@@ -382,7 +421,6 @@ class SelfRag_Reproduction(NaiveRag):
                 catation_doc[response_idx] = docs
             else:
                 if len(postprocess(generated_response)) == 0:
-                    pdb.set_trace()
                     generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx] = generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx] 
                 # 上面这条我感觉大概率也不会用到
                 for cite_idx, (sentence, doc) in enumerate(iterable=zip(generation_track["splitted_sentences"][response_idx], generation_track["ctxs"][response_idx])):
