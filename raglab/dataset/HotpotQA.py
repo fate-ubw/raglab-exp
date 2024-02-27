@@ -8,18 +8,32 @@ import numpy as np
 from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metric import match
 from raglab.dataset.base_dataset import QA
-# from dspy.datasets import HotPotQA
+
+from dspy.datasets import HotPotQA
 
 class HotpotQA(QA):
-    def __init__(self, output_dir, llm_path, eval_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath)
-    
-    def load_dataset(self)-> list[dict]:
-        if self.eval_datapath.endswith(".json"):
-            eval_dataset = json.load(open(self.eval_datapath))
-        else:
-            eval_dataset = load_jsonlines(self.eval_datapath)
-        return eval_dataset
+    def __init__(self, output_dir, llm_path, eval_datapath, rag):
+        self.output_dir = output_dir
+        self.llm_path = llm_path
+        self.eval_datapath = eval_datapath
+        self.rag = rag
+
+    def load_dataset(self):
+        try:
+            if self.rag == "selfrag":
+                print(f"\nCurrent RAG Method: {self.rag}\n")
+                if self.eval_datapath.endswith(".json"):
+                    eval_dataset = json.load(open(self.eval_datapath))
+                else:
+                    eval_dataset = load_jsonlines(self.eval_datapath)
+                return eval_dataset
+            elif self.rag == "dsp":
+                print(f"\nCurrent RAG Method: {self.rag}\n")
+                return HotPotQA(train_seed=1, train_size=20, eval_seed=2023, dev_size=50, test_size=0)
+            else:
+                raise ValueError(f"Invalid RAG : {self.model_mode}. Must be 'HFModel' or 'OpenAI'.")
+        except ValueError as e:
+            print(e)
 
     def save_result(self, inference_result: list[dict])-> None: 
         print('storing result....')

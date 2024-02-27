@@ -9,7 +9,7 @@ def load_jsonlines(file:str)-> list[dict]:
         lst = [obj for obj in jsonl_f]
     return lst 
 
-def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) -> object:
+def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, rag: str = "selfrag") -> object:
     from raglab.dataset.PopQA import PopQA
     from raglab.dataset.PubHealth import PubHealth
     from raglab.dataset.ArcChallenge import ArcChallenge
@@ -34,10 +34,10 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str) ->
     elif 'Factscore' == task:
         EvalData = Factscore(output_dir, llm_path, eval_datapath)
     elif 'HotpotQA' == task:
-        EvalData = HotpotQA(output_dir, llm_path, eval_datapath)
+        EvalData = HotpotQA(output_dir, llm_path, eval_datapath, rag = "dsp")
     elif 'QReCC' == task:
-        EvalData = QReCC(output_dir, llm_path, eval_datapath)
+        EvalData = QReCC(output_dir, llm_path, eval_datapath, rag = "dsp")
     elif 'SQuAD' == task:
-        EvalData = SQuAD(output_dir, llm_path, eval_datapath)
+        EvalData = SQuAD(output_dir, llm_path, eval_datapath, rag = "dsp")
     return EvalData
 
