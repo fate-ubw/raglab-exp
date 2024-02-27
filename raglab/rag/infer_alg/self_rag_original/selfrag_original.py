@@ -4,6 +4,7 @@ import numpy as np
 from typing import Any
 from tqdm import tqdm
 import pudb
+import pdb
 
 from raglab.dataset.base_dataset import MultiChoiceQA 
 from raglab.dataset.utils import get_dataset
@@ -63,7 +64,7 @@ class SelfRag_Original(NaiveRag):
             source_question = eval_data['question']
             _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages from the eval_data.jsonl
             
-            if 'short' == self.inference_form:
+            if 'short_form' == self.inference_form:
                 
                 input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) 
                 response, generation_track, do_retrieve = self.short_form_generation(prompt=input, source_question=source_question, evidences=evidences,
@@ -85,7 +86,7 @@ class SelfRag_Original(NaiveRag):
                 # calculate the error in each step
                 eval_result = self.EvalData.eval_acc(inference_results)
                 print(f'{self.task} Accuracy in {instance_idx} turn: {eval_result}')
-            elif 'long' == self.inference_form:
+            elif 'long_form' == self.inference_form:
                 pu.db
                 if self.task in TASK_INST:
                     instructions = TASK_INST[self.task]
@@ -168,11 +169,6 @@ class SelfRag_Original(NaiveRag):
         ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(self.tokenizer, 
                                                                             use_grounding=self.use_groundness, 
                                                                             use_utility=self.use_utility)
-        special_tokens = [] 
-        if rel_tokens is not None:
-            special_tokens = list(rel_tokens.keys())
-        if ret_tokens is not None:
-            special_tokens += list(ret_tokens.keys())#Diff: this code delete in  selfrag_reproduction, because the variable 'special tokens' is not referenced later on.
 
         if  "no_retrieval" == self.retrieval_mode: 
             prompt += "[No Retrieval]" 
@@ -180,7 +176,7 @@ class SelfRag_Original(NaiveRag):
             preds_text = [pred.outputs[0].text.split("\n\n")[0] for pred in preds]
             final_prediction = {0:preds_text[0]} 
             generation_track = {"original_splitted_sentences": {0:preds_text}}
-            return final_prediction, generation_track, do_retrieve
+            return final_prediction, generation_track, False
         
         elif "always_retrieval" == self.retrieval_mode:
             do_retrieve = True
@@ -217,6 +213,7 @@ class SelfRag_Original(NaiveRag):
                             continue
                         if "[Retrieval]" in prev_pred:
                             curr_prompt = prompt + prev_generation # get new prompt
+                            pdb.set_trace()
                             curr_preds, curr_scores, overall_score_dict = self.run_step_generation_batch(curr_prompt, ctxs,
                                                                                                          rel_tokens, 
                                                                                                          ret_tokens=ret_tokens, 
@@ -400,7 +397,7 @@ class SelfRag_Original(NaiveRag):
                 prev_generation = curr_pred
             # Diff: check wrong pattern and cutting the wrong pattern in curr_pred. 
             prediction_tree[node_id]["processed_pred"] = prev_generation 
-            levels[curr_depth].append(node_id)
+            levels[curr_depth].append(node_id) #这个就不对了呀
         return prediction_tree, node_id
 
     def get_lastTurn_generation(self, parent_node, prediction_tree):
