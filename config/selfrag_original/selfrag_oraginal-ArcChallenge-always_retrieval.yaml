@@ -1,18 +1,20 @@
-use_seed: True
 seed: 633
+use_seed: True
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: ./data/eval_datasets/factscore_unlabeled_alpaca_13b_retrieval_without_idx62.jsonl
-task: "Factscore"
+eval_datapath: ./data/eval_datasets/arc_challenge_processed.jsonl
+task: ArcChallenge
 output_dir: ./1-eval_output/
 # llm config
 llm_path: ./model/selfrag_llama2_7b/
-generate_maxlength: 200
-use_vllm: True
+generate_maxlength: 50
+use_vllm:
 # retrieval common config
-n_docs: 5
-# self rag 
+n_docs: 10
+# colbert config
+nbits: 2
+# self rag
 download_dir: ".cache"
 world_size: 1
 dtype: "half"
@@ -21,14 +23,13 @@ use_seqscore: True
 use_groundness: True
 use_utility: True
 beam_width: 2
-max_depth: 7
+max_depth: 2
 w_rel: 1.0
 w_sup: 1.0
 w_use: 0.5
-retrieval_mode: "adaptive_retrieval"
+retrieval_mode: "always_retrieval"
 show_specialtokens: True
-inference_form: 'long_form'
+inference_form: 'short_form'
 ignore_cont: False
-use_citation: False 
 
 

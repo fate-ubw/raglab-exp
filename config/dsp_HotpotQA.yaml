@@ -6,7 +6,7 @@ task: HotpotQA
 # eval_datapath: 
 
 # language model
-model_mode: HFModel # OpenAI
+model_mode: OpenAI # HFModel # OpenAI
 llm_path: /home/wyd/raglab-exp/model/Llama-2-7b-hf
 llm_api: gpt-3.5-turbo
 api_key: sk-tFi5dr7s6tfZM9IA99570920Ea464869A88a3aB77128800b
@@ -22,10 +22,15 @@ retrieval_url: http://100.124.78.167:3389
 passages_per_hop: 2
 
 # dsp paramters
-inference_CoT: True
-signature_retrieval: True
+inference_CoT: Ture
+signature_retrieval: False
+# inference_CoT signature_retrieval function
+#     False            False        Generate as llm
+#     Ture             False        Generate as llm with chain-of-thought
+#     False            Ture         Generate as RAG
+#     Ture             Ture         Generate as RAG with chain-of-thought
 max_hops: 3
-eval_threads: 2
+eval_threads: 1
 
 # evaluate parametes
 metrics: EM # EM F1
