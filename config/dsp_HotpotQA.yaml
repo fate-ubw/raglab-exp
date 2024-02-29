@@ -15,22 +15,19 @@ api_base: https://api.aigcbest.top/v1
 generate_maxlength: 1024
 temperature: 0.7
 output_dir: /home/zxw/raglab-exp/1-eval_output
-
 # retrieval model
-retrieval_url: http://100.124.78.167:3389
+retrieval_url: http://20.102.90.50:2017/wiki17_abstracts
 # retrieval paramters
 passages_per_hop: 2
-
 # dsp paramters
-inference_CoT: Ture
-signature_retrieval: False
+inference_CoT: True
+signature_retrieval: True
 # inference_CoT signature_retrieval function
 #     False            False        Generate as llm
-#     Ture             False        Generate as llm with chain-of-thought
-#     False            Ture         Generate as RAG
-#     Ture             Ture         Generate as RAG with chain-of-thought
+#     True             False        Generate as llm with chain-of-thought
+#     False            True         Generate as RAG
+#     True             True         Generate as RAG with chain-of-thought
 max_hops: 3
 eval_threads: 1
-
 # evaluate parametes
 metrics: EM # EM F1
