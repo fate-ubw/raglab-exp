@@ -67,15 +67,14 @@ class SelfRag_Reproduction(NaiveRag):
             self.eval_dataset = self.EvalData.load_dataset()
             inference_results = []
             for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                eval_data = self.EvalData.preprocess(eval_data) # 其实只有 arc challenge 需要将数据 preprocess 一下
-                input = self.EvalData.get_instruction(eval_data[self.EvalData.inputStruction.question]) # 仅仅实现每个数据集合的 instrction 
+                eval_data = self.EvalData.preprocess(eval_data)
+                input = self.EvalData.get_instruction(eval_data[self.EvalData.inputStruction.question])
                 source_question = eval_data[self.EvalData.inputStruction.question]
                 if self.realtime_retrieval == True:
                     pregiven_passages = []
                 else:
                     # get the pregiven passages form local eval datasets
                     pregiven_passages = eval_data[self.EvalData.inputStruction.pregiven_passages][:self.n_docs]
-                
                 if 'short_form' == self.inference_form:
                     final_prediction, generation_track = self.short_form_generation(input, source_question, pregiven_passages,
                                                                             use_seqscore = self.use_seqscore, threshold = self.threshold,
@@ -115,7 +114,7 @@ class SelfRag_Reproduction(NaiveRag):
     def short_form_generation(self, prompt:str, source_question:str, pregiven_passages:Optional[None],
                             use_seqscore=True, threshold=0.2,w_rel=1.0, w_sup=1.0, w_use=0.5, mode = 'evaluation'): 
 
-        ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(
+        retrieval_tokens, relevant_tokens, ground_tokens, utility_tokens = load_special_tokens(
                                 self.tokenizer, use_grounding=self.use_groundness, use_utility=self.use_utility)
         generation_track = {}
         if 'always_retrieval' == self.retrieval_mode:
@@ -124,7 +123,7 @@ class SelfRag_Reproduction(NaiveRag):
             do_retrieve = False
         elif 'adaptive_retrieval' == self.retrieval_mode:
             #retrieval or not base on first token
-            ratio, generation_track = self.firstToken_retrievalRatio(prompt, ret_tokens, generation_track)
+            ratio, generation_track = self.firstToken_retrievalRatio(prompt, retrieval_tokens, generation_track)
             do_retrieve = ratio > threshold
         # "do retrieval or not retrieval
         if do_retrieve is True:   
@@ -147,11 +146,11 @@ class SelfRag_Reproduction(NaiveRag):
                 grd_score_dict.setdefault(p_idx, {})
                 ut_score_dict.setdefault(p_idx, {})
                 # relevance score 
-                relevance_score, relevance_score_dict = self.relevanceToken_score(pred, rel_tokens, p_idx, relevance_score_dict)
+                relevance_score, relevance_score_dict = self.relevanceToken_score(pred, relevant_tokens, p_idx, relevance_score_dict)
                 # Issupport score
-                ground_score, grd_score_dict = self.IssupportToken_score(pred, grd_tokens, p_idx, grd_score_dict)
+                ground_score, grd_score_dict = self.IssupportToken_score(pred, ground_tokens, p_idx, grd_score_dict)
                 # Utility score
-                utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens, p_idx, ut_score_dict)
+                utility_score, ut_score_dict = self.UtilityToken_score(pred, utility_tokens, p_idx, ut_score_dict)
                 if use_seqscore is True:
                     final_score = seq_score + w_rel * relevance_score + w_sup * ground_score + w_use * utility_score
                 else:
@@ -196,7 +195,7 @@ class SelfRag_Reproduction(NaiveRag):
                 for key, result in generation_track.items():
                     if key == "decide_retrieval_mode":
                         continue
-                    answer = postprocess_answer_option_conditioned(result["pred"]) # keyword
+                    answer = postprocess_answer_option_conditioned(result["pred"])
                     score = result["score"]
                     answer2score.setdefault(answer, 0)
                     answer2score[answer] += score
@@ -218,9 +217,10 @@ class SelfRag_Reproduction(NaiveRag):
                              beam_width=2, max_depth=7,w_rel=1.0, w_sup=1.0, w_use=0.5, 
                              use_seqscore = True,ignore_cont = None) -> tuple[dict[int,str], dict, bool]: 
 
-        ret_tokens, rel_tokens, grd_tokens, ut_tokens = load_special_tokens(self.tokenizer, 
+        retrieval_tokens, relevant_tokens, ground_tokens, utility_tokens = load_special_tokens(self.tokenizer, 
                                                                             use_grounding=self.use_groundness, 
-                                                                            use_utility=self.use_utility)
+                                                                             use_utility=self.use_utility)
+
         if 'no_retrieval' == self.retrieval_mode:
             prompt += "[No Retrieval]" 
             preds = self.llm.generate([prompt], self.sampling_params)
@@ -245,28 +245,27 @@ class SelfRag_Reproduction(NaiveRag):
                 levels[curr_depth]= []
                 if curr_depth - 1 in levels:
                     for parent_node in levels[curr_depth-1]:
+                        # 对于当前来说当curr_depth == 2 的时候parent_node确实是 1，也就是从 1 里面拿出来存储的东西
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
-                        curr_prompt = prompt + postprocess(prev_generation)
-                        # BUG 这块有问题，因为多轮之后
-                        # prompt其实一致是不断拼接起来的，因为要往后面的句子预测
-                        # 这里面还有一个问题就是否使用，selfrag 实现的 trick 因为这个 trick 正好可以保护selfrag 的弊端，这个问题必须要讨论清楚
-                        #Meet：prev_pred 还是 processed_pred 因为 processed_pred 是经过 trick 处理过的，剪枝了一个句子中出现的有问题的句子
-                        # 按照论文的表格表格中，yt仅仅代表生成的内容，不代表 special 所以这部分可能也需要 remove special token
-                        previous_sentence = postprocess(prev_pred) # prev_pred 正好是上一次生成的一个句子，不包括之前生成的句子
+                        # retrirval model的 input 是不需要 special token
+                        curr_prompt = prompt + prev_generation
+                        # self rag input maintain special token
+                        previous_sentence = postprocess(prev_pred) 
                         current_retrieval_input = source_question + previous_sentence
                         '''
                         这里是按照樱花妹论文里面写的方法实现的，每一次 retrieval 的 input 都是 source qeustion + 上一次生成的句子，并且按照道理讲，这个句子应该是remove special tokens 的句子，这样再检索的时候才能更加的准确
                         '''
                         curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.run_step_generation_batch(curr_prompt, current_retrieval_input , pregiven_passages,
-                                                                                                    rel_tokens, ret_tokens, grd_tokens, ut_tokens=ut_tokens,
-                                                                                                    w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
+                                                                                                                     retrieval_tokens=retrieval_tokens, relevant_tokens=relevant_tokens,
+                                                                                                                     ground_tokens=ground_tokens, utility_tokens=utility_tokens,
+                                                                                                                     w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
                         
                         prediction_tree, node_id, levels = self.set_predictionTree(curr_depth, parent_node, node_id, 
                                                                            curr_preds, curr_scores, curr_prompt,
                                                                            prev_score, retrieval_docs, prediction_tree, levels ,overall_score_dict)
                     # end of the for loop 
                     current_rank = levels[curr_depth]
-                    #get the top-2 score
+                    #get the top-2 score 
                     node2score = {node_id: prediction_tree[node_id]['score'] for node_id in current_rank} #
                     top_nodes = sorted(node2score.items(), key=lambda x: x[1], reverse=True)[:beam_width] # 取 top2 结果
                     levels[curr_depth] = [node[0] for node in top_nodes] 
@@ -319,17 +318,19 @@ class SelfRag_Reproduction(NaiveRag):
                     levels[curr_depth]= []
                     for parent_node in levels[curr_depth-1]:
                         prev_pred, prompt, prev_generation, prev_score = self.get_lastTurn_generation(parent_node, prediction_tree)
-                        curr_prompt = prompt + postprocess(prev_generation)
+
+                        curr_prompt = prompt + prev_generation
                         # BUG Meet，讨论一下curr_prompt 和 current_retrieval_input 是什么
-                        previous_sentence = postprocess(prev_pred) # prev_pred 正好是上一次生成的一个句子，不包括之前生成的句子
+                        previous_sentence = postprocess(prev_pred) 
                         current_retrieval_input = source_question + previous_sentence
                         '''
                         这里是按照樱花妹论文里面写的方法实现的，每一次 retrieval 的 input 都是 source qeustion + 上一次生成的句子，并且按照道理讲，这个句子应该是remove special tokens 的句子，这样再检索的时候才能更加的准确
                         '''
-                        ratio, _ = self.firstToken_retrievalRatio(curr_prompt, ret_tokens, None)
+                        ratio, _ = self.firstToken_retrievalRatio(curr_prompt, retrieval_tokens, None)
                         if ratio > self.threshold:
                             curr_preds, curr_scores, overall_score_dict, retrieval_docs = self.run_step_generation_batch(curr_prompt, current_retrieval_input , pregiven_passages,
-                                                                                                        rel_tokens, ret_tokens, grd_tokens, ut_tokens=ut_tokens,
+                                                                                                        retrieval_tokens=retrieval_tokens, relevant_tokens=relevant_tokens, 
+                                                                                                        ground_tokens=ground_tokens, utility_tokens=utility_tokens,
                                                                                                         w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
                             prediction_tree, node_id, levels = self.set_predictionTree(curr_depth, parent_node, node_id,curr_preds, 
                                                                                        curr_scores, curr_prompt,prev_score, retrieval_docs, 
@@ -553,7 +554,7 @@ class SelfRag_Reproduction(NaiveRag):
         return prediction_tree, node_id, level_tmp
 
     def run_step_generation_batch(self, prompt, current_retrieval_input, pregiven_passages:Optional[list[dict]],
-                                  rel_tokens=None, grd_tokens=None, ret_tokens=None, ut_tokens=None,
+                                  retrieval_tokens=None, relevant_tokens=None, ground_tokens=None,  utility_tokens=None,
                                   w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore=False) -> tuple[list[str], list[float], dict]:
         if self.realtime_retrieval == True: 
             passages = self.retrieval.search(current_retrieval_input) # 这块必须的设计一下关于
@@ -577,11 +578,11 @@ class SelfRag_Reproduction(NaiveRag):
             grd_score_dict.setdefault(p_idx, {})
             ut_score_dict.setdefault(p_idx, {})
             # relevance score
-            relevance_score, relevance_score_dict = self.relevanceToken_score(pred, rel_tokens, p_idx, relevance_score_dict)
+            relevance_score, relevance_score_dict = self.relevanceToken_score(pred, relevant_tokens, p_idx, relevance_score_dict)
             # Issupport score
-            ground_score, grd_score_dict = self.IssupportToken_score(pred, grd_tokens, p_idx, grd_score_dict)
+            ground_score, grd_score_dict = self.IssupportToken_score(pred, ground_tokens, p_idx, grd_score_dict)
             # Utility score
-            utility_score, ut_score_dict = self.UtilityToken_score(pred, ut_tokens,p_idx, ut_score_dict) 
+            utility_score, ut_score_dict = self.UtilityToken_score(pred, utility_tokens, p_idx, ut_score_dict) 
             '''
             Diff: selfrag_reproduction.py use self.UtilityToken_score() calculate the correct utility_score, which is different from the logic of selfrag_orignal.py
             '''
@@ -592,12 +593,7 @@ class SelfRag_Reproduction(NaiveRag):
             overall_scores[p_idx] = {"final_score": final_score} 
 
             if "[No Retrieval]" in pred_text:
-                pred_text = self.modify_NoRetrieval_into_Retrieval(pred, ret_tokens)
-                '''
-                Diff: The method "modify_NoRetrieval_into_Retrieval" is not explicitly mentioned in the paper or in run_short_form.py
-                Consequently, in selfrag_reproduction.py, we have adhered to the paper's standard, and this particular function has been omitted. 
-                The primary objective of selfrag_reproduction.py is to precisely assess the performance of Self-RAG in long form inference.
-                '''
+                pred_text = self.modify_NoRetrieval_into_Retrieval(pred, retrieval_tokens)
                 final_preds.append(pred_text)
             else:
                 final_preds.append(pred_text)
@@ -609,6 +605,8 @@ class SelfRag_Reproduction(NaiveRag):
         else:
             retrieval_docs = pregiven_passages # pregiven_passages only provide in PopQA, 
         return preds, scores, overall_scores, retrieval_docs
+    
+
 
     def get_lastTurn_generation(self, parent_node, prediction_tree):
         ''' 
@@ -620,7 +618,7 @@ class SelfRag_Reproduction(NaiveRag):
         prev_generationScore = prediction_tree[parent_node]["score"]
         return prev_pred, prev_prompt, prev_generation, prev_generationScore
         
-    def firstToken_retrievalRatio(self, prompt:str, ret_tokens:dict[str,int], generation_track:Optional[dict[str,Any]]) -> tuple[float, dict]:
+    def firstToken_retrievalRatio(self, prompt:str, retrieval_tokens:dict[str,int], generation_track:Optional[dict[str,Any]]) -> tuple[float, dict]:
         '''
         calculate the ratio of retrieval base on first token logits
         '''
@@ -633,7 +631,7 @@ class SelfRag_Reproduction(NaiveRag):
         preds = self.llm.generate([prompt], sampling_params) 
         pred_log_probs = preds[0].outputs[0].logprobs 
         score_dict = {}
-        for tok, id in ret_tokens.items():
+        for tok, id in retrieval_tokens.items():
             if id not in pred_log_probs[0]:
                 score_dict[tok] = -100
             prob = pred_log_probs[0][id] 
@@ -654,27 +652,27 @@ class SelfRag_Reproduction(NaiveRag):
         score = np.exp(pred.outputs[0].cumulative_logprob) / max(len(pred.outputs[0].token_ids), 1)
         return float(score)
 
-    def relevanceToken_score(self, pred, rel_tokens:dict[str,int], p_idx:int, relevance_score_dict:dict) -> tuple[float, dict]:
+    def relevanceToken_score(self, pred, relevant_tokens:dict[str,int], p_idx:int, relevance_score_dict:dict) -> tuple[float, dict]:
         pred_log_probs = pred.outputs[0].logprobs
-        for tok, id in rel_tokens.items(): 
+        for tok, id in relevant_tokens.items(): 
             prob = pred_log_probs[0][id] if id in pred_log_probs[0] else -100
             relevance_score_dict[p_idx][tok] = np.exp(float(prob))
         # calculate score
         relevance_score = relevance_score_dict[p_idx]["[Relevant]"] / (np.sum(list(relevance_score_dict[p_idx].values())))
         return float(relevance_score), relevance_score_dict
 
-    def IssupportToken_score(self, pred, grd_tokens:dict[str,int], p_idx:int, grd_score_dict:dict) -> tuple[float, dict]:
+    def IssupportToken_score(self, pred, ground_tokens:dict[str,int], p_idx:int, grd_score_dict:dict) -> tuple[float, dict]:
         pred_token_ids = pred.outputs[0].token_ids
         pred_log_probs = pred.outputs[0].logprobs
         groundness_token_appear_indices = []
         # get the position of Issupport token
         for tok_idx, tok in enumerate(pred_token_ids):
-            if tok in list(grd_tokens.values()):
+            if tok in list(ground_tokens.values()):
                 groundness_token_appear_indices.append(tok_idx)
                 break
         if len(groundness_token_appear_indices) > 0:
             idx = groundness_token_appear_indices[0]
-            for token, token_id in grd_tokens.items():
+            for token, token_id in ground_tokens.items():
                 prob = pred_log_probs[idx][token_id] if token_id in pred_log_probs[idx] else -100 
                 grd_score_dict[p_idx][token] = np.exp(float(prob))
         # calculate score
@@ -685,18 +683,18 @@ class SelfRag_Reproduction(NaiveRag):
             ground_score = 0.0 # "If the sentence is labeled as [isRel], then [Issup] will not appear later, resulting in a ground score of 0."
         return float(ground_score), grd_score_dict
     
-    def UtilityToken_score(self, pred, ut_tokens:dict, p_idx:int, ut_score_dict:dict) -> tuple[float, dict]:
+    def UtilityToken_score(self, pred, utility_tokens:dict, p_idx:int, ut_score_dict:dict) -> tuple[float, dict]:
         pred_token_ids = pred.outputs[0].token_ids
         pred_log_probs = pred.outputs[0].logprobs
         utility_token_appear_indices = []
         for tok_idx, tok in enumerate(pred_token_ids):
-            if tok in list(ut_tokens.values()):
+            if tok in list(utility_tokens.values()):
                 utility_token_appear_indices.append(tok_idx)
         if len(utility_token_appear_indices) > 0:
             idx = utility_token_appear_indices[0] # position of ut_token [Utility:1-5]
-            for token, token_id in ut_tokens.items(): 
+            for token, token_id in utility_tokens.items(): 
                 '''
-                diff: Raglab fix the bug which in selfrag orignal code. selfrag_reproduction.py fix all the bug and realize real-time retrieval rag system
+                diff: Raglab fix the bug which in selfrag orignal code.
                 '''
                 prob = pred_log_probs[idx][token_id] if token_id in pred_log_probs[idx] else -100
                 ut_score_dict[p_idx][token] = np.exp(float(prob))
@@ -708,3 +706,43 @@ class SelfRag_Reproduction(NaiveRag):
         else:   
             utility_score = 0.0
         return float(utility_score), ut_score_dict
+
+    def modify_NoRetrieval_into_Retrieval(self,pred, retrieval_tokens)-> str:
+        '''
+        check the ratio of ([Retrieval] + [Continue to Use Evidence])/([Retrieval] + [Continue to Use Evidence] + [No Retrieval] )
+        if the ratio > threshold modify [No Retrieval] -> [Retrieval]
+        '''
+        pred_text = pred.outputs[0].text
+        pred_log_probs = pred.outputs[0].logprobs 
+        pred_token_ids = pred.outputs[0].token_ids
+        ret_token_appear_indices = []
+        substrings = pred_text.split("[No Retrieval]")
+        for tok_idx, tok in enumerate(pred_token_ids):
+            if tok == retrieval_tokens["[No Retrieval]"]:
+                ret_token_appear_indices.append(tok_idx)
+                substrings
+                print("retrieval_tokens")
+
+        ret_token_score_dict = {}
+        retrieval_remap = {}
+        for order, idx in enumerate(ret_token_appear_indices):
+            ret_token_score_dict.setdefault(order, {})
+            for tok, tok_id in retrieval_tokens.items(): 
+                prob = pred_log_probs[idx][tok_id] if tok_id in pred_log_probs[idx] else -100
+                ret_token_score_dict[order][tok] = np.exp(prob)
+            if ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[No Retrieval]"] != 0.0: 
+                do_retrieve = (ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[Continue to Use Evidence]"]) / (
+                    ret_token_score_dict[order]["[Retrieval]"] + ret_token_score_dict[order]["[No Retrieval]"]) > self.threshold
+            else:
+                do_retrieve = 0.0
+            if do_retrieve > self.threshold:
+                retrieval_remap[order] = True
+            else:
+                retrieval_remap[order] = False
+        processed_pred = ""
+        for substr_i, substring in enumerate(iterable=substrings):
+            if substr_i in retrieval_remap and retrieval_remap[substr_i] is True:
+                processed_pred += substring + "[Retrieval]" 
+            else:
+                processed_pred += substring + "[No Retrieval]"
+        return processed_pred
