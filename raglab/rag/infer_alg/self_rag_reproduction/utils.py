@@ -93,25 +93,26 @@ def preprocess_input_data(dataset, task=None):
     return new_data
 
 def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
-    ret_tokens = {token: tokenizer.convert_tokens_to_ids(
+    retrieval_tokens = {token: tokenizer.convert_tokens_to_ids(
         token) for token in retrieval_tokens_names}
-    rel_tokens = {}
+    relevant_tokens = {}
     for token in ["[Irrelevant]", "[Relevant]"]:
-        rel_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+        relevant_tokens[token] = tokenizer.convert_tokens_to_ids(token)
 
-    grd_tokens = None
+
+    ground_tokens = None
     if use_grounding is True:
-        grd_tokens = {}
+        ground_tokens = {}
         for token in ground_tokens_names:
-            grd_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+            ground_tokens[token] = tokenizer.convert_tokens_to_ids(token)
 
-    ut_tokens = None
+    utility_tokens = None
     if use_utility is True:
-        ut_tokens = {}
+        utility_tokens = {}
         for token in utility_tokens_names:
-            ut_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+            utility_tokens[token] = tokenizer.convert_tokens_to_ids(token)
 
-    return ret_tokens, rel_tokens, grd_tokens, ut_tokens
+    return retrieval_tokens, relevant_tokens, ground_tokens, utility_tokens
     
 def postprocess_answer_option_conditioned(answer):
     for token in control_tokens:

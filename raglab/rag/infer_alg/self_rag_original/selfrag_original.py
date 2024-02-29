@@ -57,6 +57,7 @@ class SelfRag_Original(NaiveRag):
         self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
         self.eval_dataset = self.EvalData.load_dataset()
         #TODO seperate instruction and preprocess from logic. Combine instruction and dataset class
+        pdb.set_trace()
         self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
         inference_results = []
         for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
@@ -65,7 +66,6 @@ class SelfRag_Original(NaiveRag):
             _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages from the eval_data.jsonl
             
             if 'short_form' == self.inference_form:
-                
                 input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) 
                 response, generation_track, do_retrieve = self.short_form_generation(prompt=input, source_question=source_question, evidences=evidences,
                                                         use_seqscore = self.use_seqscore, threshold = self.threshold,
@@ -87,7 +87,6 @@ class SelfRag_Original(NaiveRag):
                 eval_result = self.EvalData.eval_acc(inference_results)
                 print(f'{self.task} Accuracy in {instance_idx} turn: {eval_result}')
             elif 'long_form' == self.inference_form:
-                pu.db
                 if self.task in TASK_INST:
                     instructions = TASK_INST[self.task]
                     prompt = instructions + "## Input:\n\n" + source_question # 这个地方的format 应该严格对齐，等 reproductiond 的时候可以重新写
@@ -215,9 +214,8 @@ class SelfRag_Original(NaiveRag):
                             curr_prompt = prompt + prev_generation # get new prompt
                             pdb.set_trace()
                             curr_preds, curr_scores, overall_score_dict = self.run_step_generation_batch(curr_prompt, ctxs,
-                                                                                                         rel_tokens, 
-                                                                                                         ret_tokens=ret_tokens, 
-                                                                                                         grd_tokens=grd_tokens, ut_tokens=ut_tokens,
+                                                                                                         rel_tokens=rel_tokens,grd_tokens=grd_tokens,
+                                                                                                        ret_tokens=ret_tokens, ut_tokens=ut_tokens,
                                                                                                          w_rel=w_rel, w_sup=w_sup, w_use=w_use, use_seqscore=use_seqscore)
                             prediction_tree, node_id = self.set_predictionTree(curr_depth, parent_node, node_id, curr_preds, curr_scores, curr_prompt, 
                                                                             prev_score, ctxs, prediction_tree, levels ,overall_score_dict)
