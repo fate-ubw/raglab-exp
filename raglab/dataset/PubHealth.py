@@ -82,7 +82,7 @@ class PubHealth(MultiChoiceQA):
     def eval_acc(self, infer_results: list[dict]):
         print('start evaluation!')
         eval_results = []
-        for idx, data in enumerate(tqdm(infer_results)):
+        for idx, data in enumerate(infer_results):
             metric_result = match(data["generation"], data["answers"])
             eval_results.append(metric_result)
         # TODO save result in ***.json.eval_result file 

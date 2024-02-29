@@ -3,9 +3,42 @@ import jsonlines
 from raglab.dataset.PopQA import  PopQA
 from datetime import datetime
 
+class InputStruction:
+    question:str
+    answer:str
+    pregiven_passages:str
+
+class OutputStruction:
+    question:str
+    answer:str
+    generation:str
+    cite_passages:str
+    generation_track:str
+
+TASK_INSTRUCTION = "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers."
+
+PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
+
 class ASQA(PopQA):
     def __init__(self, output_dir, llm_path, eval_datapath):
         super().__init__(output_dir, llm_path, eval_datapath)
+
+    def set_data_struction(self):
+        '''
+        The goal of constructing InputStruction and OutputStruction is to achieve the separation of algorithm logic and data, 
+        so that users only need to add new dataset structures according to the rules without modifying the algorithm logic.
+        '''
+        self.inputStruction = InputStruction
+        self.inputStruction.question = 'question'
+        self.inputStruction.answer = 'answer'
+        self.inputStruction.pregiven_passages = 'docs'
+        
+        self.outputStruction = OutputStruction
+        self.outputStruction.question = 'question'
+        self.outputStruction.answer = 'answer'
+        self.outputStruction.generation = 'output'
+        self.outputStruction.cite_passages = 'docs'
+        self.outputStruction.generation_track = 'intermediate'
 
     def save_result(self, inference_result: list[dict])-> None: 
         print('storing result....')
@@ -23,10 +56,33 @@ class ASQA(PopQA):
         print(f'output file path:{output_file}')
         print('success!')
 
+    def get_instruction(self, prompt):
+        if len(TASK_INSTRUCTION) > 0:
+            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
+        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
+        return prompt_with_instruction
+
     def record_result(self, eval_data, final_prediction_with_citation, catation_docs, response_id, generation_track, inference_results):
-        eval_data["output"] = final_prediction_with_citation[response_id]
-        eval_data["docs"] = catation_docs[response_id] # list[dict]
+        '''
+        - record inference results 
+        '''
         if "original_splitted_sentences" in generation_track:
-            eval_data['intermediate'] = generation_track['original_splitted_sentences'][response_id]
-        inference_results.append(eval_data)
+            inference_results.append(
+                {
+                    self.inputStruction.question: eval_data[self.inputStruction.question],
+                    self.inputStruction.answer: eval_data[self.inputStruction.answer],
+                    self.outputStruction.generation: final_prediction_with_citation[response_id],
+                    self.outputStruction.cite_passages: catation_docs[response_id],
+                    self.outputStruction.generation_track: generation_track['original_splitted_sentences'][response_id]
+                }
+                    )
+        else:
+            inference_results.append(
+                {
+                    self.inputStruction.question: eval_data[self.inputStruction.question],
+                    self.inputStruction.answer: eval_data[self.inputStruction.answer],
+                    self.outputStruction.generation: final_prediction_with_citation[response_id],
+                    self.outputStruction.cite_passages: catation_docs[response_id]
+                }
+                    )
         return inference_results

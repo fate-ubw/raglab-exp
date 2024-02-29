@@ -19,7 +19,6 @@ class OutputStruction:
     answer:str
     generation:str
 
-
 TASK_INSTRUCTION = '' # open QA no need special instruction for inference
 
 PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
@@ -37,7 +36,8 @@ class PopQA(QA):
         self.inputStruction = InputStruction
         self.inputStruction.question = 'question'
         self.inputStruction.answer = 'answers'
-        self.inputStruction.pregiven_passages = 'ctxs'
+        self.inputStruction.pregiven_passages = 'ctxs' 
+        
         self.outputStruction = OutputStruction
         self.outputStruction.question = 'question'
         self.outputStruction.answer = 'answers'
@@ -67,10 +67,12 @@ class PopQA(QA):
         print('success!')
 
     def record_result(self, eval_data, final_prediction, inference_results):
-        inference_results.append({
+        inference_results.append(
+            {
             'question': eval_data[self.inputStruction.question],
-            'answers': eval_data['answers'],
-            'generation': final_prediction})
+            'answers': eval_data[self.inputStruction.answer],
+            'generation': final_prediction
+            })
         return inference_results
 
     def get_instruction(self, prompt):
@@ -82,11 +84,8 @@ class PopQA(QA):
     def eval_acc(self, infer_results: list[dict]) -> float:
         print('start evaluation!')
         eval_results = []
-        for idx, data in enumerate(tqdm(infer_results)):
+        for idx, data in enumerate(infer_results):
             metric_result = match(data["generation"], data["answers"])
             eval_results.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result
         return float(np.mean(eval_results))
-
-    def postprecess(self):
-        pass
