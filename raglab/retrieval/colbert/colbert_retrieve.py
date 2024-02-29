@@ -38,7 +38,7 @@ class ColbertRetrieve(Retrieve):
             with Run().context(RunConfig(experiment = self.index_dbPath)): 
                 self.searcher = Searcher(index = index_name)
         
-    def search(self, query):
+    def search(self, query) -> dict[int,dict]:
         ids = self.searcher.search(query, k = self.n_docs)
         passages = {}
         for passage_id, passage_rank, passage_score in zip(*ids):
