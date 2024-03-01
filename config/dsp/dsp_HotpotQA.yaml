@@ -15,12 +15,24 @@ api_base: https://api.aigcbest.top/v1
 generate_maxlength: 1024
 temperature: 0.7
 output_dir: /home/zxw/raglab-exp/1-eval_output
+
+# # retrieval model
+# retrieval_url: http://20.102.90.50:2017/wiki17_abstracts
+# # retrieval paramters
+# passages_per_hop: 2
+
 # retrieval model
-retrieval_url: http://20.102.90.50:2017/wiki17_abstracts
-# retrieval paramters
-passages_per_hop: 2
+retrieval_name: colbert
+index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding
+text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
+retriever_modelPath: ./model/colbertv2.0
+n_docs: 3
+nbits: 2
+num_gpu: 1
+# doc_maxlen:
+
 # dsp paramters
-inference_CoT: True
+inference_CoT: False
 signature_retrieval: True
 # inference_CoT signature_retrieval function
 #     False            False        Generate as llm

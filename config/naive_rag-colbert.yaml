@@ -1,16 +1,16 @@
 seed: 633
 num_gpu: 1
-output_dir: /home/zxw/raglab-exp/1-eval_output
+output_dir: ./1-eval_output
 task: PopQA
-llm_path: /home/zxw/rag/model/Llama-2-7b-hf
+llm_path: ./model/Llama-2-7b-hf
 # retrieval config
 retrieval_name: colbert
-index_dbPath: /home/zxw/raglab-exp/data/retrieval/colbertv2.0_embedding
-text_dbPath: /home/zxw/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
-eval_datapath: /home/zxw/raglab-exp/data/eval_dataset/2-eval_data/popqa_longtail_w_gs.jsonl
-retriever_modelPath: /home/zxw/rag/model/colbertv2.0
+index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding
+text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
+eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
+retriever_modelPath: ./model/colbertv2.0
 generate_maxlength: 300
 # max length should bigger than the length of input_ids
 n_docs: 1
-use_vllm:
+use_vllm: True
 nbits: 2
