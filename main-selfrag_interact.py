@@ -77,5 +77,6 @@ if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
     rag = SelfRag_Reproduction(args)
-    evaluation_result = rag.inference(mode = 'evaluation')
-    print(evaluation_result)
+    final_prediction, catation_docs, generation_track = rag.inference("What is Henry Feilden's occupation?", mode = 'interact')
+    print(final_prediction)
+    print(catation_docs)

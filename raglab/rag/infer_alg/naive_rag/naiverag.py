@@ -8,27 +8,30 @@ from typing import Optional
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 
-from raglab.dataset.utils import get_dataset # load popqa class
+from raglab.dataset.utils import get_dataset # load dataset class
 from raglab.rag.infer_alg.naive_rag.utils import load_evaldataset, save_inference_result
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
 import pudb
+
 class NaiveRag:
     def __init__(self, args):
         self.args = args 
         self.task = args.task
         self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
+        self.dtype = args.dtype
         self.generate_maxlength = args.generate_maxlength
         self.use_vllm = args.use_vllm
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
         
         # retrieval args
+        self.n_docs = args.n_docs
         self.retrieval_name = args.retrieval_name
 
         # setup model and database 
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
-        self.retrieval = self.setup_retrieval()
+        self.retrieval = self.setup_retrieval() # retrieval model
 
     def init(self):
         
@@ -37,7 +40,7 @@ class NaiveRag:
     def inference(self, query: Optional[str] = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            passages = self.retrieval.search(query)
+            passages = self.retrieval.search(query) # dict[int,dict]
             # passages: dict of dict
             inputs = self.get_instruction(passages, query) 
             outputs = self.llm_inference(inputs) 
@@ -68,7 +71,7 @@ class NaiveRag:
         tokenizer = None
         sampling_params = None
         if self.use_vllm:
-            llm = LLM(model=self.llm_path) 
+            llm = LLM(model=self.llm_path, dtype=self.dtype)
             sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         else:
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
@@ -100,7 +103,7 @@ class NaiveRag:
                 [Question]
                 {query}
                 '''
-        # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的instruction 是不一样的
+        # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的 instruction 是不一样的
         return instruction
     
     def llm_inference(self, inputs): 
