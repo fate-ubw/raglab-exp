@@ -537,6 +537,7 @@ class SelfRag_Original(NaiveRag):
         We reproduce the code and rewrite this part of code. 
         '''
         if "[Retrieval]" not in preds[0]: 
+            # In fact, preds[0] will never contain [Retrieval]. We just copy this snippet of the code from the orignal github repository[https://github.com/AkariAsai/self-rag/blob/main/retrieval_lm/run_long_form_static.py#L219].
             do_retrieve = False
         else:
             if self.threshold is None:
