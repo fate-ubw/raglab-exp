@@ -23,7 +23,7 @@ def get_config():
     parser.add_argument('--use_seed', action= 'store_true', help='this args will control all random seed of torch, numpy and pyhthon operation')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
-    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 'HotpotQA', 'QReCC', 'SQuAD'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
+    parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 'HotpotQA', 'QReCC', 'SQuAD'], default='', help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     # retrieval config
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
@@ -76,6 +76,6 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
-    rag = SelfRag_Reproduction(args)
+    rag = SelfRag_Original(args)
     evaluation_result = rag.inference(mode = 'evaluation')
     print(evaluation_result)

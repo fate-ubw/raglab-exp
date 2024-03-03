@@ -65,6 +65,7 @@ class SelfRag_Reproduction(NaiveRag):
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset()
+            print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 eval_data = self.EvalData.preprocess(eval_data)

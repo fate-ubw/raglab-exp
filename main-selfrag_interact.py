@@ -25,6 +25,8 @@ def get_config():
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
     parser.add_argument('--task', type=str, choices=['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 'HotpotQA', 'QReCC', 'SQuAD'], default=None, help='name of evaluation dataset')# task 参数影响 prompt 还有 format 
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
+    parser.add_argument('--algorithm_name', type = str, choices=['Naive_rag', 'Dsp', 'Selfrag_orignal', 'Selfrag_reproduction', 'Query_rewrite_rag'], default = 'Naive_rag', help='name of rag algorithm')
+    parser.add_argument('--temperature', type = float, default=0.0, help= '')
     # retrieval config
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
     parser.add_argument("--index_dbPath", type = str, help = 'path to index database. Index is index and embedding pairs')
@@ -77,6 +79,7 @@ if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
     rag = SelfRag_Reproduction(args)
+    pu.db
     final_prediction, catation_docs, generation_track = rag.inference("What is Henry Feilden's occupation?", mode = 'interact')
     print(final_prediction)
     print(catation_docs)

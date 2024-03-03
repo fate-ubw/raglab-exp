@@ -13,7 +13,7 @@ from raglab.rag.infer_alg.naive_rag.utils import load_evaldataset, save_inferenc
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
 import pudb
-
+import pdb
 class NaiveRag:
     def __init__(self, args):
         self.args = args 
@@ -40,26 +40,26 @@ class NaiveRag:
     def inference(self, query: Optional[str] = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            passages = self.retrieval.search(query) # dict[int,dict]
+            passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
             # passages: dict of dict
-            inputs = self.get_instruction(passages, query) 
-            outputs = self.llm_inference(inputs) 
+            collated_passages = self.collate_passages(passages)
+            target_instruction = self.find_instruction('Naive_rag-interact', '')
+            inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
+            outputs = self.llm_inference(inputs)
             return outputs
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
-            self.eval_dataset = self.EvalData.load_dataset() # right
+            self.eval_dataset = self.EvalData.load_dataset()
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                temp = {}
-                question = eval_data["question"] # 这个参数是和具体数据相关的，这个 key 选什么也没有什么办法，到时候放到 dataset 里面
-                passages = self.retrieval.search(question) # 这里面必须调用 search 函数因为 每个self.retrieval自带的search 函数都不一样没法统一
-                inputs = self.get_instruction(passages, question)
+                question = eval_data[self.EvalData.inputStruction.question] 
+                passages = self.retrieval.search(question)
+                collated_passages = self.collate_passages(passages)
+                target_instruction = self.find_instruction('Naive_rag-evaluation', self.task)
+                inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
                 outputs = self.llm_inference(inputs)
-                temp["question"] = question
-                temp["answets"] = eval_data["answers"]
-                temp["generation"] = outputs 
-                inference_results.append(temp)
+                inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
             
             self.EvalData.save_result(inference_results)
             eval_result = self.EvalData.eval_acc(inference_results) 
@@ -72,7 +72,7 @@ class NaiveRag:
         sampling_params = None
         if self.use_vllm:
             llm = LLM(model=self.llm_path, dtype=self.dtype)
-            sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+            sampling_params = SamplingParams(temperature=0.7, top_p=0.8, repetition_penalty= 1.5, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         else:
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
             llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
@@ -80,32 +80,19 @@ class NaiveRag:
     
     def setup_retrieval(self):
         if 'colbert' == self.retrieval_name:
-            retrieval_model = ColbertRetrieve(self.args) 
+            retrieval_model = ColbertRetrieve(self.args)
             retrieval_model.setup_retrieve()
         elif 'contriever' == self.retrieval_name:
             retrieval_model = ContrieverRrtieve(self.args)
             retrieval_model.setup_retrieve()
         return retrieval_model 
     
-    def get_instruction(self, passages, query): 
-        # passages is dict type
-        collater = ''
+    def collate_passages(self, passages:dict[int, dict])-> str:
+        collate = ''
         for rank_id, tmp in passages.items(): 
-            collater += f'Passages{rank_id}: ' + tmp['content'] +'\n'  # 这个拿回来之后             
-        instruction = f'''
-                [Task]
-                Please answer the question based on the user's input context and comply with the answering requirements.
-                [Background Knowledge]
-                {collater}
-                [Answering Requirements]
-                - You need to strictly answer based on the content of the background knowledge, and it is forbidden to answer questions based on common sense and known information.
-                - For information that is not known, simply answer "No relevant answer found"
-                [Question]
-                {query}
-                '''
-        # 感觉这块可以添加不同任务的 instruction 因为不同任务使用的 instruction 是不一样的
-        return instruction
-    
+            collate += f'Passages{rank_id}: ' + tmp['content'] +'\n'  
+        return collate
+
     def llm_inference(self, inputs): 
         if self.use_vllm:
             output = self.llm.generate(inputs, self.sampling_params)
@@ -114,7 +101,18 @@ class NaiveRag:
             input_ids = self.tokenizer.encode(inputs, return_tensors="pt")
             output_ids = self.llm.generate(input_ids, do_sample = False, max_length = self.generate_maxlength)
             output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
-        if '<\s>' in output_text: 
+        if '</s>' in output_text:
             return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
         else:
             return output_text.replace("<s> " + inputs, "").strip()
+
+    def find_instruction(self, rag_name:str, dataset_name:str) -> str:
+        file_path = './instruction_lab/instruction_lab.json'
+        with open(file_path, 'r') as file:
+            instructions = json.load(file)
+        for instruction in instructions:
+            if instruction['rag_name'] == rag_name and instruction['dataset_name'] == dataset_name:
+                target_instruction = instruction['instruction']
+                break
+        return target_instruction
+
