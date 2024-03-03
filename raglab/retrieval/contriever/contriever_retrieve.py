@@ -55,9 +55,8 @@ class ContrieverRrtieve(Retrieve):
         self.passage_id_map = {x["id"]: x for x in tqdm(self.passages)} # 将passages定义为{'n':conent} 
         print("passages have been loaded") 
 
-    def search(self, query):
+    def search(self, query)-> dict[int,dict]:
         passages = {}
-
         questions_embedding = self.embed_queries(self.args, [query])
         start_time_retrieval = time.time()
         top_ids_and_scores = self.index.search_knn(questions_embedding, self.n_docs)  

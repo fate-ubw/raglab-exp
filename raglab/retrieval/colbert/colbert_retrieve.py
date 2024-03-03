@@ -23,7 +23,7 @@ class ColbertRetrieve(Retrieve):
         collection_path = self.text_dbPath
         collection = Collection(path = collection_path) 
         try:
-            # try reuse mode at first. If the index break, 
+            # try reuse mode at first. If the index break,
             with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
                 config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) #
                 indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
