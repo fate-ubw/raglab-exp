@@ -2,12 +2,22 @@
     {
         "rag_name": "Naive_rag-interact",
         "dataset_name": "",
-        "instruction": "# Task:\n Please answer the question based on the user's input context and comply with the answering requirements. # Background Knowledge:\n {passages} # Answering Requirements. - You need to strictly answer based on the content of the background knowledge, and it is forbidden to answer questions based on common sense and known information. - For information that is not known, simply answer 'No relevant answer found'. # Question: {query} \n # Response:"
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "Naive_rag-interact-without_retrieval",
+        "dataset_name": "",
+        "instruction": "### Instruction:\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "Naive_rag-evaluation",
         "dataset_name": "PopQA",
-        "instruction": "# Task:\n Please answer the question based on the user's input context and comply with the answering requirements. # Background Knowledge:\n {passages} # Answering Requirements. - You need to strictly answer based on the content of the background knowledge, and it is forbidden to answer questions based on common sense and known information. - For information that is not known, simply answer 'No relevant answer found'. # Question: {query} \n # Response:"
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "Naive_rag-evaluation-without_retrieval",
+        "dataset_name": "PopQA",
+        "instruction": "### Instruction:\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "query_rewrite_rag-rewrite-Open_domain_QA",
@@ -25,6 +35,11 @@
         "instruction": "Answer the question in the following format, end the answer with '**'. You can use the provid passage. \n\n Passage: World heavyweight champion. Charles returned to boxing after the war as a light heavyweight, picking up many notable wins over leading light heavyweights, as well as heavyweight contenders Archie Moore, Jimmy Bivins, Lloyd Marshall and Elmer Ray. \n\n Question: Ezzard Charles was a world champion in which sport? \n\n Answer: Prize fight.** \n\n Passage: {passages} \n\n Question: {query} \n\n Answer: "
     },
     {
+        "rag_name": "query_rewrite_rag-read-2",
+        "dataset_name": "",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
         "rag_name": "query_rewrite_rag-rewrite-Open_domain_QA",
         "dataset_name": "PopQA",
         "instruction": "Think step by step to answer this question, and provide search engine queries for knowledge that you need. End outputs with '**'. \n\n Question: zhou yang, gold medal winner at the winter olympics 2010, made the news again later by being chided by china's deputy sports minister yu zaiqing for thanking her parents, but not her country, for her win. she had won gold in what sport \nThought: I need to find zhouyang won gold in what sport. \nQuery:  zhouyang won gold in what sport**\n\nQuestion:{query} \nThought: "
@@ -40,8 +55,23 @@
         "instruction": "Answer the question in the following format, end the answer with '**'. You can use the provid passage. \n\n Passage: World heavyweight champion. Charles returned to boxing after the war as a light heavyweight, picking up many notable wins over leading light heavyweights, as well as heavyweight contenders Archie Moore, Jimmy Bivins, Lloyd Marshall and Elmer Ray. \n\n Question: Ezzard Charles was a world champion in which sport? \n\n Answer: Prize fight.** \n\n Passage: {passages} \n\n Question: {query} \n\n Answer: "
     },
     {
-        "rag_name": "selfrag_reproduction",
+        "rag_name": "query_rewrite_rag-read-2",
         "dataset_name": "PopQA",
-        "instruction": "{query}"
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "query_rewrite_rag-read-without_retrieval",
+        "dataset_name": "PopQA",
+        "instruction": "Answer the question in the following format, end the answer with '**'. \n\n Question: {query} \n\n Answer: "
+    },
+    {
+        "rag_name": "Iterative_rag-read",
+        "dataset_name": "",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "Iterative_rag-read",
+        "dataset_name": "PopQA",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     }
 ]
