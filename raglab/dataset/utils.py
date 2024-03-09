@@ -4,10 +4,13 @@ import jsonlines
 import json
 from ruamel.yaml import YAML
 
+
+
 def load_jsonlines(file:str)-> list[dict]:
     with jsonlines.open(file, 'r') as jsonl_f:
         lst = [obj for obj in jsonl_f]
     return lst 
+
 
 def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, rag: str = "selfrag") -> object:
     from raglab.dataset.PopQA import PopQA
@@ -39,5 +42,9 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, ra
         EvalData = QReCC(output_dir, llm_path, eval_datapath, rag = "dsp")
     elif 'SQuAD' == task:
         EvalData = SQuAD(output_dir, llm_path, eval_datapath, rag = "dsp")
+    else:
+        raise TaskNotFoundError("Task not recognized. Please provide a valid task.")
     return EvalData
 
+class TaskNotFoundError(Exception):
+    pass

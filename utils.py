@@ -1,4 +1,9 @@
 from ruamel.yaml import YAML
+from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
+from raglab.rag.infer_alg.self_rag_reproduction import SelfRag_Reproduction
+def get_algorithm(args):
+    pass
+    
 
 def over_write_args_from_file(args, yml): # 后面这个 yaml 文件是直接从 args load 进来的。
     """
