@@ -7,7 +7,7 @@ import numpy as np
 from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
 from raglab.rag.infer_alg.self_rag_reproduction import SelfRag_Reproduction
 from raglab.rag.infer_alg.query_rewrite_rag import QueryRewrite_rag
-
+from raglab.rag.infer_alg.naive_rag import NaiveRag
 from utils import over_write_args_from_file
 
 def set_randomSeed(args):
@@ -82,11 +82,10 @@ def get_config():
     over_write_args_from_file(args, args.config)
     return args
 
-if __name__=='__main__':
+if __name__=='__main__': 
     args = get_config()
     set_randomSeed(args)
-    rag = QueryRewrite_rag(args)
-    pu.db
+    rag = NaiveRag(args)
     evaluation_result = rag.inference("What is Henry Feilden's occupation?" ,mode = 'interact')
     evaluation_result = rag.inference(mode = 'evaluation')
     print(evaluation_result)
