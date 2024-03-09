@@ -6,9 +6,12 @@ num_gpu: 2
 output_dir: ./1-eval_output/
 # llm config
 llm_path: ./model/selfrag_llama2_7b/
+download_dir: ".cache"
 generate_maxlength: 500
 use_vllm: True
-
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
 # retrieval common config
 retrieval_name: contriever
 index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
@@ -25,7 +28,7 @@ n_subquantizers: 0
 per_gpu_batch_size: 64
 question_maxlength: 512 # Maximum number of tokens in a question
 # self rag 
-download_dir: ".cache"
+
 world_size: 1
 dtype: "half"
   # decoding args

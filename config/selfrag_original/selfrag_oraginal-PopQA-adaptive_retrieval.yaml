@@ -8,14 +8,17 @@ task: PopQA
 output_dir: ./1-eval_output/
 # llm config
 llm_path: ./model/selfrag_llama2_7b/
+dtype: "half"
 generate_maxlength: 100
 use_vllm: True
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
 # retrieval common config
 n_docs: 10
 # self rag 
 download_dir: ".cache"
 world_size: 1
-dtype: "half"
 threshold: 0.2  
 use_seqscore: True
 use_groundness: True

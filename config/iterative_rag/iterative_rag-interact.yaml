@@ -1,0 +1,26 @@
+use_seed: True
+seed: 633
+num_gpu: 1
+# eval config
+eval_datapath: ./data/eval_datasets/popqa_longtail_w_gs.jsonl
+task: ''
+output_dir: ./1-eval_output
+# llm config
+llm_path: ./model/Llama-2-7b-chat-hf
+dtype: "half"
+use_vllm: True
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: True
+retrieval_name: contriever
+index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings/*
+text_dbPath: ./data/retrieval/contriever_passages/psgs_w100.tsv
+retriever_modelPath: ./model/contriever-msmarco
+n_docs: 10
+# retrieval config
+nbits: 2
+# iterative rag config
+max_iteration: 3

@@ -1,0 +1,18 @@
+use_seed: True
+seed: 633
+num_gpu: 1
+# eval config
+eval_datapath: ./data/eval_datasets/popqa_longtail_w_gs.jsonl
+task: PopQA
+output_dir: ./1-eval_output/
+# llm config
+llm_path: ./model/PandaLM-Alpaca-7B-v1
+use_vllm: True
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: False
+n_docs: 10
+nbits: 2
