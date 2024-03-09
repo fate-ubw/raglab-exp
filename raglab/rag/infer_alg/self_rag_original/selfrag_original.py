@@ -114,7 +114,7 @@ class SelfRag_Original(NaiveRag):
     
     def load_llm(self):
         llm = LLM(model=self.llm_path, dtype=self.dtype)
-        sampling_params = SamplingParams(temperature=0.0, top_p=1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+        sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         tokenizer = AutoTokenizer.from_pretrained(self.llm_path, padding_side="left")
         return llm, tokenizer, sampling_params
     

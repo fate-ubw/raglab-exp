@@ -18,33 +18,43 @@ class NaiveRag:
     def __init__(self, args):
         self.args = args 
         self.task = args.task
-        self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
-        self.dtype = args.dtype
-        self.generate_maxlength = args.generate_maxlength
-        self.use_vllm = args.use_vllm
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
-        
+
+        # llm config
+        self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
+        self.dtype = args.dtype
+        self.use_vllm = args.use_vllm
+        self.generate_maxlength = args.generate_maxlength
+        self.temperature = args.temperature
+        self.top_p = args.top_p
+        self.generation_stop = args.generation_stop
+
         # retrieval args
         self.n_docs = args.n_docs
         self.retrieval_name = args.retrieval_name
+        self.realtime_retrieval = args.realtime_retrieval
 
         # setup model and database 
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
-        self.retrieval = self.setup_retrieval() # retrieval model
+        if self.realtime_retrieval:
+            self.retrieval = self.setup_retrieval() # retrieval model
 
     def init(self):
-        
+
         raise NotImplementedError
 
     def inference(self, query: Optional[str] = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
-            # passages: dict of dict
-            collated_passages = self.collate_passages(passages)
-            target_instruction = self.find_instruction('Naive_rag-interact', '')
-            inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
+            if self.realtime_retrieval:
+                passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
+                collated_passages = self.collate_passages(passages)
+                target_instruction = self.find_instruction('Naive_rag-interact', '')
+                inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
+            else:
+                target_instruction = self.find_instruction('Naive_rag-interact-without_retrieval', '')
+                inputs = target_instruction.format_map({'query': query})
             outputs = self.llm_inference(inputs)
             return outputs
         elif 'evaluation' == mode:
@@ -54,13 +64,20 @@ class NaiveRag:
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 question = eval_data[self.EvalData.inputStruction.question] 
-                passages = self.retrieval.search(question)
-                collated_passages = self.collate_passages(passages)
-                target_instruction = self.find_instruction('Naive_rag-evaluation', self.task)
-                inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
+                if self.realtime_retrieval:
+                    passages = self.retrieval.search(question) #self.retrieval.search(query) -> dict[int,dict] 
+                    # passages: dict of dict
+                    collated_passages = self.collate_passages(passages)
+                    target_instruction = self.find_instruction('Naive_rag-evaluation', self.task)
+                    inputs = target_instruction.format_map({'passages': collated_passages, 'query': question})
+                else:
+                    target_instruction = self.find_instruction('Naive_rag-evaluation-without_retrieval', self.task)
+                    inputs = target_instruction.format_map({'query': question})
                 outputs = self.llm_inference(inputs)
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
-            
+                eval_result = self.EvalData.eval_acc(inference_results)
+                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+            # end of for loop
             self.EvalData.save_result(inference_results)
             eval_result = self.EvalData.eval_acc(inference_results) 
             print(f'{self.task} Accuracy: {eval_result}')
@@ -72,7 +89,10 @@ class NaiveRag:
         sampling_params = None
         if self.use_vllm:
             llm = LLM(model=self.llm_path, dtype=self.dtype)
-            sampling_params = SamplingParams(temperature=0.7, top_p=0.8, repetition_penalty= 1.5, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+            if self.generation_stop != '':
+                sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop=[self.generation_stop], repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+            else:
+                sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         else:
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
             llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
@@ -87,9 +107,11 @@ class NaiveRag:
             retrieval_model.setup_retrieve()
         return retrieval_model 
     
-    def collate_passages(self, passages:dict[int, dict])-> str:
+    def collate_passages(self, passages:dict[int, Optional[dict]])-> str:
         collate = ''
         for rank_id, tmp in passages.items(): 
+            if tmp is None:
+                continue
             collate += f'Passages{rank_id}: ' + tmp['content'] +'\n'  
         return collate
 

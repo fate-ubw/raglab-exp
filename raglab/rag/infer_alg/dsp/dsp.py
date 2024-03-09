@@ -133,7 +133,7 @@ class dsp(NaiveRag):
         else:
             return dspy.Predict(self.setup_Signature(),temperature=self.temperature)
         
-        
+
 
     # def test_for_no_retrieve(self):
     #     from dspy.datasets import HotPotQA
