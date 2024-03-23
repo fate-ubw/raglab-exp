@@ -4,7 +4,7 @@ import pudb
 import random
 import torch
 import numpy as np
-from raglab.rag.infer_alg.iterative_rag import Itertive_rag
+from raglab.rag.infer_alg.iterative_rag import ItertiveRag
 
 from utils import over_write_args_from_file
 
@@ -87,7 +87,7 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
-    rag = Itertive_rag(args)
+    rag = ItertiveRag(args)
     evaluation_result, cited_passages, generation_track = rag.inference("What is Henry Feilden's occupation?", mode = 'interact')
     evaluation_result = rag.inference(mode = 'evaluation')
     print(evaluation_result)
