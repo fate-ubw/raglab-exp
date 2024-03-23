@@ -9,7 +9,7 @@ from raglab.dataset.utils import get_dataset # load dataset class
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 
 
-class Itertive_rag(NaiveRag):
+class ItertiveRag(NaiveRag):
     def __init__(self, args):
         super().__init__(args)
         self.init(args)
@@ -21,7 +21,7 @@ class Itertive_rag(NaiveRag):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
             generation_track = {}
-            generation_track[0] = {'instruction':None, 'retrieval_input': query,'passages':None, 'generation':None}
+            generation_track[0] = {'instruction': None, 'retrieval_input': query, 'passages':None, 'generation':None}
             for iter in range(self.max_iteration):
                 retrieval_input = generation_track[iter]['retrieval_input']
                 passages = self.retrieval.search(retrieval_input)
@@ -34,7 +34,7 @@ class Itertive_rag(NaiveRag):
                 generation_track[iter]['generation'] = outputs
                 # save outputs as next iter retrieval inputs
                 generation_track[iter+1] = {'instruction':None, 'retrieval_input': outputs, 'passages':None, 'generation':None}
-            citation_passages = passages # 这里用的是最后一次的 passages，中间的 passages 都丢弃了，最后的 outputs 是根据最后一轮的 passages 来生成的
+            citation_passages = passages
             return outputs, citation_passages, generation_track # 所有 interact 都使用这 3 个标准的回答，但是selfrag 使用的是 beam search 还是需要注意一下的
         # end of interact mode
         elif 'evaluation' == mode:
