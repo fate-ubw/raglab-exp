@@ -88,13 +88,14 @@ class NaiveRag:
         tokenizer = None
         sampling_params = None
         if self.use_vllm:
-            llm = LLM(model=self.llm_path, dtype=self.dtype)
+            llm = LLM(model=self.llm_path, tokenizer=self.llm_path, dtype=self.dtype)
             if self.generation_stop != '':
                 sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop=[self.generation_stop], repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
             else:
                 sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+            tokenizer = llm.get_tokenizer()
         else:
-            tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False) #
+            tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False)
             llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
         return llm, tokenizer, sampling_params
     
@@ -119,9 +120,12 @@ class NaiveRag:
         if self.use_vllm:
             output = self.llm.generate(inputs, self.sampling_params)
             output_text = output[0].outputs[0].text
+            pdb.set_trace()
         else:
+            pdb.set_trace()
             input_ids = self.tokenizer.encode(inputs, return_tensors="pt")
-            output_ids = self.llm.generate(input_ids, do_sample = False, max_length = self.generate_maxlength)
+            instruction_len = input_ids.shape[1]
+            output_ids = self.llm.generate(input_ids, do_sample = False, max_length =instruction_len + self.generate_maxlength)
             output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
         if '</s>' in output_text:
             return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
