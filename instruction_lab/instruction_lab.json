@@ -73,5 +73,15 @@
         "rag_name": "Iterative_rag-read",
         "dataset_name": "PopQA",
         "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "active_rag-read",
+        "dataset_name": "PopQA",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "active_rag-read",
+        "dataset_name": "",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     }
 ]
