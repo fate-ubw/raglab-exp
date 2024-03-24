@@ -93,5 +93,7 @@ if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
     rag = ActiveRag(args)
-    evaluation_result = rag.inference("Predict the development trends in the technology industry over the next 10 years, focusing on the technological development directions and market demand changes in the company's areas of operation (e.g., artificial intelligence, cloud computing, big data, etc.).", mode = 'interact')
+    # evaluation_result = rag.inference("Predict the development trends in the technology industry over the next 10 years, focusing on the technological development directions and market demand changes in the company's areas of operation (e.g., artificial intelligence, cloud computing, big data, etc.).", mode = 'interact')
+    evaluation_result = rag.inference("What is Henry Feilden's occupation?", mode = 'interact')
+    evaluation_result = rag.inference(mode = 'evaluation')
     print(evaluation_result)
