@@ -7,7 +7,7 @@ import json
 from typing import Optional
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
-
+import torch
 from raglab.dataset.utils import get_dataset # load dataset class
 from raglab.rag.infer_alg.naive_rag.utils import load_evaldataset, save_inference_result
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
@@ -95,8 +95,11 @@ class NaiveRag:
                 sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
             tokenizer = llm.get_tokenizer()
         else:
+            if self.dtype == 'half' or self.dtype == 'float16': # 这个逻辑扩展性太差，因为另一个可能是 float16
+                llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto", torch_dtype=torch.float16)
+            else:
+                llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
             tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False)
-            llm = AutoModelForCausalLM.from_pretrained(self.llm_path)
         return llm, tokenizer, sampling_params
     
     def setup_retrieval(self):
