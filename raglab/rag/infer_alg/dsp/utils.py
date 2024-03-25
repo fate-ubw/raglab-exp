@@ -1,6 +1,6 @@
 import dspy
 from dsp.utils import deduplicate
-
+import pdb
 
 class BasicQA(dspy.Signature):
     """Answer questions with short factoid answers."""
@@ -65,17 +65,19 @@ class SimplifiedBaleen(dspy.Module):
         self.generate_answer = dspy.ChainOfThought(GenerateAnswer, temperature=0.7)
         self.max_hops = max_hops
     
-    def forward(self, question):
+    def forward(self, question): #debug 的时候得跳进来，来这里才能看得清楚
         context = []
-        
-        for hop in range(self.max_hops):
-            query = self.generate_query[hop](context=context, question=question).query
-            passages = self.retrieve.search(query)
-            passages = [passages[rank]['content'] for rank in sorted(passages)]
-            context = deduplicate(context + passages)
-
+        pdb.set_trace()
+        for hop in range(self.max_hops): #
+            query = self.generate_query[hop](context=context, question=question).query # 第二次生成 query 的时候，context 上一次 question 检索到的 3 个 passages
+            # -> passages = self.retrieve.search(query) # 检索对应的passages
+            # (Pdb) query -> '"number of storeys in castle David Gregory inherited"'
+            passages = self.retrieve.search(query) # 检索对应的 passages,这里的 passages 和 colbert 得到的是一样的dict[int, dict['content', 'score']]
+            passages = [passages[rank]['content'] for rank in sorted(passages)] # list[str]
+            context = deduplicate(context + passages) # 喔喔看来第二次的hotpot 生成之前就会将passages 拼接到 context 当中，这个 deduplicate 是去除重复的 passages
         pred = self.generate_answer(context=context, question=question)
-        return dspy.Prediction(context=context, answer=pred.answer)
+        # (Pdb) pred = Prediction(rationale='Answer: Bob Dylan',answer='Bob Dylan')
+        return dspy.Prediction(context=context, answer=pred.answer) #这里为什么又定义了一个Prediction呢，但是这里的参数是不同的，得到结果的长度是 4
     
 
 def validate_context_and_answer_and_hops(example, pred, trace=None):

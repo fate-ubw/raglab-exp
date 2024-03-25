@@ -29,6 +29,7 @@ class ActiveRag(NaiveRag):
     def inference(self, query:Optional[str]=None, mode = 'interact'):
         assert mode in ['interact', 'evaluation']
         self.nlp = spacy.load("en_core_web_sm")
+
         if 'interact' == mode:
             final_generation = self.active_rag_generation(query)
             return final_generation
@@ -57,6 +58,7 @@ class ActiveRag(NaiveRag):
         iter_step = 0
         generation_track = {}
         generation_track[iter_step] = {'instruction': None, 'retrieval_input': query, 'passages':None, 'generation':None}
+        print(f'source question -> {query}')
         while next_iter_flag and answer_len < self.max_fianl_answer_length:
             if iter_step == 0:
                 retrieval_input = query
@@ -68,6 +70,8 @@ class ActiveRag(NaiveRag):
             # get look_ahead
             outputs = self.llm_inference(inputs)
             print(f'whole look ahead -> {outputs.text}')
+            if len(outputs.text)==0:
+                break
             # get first sentence from look_ahead
             look_ahead = self.truncate_text(outputs)
             print(f'look ahead -> {look_ahead.text}')
@@ -88,7 +92,8 @@ class ActiveRag(NaiveRag):
             else:
                 # If no low prob tokens in look_ahead, look_ahead is the current turn outputs
                 outputs = look_ahead
-
+            if len(outputs.text) == 0:
+                break
             # get the first sentence from outputs 
             Doc = self.nlp(outputs.text)
             first_sentence = list(Doc.sents)[0].text
@@ -135,6 +140,7 @@ class ActiveRag(NaiveRag):
         '''
         '''
         Doc = self.nlp(llm_outputs.text)
+        # 这里有可能没有句子？？？这怎么可能真的奇怪
         first_sent = list(Doc.sents)[0].text
         first_sent_tokenid = self.tokenizer.encode(first_sent)
         first_sent_len = len(first_sent_tokenid)

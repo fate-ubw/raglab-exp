@@ -11,6 +11,7 @@ if repo_path not in sys.path:
     sys.path.append(repo_path)
 os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(repo_path, 'cache')
 import dspy
+import pdb
 
 proxy = "http://100.124.78.167:3389"
 os.environ['http_proxy'] = proxy
@@ -72,25 +73,38 @@ class dsp(NaiveRag):
 
 
     def inference(self, query='', mode='interact'):
+        pdb.set_trace()
         assert mode in ['interact', 'evaluation']
         generator = dspy.ChainOfThought(dsp_utils.BasicQA, temperature=self.temperature)
 
-        if self.signature_retrieval:
+        if self.signature_retrieval: # 这个
             dataset = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath, self.rag).load_dataset()
             trainset = [x.with_inputs('question') for x in dataset.train]
             print(f"\nLength of traing dataset is {len(trainset)}\n")
             print(trainset)
-            teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops)
+            teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops) #这个地方就会 wrap dsp 的 3 个阶段，demonstration、search、predict
             compiled_rag = teleprompter.compile(dsp_utils.SimplifiedBaleen(retrieve=self.rm), teacher=dsp_utils.SimplifiedBaleen(retrieve=self.rm), trainset=trainset)
+            # 在这里编译的时候会对所有的 trainset 中的 QA pair 进行了 augmentation ，也就是说这一步其实已经准备好了所有的代码， 
+            # 初始化一个元模型，并且给定训练集合来编译模型，大概理解是什么意思了
+            # (Pdb) compiled_rag 
+            # generate_query[0] = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateSearchQuery'>)
+            # generate_query[1] = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateSearchQuery'>)
+            # generate_answer = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateAnswer'>)
+            # 非常像 torch 里面里面的 sequence 这个类，将不同的 block 都添加到 dspy 这个框架里面，然后再通过一个编译器将这些 block 编译起来
             if 'interact' == mode:
-                compiled_rag(query)
-                print(self.lm.inspect_history(n=3))
+                outputs = compiled_rag(query) # 得到的是prediction 的 class 
+                # >>> type(output) = <class 'dspy.primitives.prediction.Prediction'>
+                print(self.lm.inspect_history(n=3)) 
+
             elif 'evaluation' == mode:
                 assert self.signature_retrieval is True
+                pdb.set_trace()
                 devset = [x.with_inputs('question') for x in dataset.dev]
+                # list[Example]
+                # list[dict] 
                 print(f"Length of dev dataset is {len(trainset)}")
                 evaluator = Evaluate(devset=devset, num_threads=self.eval_threads)
-                metric = dspy.evaluate.answer_exact_match
+                metric = dspy.evaluate.answer_exact_match 
                 return evaluator(compiled_rag, metric=metric)
         else:
             print(query)
@@ -99,7 +113,7 @@ class dsp(NaiveRag):
             print(f"Thought: \n{pred.rationale} \n\n")
             print(f"Predicted Answer: \n{pred.answer} \n\n")
             return pred.answer
-            
+    
     def load_llm(self):
         try:
             if self.model_model == "HFModel":
