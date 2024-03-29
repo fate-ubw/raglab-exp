@@ -17,7 +17,7 @@ class HotpotQA(QA):
         self.llm_path = llm_path
         self.eval_datapath = eval_datapath
         self.rag = rag
-
+    
     def load_dataset(self):
         try:
             if self.rag == "selfrag":

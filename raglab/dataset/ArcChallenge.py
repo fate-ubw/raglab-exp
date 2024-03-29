@@ -37,7 +37,6 @@ class ArcChallenge(PubHealth):
         return eval_data
 
     def get_instruction(self, prompt):
-
         if len(TASK_INSTRUCTION) > 0:
             prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt + self.choices
         prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})

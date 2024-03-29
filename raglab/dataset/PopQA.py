@@ -67,15 +67,17 @@ class PopQA(QA):
         print('success!')
 
     def record_result(self, eval_data, final_prediction, inference_results):
+        # 这里的关键字尤其是question，answers，generation 必须要写成 self.inputStruction.question 
+        # 因为这个函数会被其他class 进行复用，如果存储的时候希望保持子类的 inputStruction 就必须使用关键字
         inference_results.append(
             {
-            'question': eval_data[self.inputStruction.question],
-            'answers': eval_data[self.inputStruction.answer],
-            'generation': final_prediction
+             self.outputStruction.question: eval_data[self.inputStruction.question],
+             self.outputStruction.answer: eval_data[self.inputStruction.answer],
+             self.outputStruction.generation: final_prediction
             })
         return inference_results
 
-    def get_instruction(self, prompt):
+    def get_instruction(self, prompt:str)->str:
         if len(TASK_INSTRUCTION) > 0:
             prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
         prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
@@ -85,7 +87,17 @@ class PopQA(QA):
         print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(infer_results):
-            metric_result = match(data["generation"], data["answers"])
+            # 这里还是有一些问题，尤其是这个 match 函数
+            if type(data[self.outputStruction.answer]) is str:
+                answer = [data[self.outputStruction.answer]]
+            elif type(data[self.outputStruction.answer]) is list:
+                answer = data[self.outputStruction.answer]
+            else:
+                raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
+            metric_result = match(data[self.outputStruction.generation], answer)
             eval_results.append(metric_result)
-        # TODO 这里应该把结果存储下来***.json.eval_result
+        # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_results))
+
+class InvalidAnswerType(Exception):
+    pass

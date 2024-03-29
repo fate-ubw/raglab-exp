@@ -42,21 +42,14 @@ class PubHealth(MultiChoiceQA):
         self.outputStruction.answer = 'answers'
         self.outputStruction.generation = 'generation'
 
-    def get_instruction(self, prompt):
-        if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
-        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
-        return prompt_with_instruction
-
-    def load_dataset(self): 
+    def load_dataset(self)-> list[dict]:
         if self.eval_datapath.endswith(".json"):
             eval_dataset = json.load(open(self.eval_datapath))
         else:
             eval_dataset = load_jsonlines(self.eval_datapath)
-        # the type of eval_dataset is list of dict
         return eval_dataset
 
-    def save_result(self, inference_result: list[dict]): 
+    def save_result(self, inference_result: list[dict])-> None: 
         print('storing result....')
         if not os.path.exists(self.output_dir): 
             os.makedirs(self.output_dir)
@@ -72,20 +65,36 @@ class PubHealth(MultiChoiceQA):
         print(f'output file path:{output_file}')
         print('success!')
 
-    def record_result(self, eval_data, final_prediction, inference_results):
-        inference_results.append({
-            'question': eval_data[self.inputStruction.question],
-            'answers': eval_data['answers'],
-            'generation': final_prediction})
+    def record_result(self, eval_data:dict, final_prediction:str, inference_results:list) -> list[dict]:
+        inference_results.append(
+            {
+             self.outputStruction.question: eval_data[self.inputStruction.question],
+             self.outputStruction.answer: eval_data[self.inputStruction.answer],
+             self.outputStruction.generation: final_prediction
+            })
         return inference_results
+    
+    def get_instruction(self, prompt:str) ->str:
+        if len(TASK_INSTRUCTION) > 0:
+            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
+        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
+        return prompt_with_instruction
+
 
     def eval_acc(self, infer_results: list[dict]):
         print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(infer_results):
-            metric_result = match(data["generation"], data["answers"])
+            if type(data[self.outputStruction.answer]) is str:
+                answer = [data[self.outputStruction.answer]]
+            elif type(data[self.outputStruction.answer]) is list:
+                answer = data[self.outputStruction.answer]
+            else:
+                raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
+            metric_result = match(data[self.outputStruction.generation], answer)
             eval_results.append(metric_result)
         # TODO save result in ***.json.eval_result file 
         return np.mean(eval_results)
 
-
+class InvalidAnswerType(Exception):
+    pass
