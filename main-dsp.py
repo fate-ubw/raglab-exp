@@ -2,7 +2,7 @@ import argparse
 import random
 import torch
 import numpy as np
-from raglab.rag.infer_alg.dsp import dsp
+from raglab.rag.infer_alg.dsp import Dsp
 from utils import over_write_args_from_file
 
 # def set_randomSeed(args):
@@ -69,9 +69,9 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     # set_randomSeed(args)
-    rag = dsp(args)
+    rag = Dsp(args)
     # rag.test()
-
+    
     # 1. 这是用来测试单个的
     result = rag.inference(mode = 'interact', query="How many storeys are in the castle that David Gregory inherited?")
     print(result)
