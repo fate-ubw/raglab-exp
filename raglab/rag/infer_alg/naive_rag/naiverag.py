@@ -63,6 +63,7 @@ class NaiveRag:
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                eval_data = self.EvalData.preprocess(eval_data) # some dataset need preprocess such as: arc_challenge
                 question = eval_data[self.EvalData.inputStruction.question] 
                 if self.realtime_retrieval:
                     passages = self.retrieval.search(question) #self.retrieval.search(query) -> dict[int,dict] 
@@ -123,9 +124,7 @@ class NaiveRag:
         if self.use_vllm:
             output = self.llm.generate(inputs, self.sampling_params)
             output_text = output[0].outputs[0].text
-            pdb.set_trace()
         else:
-            pdb.set_trace()
             input_ids = self.tokenizer.encode(inputs, return_tensors="pt")
             instruction_len = input_ids.shape[1]
             output_ids = self.llm.generate(input_ids, do_sample = False, max_length =instruction_len + self.generate_maxlength)

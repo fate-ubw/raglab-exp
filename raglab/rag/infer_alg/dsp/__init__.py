@@ -1,1 +1,1 @@
-from raglab.rag.infer_alg.dsp.dsp import dsp
+from raglab.rag.infer_alg.dsp.dsp import Dsp

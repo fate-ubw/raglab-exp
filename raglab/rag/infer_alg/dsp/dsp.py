@@ -11,6 +11,7 @@ if repo_path not in sys.path:
     sys.path.append(repo_path)
 os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(repo_path, 'cache')
 import dspy
+from dspy.datasets import HotPotQA
 import pdb
 
 proxy = "http://100.124.78.167:3389"
@@ -19,7 +20,7 @@ os.environ['https_proxy'] = proxy
 os.environ['all_proxy'] = proxy
 os.environ['CUDA_VISIBLE_DEVICES'] = '6'
 
-class dsp(NaiveRag):
+class Dsp(NaiveRag):
     def __init__(self, args):
         
         self.args = args 
@@ -69,16 +70,16 @@ class dsp(NaiveRag):
         
         self.lm = self.load_llm()
         self.rm = self.load_rm()
-        dspy.settings.configure(lm=self.lm, rm=self.rm)
+        dspy.settings.configure(lm=self.lm, rm=self.rm) # 这个 setup 还是不太一样，需要将参数传递给 dsp
 
 
     def inference(self, query='', mode='interact'):
         pdb.set_trace()
         assert mode in ['interact', 'evaluation']
         generator = dspy.ChainOfThought(dsp_utils.BasicQA, temperature=self.temperature)
-
-        if self.signature_retrieval: # 这个
-            dataset = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath, self.rag).load_dataset()
+        # 其实就是定义了很多组件，后期可以组装起来，感觉这个也没有那么玄学，
+        if self.signature_retrieval:
+            dataset = HotPotQA(train_seed=1, train_size=20, eval_seed=2023, dev_size=50, test_size=0)
             trainset = [x.with_inputs('question') for x in dataset.train]
             print(f"\nLength of traing dataset is {len(trainset)}\n")
             print(trainset)
