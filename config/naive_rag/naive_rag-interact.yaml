@@ -1,14 +1,19 @@
+use_seed: True
 seed: 633
 num_gpu: 1
-output_dir: ./1-eval_output
-task: PopQA
+# eval config
+algorithm_name: naive_rag
+task: ''
 # llm config
 llm_path: ./model/Llama-2-7b-hf
+dtype: 'half'
+use_vllm: True
 temperature: 0.0
 top_p: 1.0
 generation_stop: ''
 generate_maxlength: 300
 # retrieval config
+realtime_retrieval: True
 retrieval_name: colbert
 index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding
 text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
@@ -16,5 +21,4 @@ eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
 retriever_modelPath: ./model/colbertv2.0
 # max length should bigger than the length of input_ids
 n_docs: 1
-use_vllm: False
 nbits: 2

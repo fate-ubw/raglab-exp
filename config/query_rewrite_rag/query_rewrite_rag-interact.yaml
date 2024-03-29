@@ -1,20 +1,23 @@
 use_seed: True
 seed: 633
 num_gpu: 1
-output_dir: ./1-eval_output
+# eval config
+algorithm_name: query_rewrite_rag
 task: ''
 # llm config
 llm_path: ./model/Llama-2-7b-hf
+dtype: "half"
 use_vllm: True
 temperature: 0.0
 top_p: 1.0
 generation_stop: ''
 generate_maxlength: 300
 # retrieval config
-retrieval_name: colbert
-index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding
-text_dbPath: ./data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
-eval_datapath: ''
-retriever_modelPath: ./model/colbertv2.0
-n_docs: 2
+realtime_retrieval: True
+retrieval_name: contriever
+index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
+text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
+retriever_modelPath: ./model/contriever-msmarco
+n_docs: 10
 nbits: 2
+# query rewrite rag has no special config

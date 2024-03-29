@@ -1,4 +1,4 @@
-export CUDA_VISIBLE_DEVICES=1
+export CUDA_VISIBLE_DEVICES=6
 # export COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True
-python ./main-iterative_rag.py\
+python ./main-interact.py\
     --config ./config/iterative_rag/iterative_rag-interact.yaml
