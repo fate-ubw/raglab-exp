@@ -12,16 +12,6 @@ from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 import raglab.rag.infer_alg.dsp.utils as dsp_utils
 
-# repo_path = './raglab/rag/infer_alg/dsp'
-# if repo_path not in sys.path:
-#     sys.path.append(repo_path)
-# os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(repo_path, 'cache')
-
-# proxy = "http://100.124.78.167:3389"
-# os.environ['http_proxy'] = proxy
-# os.environ['https_proxy'] = proxy
-# os.environ['all_proxy'] = proxy
-
 class Dsp(NaiveRag):
     def __init__(self, args):
         self.args = args 
@@ -75,7 +65,7 @@ class Dsp(NaiveRag):
         # define model
         teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops) 
         compiled_rag = teleprompter.compile(dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), teacher=dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), trainset=train_dataset) 
-
+        
         if 'interact' == mode:
             outputs = compiled_rag(query)
             return outputs['answer'] 
@@ -83,16 +73,28 @@ class Dsp(NaiveRag):
             self.eval_dataset = self.EvalData.load_dataset()
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
+            pdb.set_trace()
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 question = eval_data[self.EvalData.inputStruction.question]
                 final_generation = compiled_rag(question)
                 final_generation = final_generation[self.EvalData.outputStruction.answer]
                 inference_results = self.EvalData.record_result(eval_data, final_generation, inference_results)
-                eval_result = self.EvalData.eval_acc(inference_results) 
-                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
-            self.EvalData.save_result(inference_results)
-            eval_result = self.EvalData.eval_acc(inference_results)
-            print(f'{self.task} Accuracy: {eval_result}')
+                # evaluation
+                acc = self.EvalData.eval_acc(inference_results)
+                print(f'{self.task} Accuracy in {idx} turn: {acc}')
+                EM = self.EvalData.eval_exact_match(inference_results)
+                print(f'{self.task} Exact match in {idx} turn: {EM}')
+                f1_score = self.EvalData.eval_f1_score(inference_results)
+                print(f'{self.task} F1 score in {idx} turn: {f1_score}')
+            # end of for loop
+            self.EvalData.save_result(inference_results)  # save inference results
+            acc = self.EvalData.eval_acc(inference_results)
+            print(f'{self.task} Accuracy: {acc}')
+            EM = self.EvalData.eval_exact_match(inference_results)
+            print(f'{self.task} Exact match in {idx} turn: {EM}')
+            f1_score = self.EvalData.eval_f1_score(inference_results)
+            print(f'{self.task} F1 score in {idx} turn: {f1_score}')
+            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
             return eval_result
 
     def dic2Example(self,dict_dataset:list[dict] )->list[Example]:
