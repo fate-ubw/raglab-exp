@@ -60,6 +60,16 @@
         "instruction": "### Instruction:\n{query}\n\n### Response:\n"
     },
     {
+        "rag_name": "Naive_rag-evaluation",
+        "dataset_name": "HotPotQA",
+        "instruction": "### Instruction:\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "Naive_rag-evaluation-without_retrieval",
+        "dataset_name": "HotPotQA",
+        "instruction": "### Instruction:\n{query}\n\n### Response:\n"
+    },
+    {
         "rag_name": "query_rewrite_rag-rewrite-Open_domain_QA",
         "dataset_name": "",
         "instruction": "Think step by step to answer this question, and provide search engine queries for knowledge that you need. End outputs with '**'. \n\n Question: zhou yang, gold medal winner at the winter olympics 2010, made the news again later by being chided by china's deputy sports minister yu zaiqing for thanking her parents, but not her country, for her win. she had won gold in what sport \nThought: I need to find zhouyang won gold in what sport. \nQuery:  zhouyang won gold in what sport**\n\nQuestion:{query} \nThought: "
