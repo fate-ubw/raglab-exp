@@ -2,6 +2,7 @@ use_seed: True
 seed: 633
 num_gpu: 1
 # eval config
+algorithm_name: naive_rag
 eval_datapath: ./data/eval_datasets/feverous/feverous_dev_challenges.jsonl
 task: Feverous
 output_dir: ./1-eval_output/
