@@ -35,14 +35,15 @@ class NaiveRag:
         self.retrieval_name = args.retrieval_name
         self.realtime_retrieval = args.realtime_retrieval
 
+
         # setup model and database 
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
         if self.realtime_retrieval:
             self.retrieval = self.setup_retrieval() # retrieval model
+        self.init(args)
 
-    def init(self):
-
-        raise NotImplementedError
+    def init(self, args):
+        pass
 
     def inference(self, query: Optional[str] = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
         assert mode in ['interact', 'evaluation']
