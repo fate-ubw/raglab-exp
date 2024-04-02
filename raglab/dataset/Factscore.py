@@ -16,8 +16,8 @@ class OutputStruction:
 input_strction = {'qeustion': 'query','answer':"answers"}
 
 class Factscore(PopQA):
-    def __init__(self, output_dir, llm_path, eval_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath)
+    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
+        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
         self.set_data_struction()
 
     # @abstruct 这个类是必须重写的

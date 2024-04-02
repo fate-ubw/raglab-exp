@@ -10,8 +10,8 @@ class OutputStruction:
     generation:str
 
 class StrategyQA(PopQA):
-    def __init__(self, output_dir, llm_path, eval_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath)
+    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
+        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
 
     def set_data_struction(self):
         '''

@@ -24,8 +24,8 @@ TASK_INSTRUCTION = "Is the following statement correct or not? Say true if it's 
 PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
 class PubHealth(MultiChoiceQA):
-    def __init__(self, output_dir, llm_path, eval_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath)
+    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
+        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
         self.set_data_struction()
 
     def set_data_struction(self):

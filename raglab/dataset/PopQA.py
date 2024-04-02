@@ -24,8 +24,8 @@ TASK_INSTRUCTION = '' # open QA no need special instruction for inference
 PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
 class PopQA(QA):
-    def __init__(self, output_dir, llm_path, eval_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath)
+    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
+        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
         self.set_data_struction()
     
     def set_data_struction(self):
@@ -49,6 +49,14 @@ class PopQA(QA):
         else:
             eval_dataset = load_jsonlines(self.eval_datapath)
         return eval_dataset
+    
+    def load_train_dataset(self)-> list[dict]:
+        # load train dataset from raw data, this function is design for dsp algorithm
+        if self.eval_train_datapath.endswith(".json"):
+            eval_dataset = json.load(open(self.eval_train_datapath))
+        else:
+            eval_dataset = load_jsonlines(self.eval_train_datapath)
+        return eval_dataset
 
     def save_result(self, inference_result: list[dict])-> None: 
         print('storing inference result....')
@@ -67,8 +75,6 @@ class PopQA(QA):
         print('success!')
 
     def record_result(self, eval_data, final_prediction, inference_results):
-        # 这里的关键字尤其是question，answers，generation 必须要写成 self.inputStruction.question 
-        # 因为这个函数会被其他class 进行复用，如果存储的时候希望保持子类的 inputStruction 就必须使用关键字
         inference_results.append(
             {
              self.outputStruction.question: eval_data[self.inputStruction.question],
@@ -87,7 +93,6 @@ class PopQA(QA):
         print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(infer_results):
-            # 这里还是有一些问题，尤其是这个 match 函数
             if type(data[self.outputStruction.answer]) is str:
                 answer = [data[self.outputStruction.answer]]
             elif type(data[self.outputStruction.answer]) is list:
@@ -98,6 +103,7 @@ class PopQA(QA):
             eval_results.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_results))
+
 
 class InvalidAnswerType(Exception):
     pass
