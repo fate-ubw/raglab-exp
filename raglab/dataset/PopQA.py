@@ -6,7 +6,7 @@ from datetime import datetime
 import numpy as np
 
 from raglab.dataset.utils import load_jsonlines
-from raglab.dataset.metric import match
+from raglab.dataset.metrics import match, exact_match, F1
 from raglab.dataset.base_dataset import QA
 
 class InputStruction:
@@ -90,9 +90,9 @@ class PopQA(QA):
         return prompt_with_instruction
 
     def eval_acc(self, infer_results: list[dict]) -> float:
-        print('start evaluation!')
+        print('start calculate accuracy!')
         eval_results = []
-        for idx, data in enumerate(infer_results):
+        for _, data in enumerate(infer_results):
             if type(data[self.outputStruction.answer]) is str:
                 answer = [data[self.outputStruction.answer]]
             elif type(data[self.outputStruction.answer]) is list:
@@ -104,6 +104,36 @@ class PopQA(QA):
         # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_results))
 
+    def eval_exact_match(self, infer_results: list[dict]) -> float:
+        print('Start calcualte exact match!')
+        eval_reaults = []
+        for _, data in enumerate(infer_results):
+            if type(data[self.outputStruction.answer]) is str:
+                answer = [data[self.outputStruction.answer]]
+            elif type(data[self.outputStruction.answer]) is list:
+                answer = data[self.outputStruction.answer]
+            else:
+                raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
+            metric_result = exact_match(data[self.outputStruction.generation], answer)
+            eval_reaults.append(metric_result)
+        # TODO 这里应该把结果存储下来***.json.eval_result 
+        return float(np.mean(eval_reaults))
+
+    def eval_f1_score(self, infer_results: list[dict]) -> float:
+        print('Start calcualte F1 score!')
+        eval_reaults = []
+        for _, data in enumerate(infer_results):
+            if type(data[self.outputStruction.answer]) is str:
+                answer = [data[self.outputStruction.answer]]
+            elif type(data[self.outputStruction.answer]) is list:
+                answer = data[self.outputStruction.answer]
+            else:
+                raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
+            
+            metric_result = F1(data[self.outputStruction.generation], answer)
+            eval_reaults.append(metric_result)
+        # TODO 这里应该把结果存储下来***.json.eval_result 
+        return float(np.mean(eval_reaults))
 
 class InvalidAnswerType(Exception):
     pass
