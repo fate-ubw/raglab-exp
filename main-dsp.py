@@ -2,7 +2,7 @@ import argparse
 import random
 import torch
 import numpy as np
-from raglab.rag.infer_alg.dsp import Dsp
+from raglab.rag.infer_alg.dsp_backup_2024_4_1 import Dsp
 from utils import over_write_args_from_file
 
 # def set_randomSeed(args):
@@ -30,6 +30,11 @@ def get_config():
     parser.add_argument('--llm_api', type=str, help='API language model name')
     parser.add_argument('--api_key', type=str, help='API key for accessing the model')
     parser.add_argument('--api_base', type=str, help='Base URL for the API')
+    parser.add_argument("--dtype", type=str, default= "half", help="all base model inference using half(fp16)")
+    parser.add_argument('--top_p', type=float, default=1.0, help='top-p of decoding algorithm')
+    parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
+    parser.add_argument('--generation_stop', type=str, default='', help='early_stop is one of the setting of generate() function, early_stop to control the outputs of llm')
+
     # generate parameters
     parser.add_argument('--generate_maxlength', type=int, help='Maximum length for generation')
     parser.add_argument('--temperature', type=float, help='Temperature for generation')
@@ -71,10 +76,8 @@ if __name__=='__main__':
     # set_randomSeed(args)
     rag = Dsp(args)
     # rag.test()
-    
     # 1. 这是用来测试单个的
-    result = rag.inference(mode = 'interact', query="How many storeys are in the castle that David Gregory inherited?")
-    print(result)
-
+    # result = rag.inference(mode = 'interact', query="How many storeys are in the castle that David Gregory inherited?")
     # 2. 这是用来测试数据集的，但是目前数据集太大，我进行了截取
-    # result = rag.inference(mode = 'evaluation')
+    result = rag.inference(mode = 'evaluation')
+    print(result)

@@ -27,20 +27,26 @@ def get_config():
     # evaluation config
     parser.add_argument('--algorithm_name', type=str, default='naive_rag', choices= ALGOROTHM_LIST, help='name of rag algorithm' )
     parser.add_argument('--task', type=str, default='', choices= TASK_LIST,  help='name of evaluation dataset, different task will select different format and instruction')
-    parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')
+    parser.add_argument("--eval_datapath", type = str, help = 'path to test or dev dataset')
+    parser.add_argument('--eval_train_datapath', type= str, help='path to train dataset')
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
 
     # llm config
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     parser.add_argument('--download_dir', type=str, default=".cache",help="specify vllm model download dir")
     parser.add_argument("--world_size",  type=int, default=1,help="world size to use multiple GPUs. world_size will be used in LLM() function")
-    parser.add_argument("--dtype", type=str, default= "half", help="all base model inference using half")
+    parser.add_argument("--dtype", type=str, default= "half", help="all base model inference using half(fp16)")
     parser.add_argument('--generate_maxlength', type = int, default = 50, help = 'llm generate max length')
     parser.add_argument('--temperature', type=float, default=0.0, help='temperature of decoding algorithm')
     parser.add_argument('--top_p', type=float, default=1.0, help='top-p of decoding algorithm')
     parser.add_argument('--generation_stop', type=str, default='', help='early_stop is one of the setting of generate() function, early_stop to control the outputs of llm')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     
+    # api config
+    parser.add_argument('--llm_api', type=str, help='API language model name')
+    parser.add_argument('--api_key', type=str, help='API key for accessing the model')
+    parser.add_argument('--api_base', type=str, help='Base URL for the API')
+
     # retrieval config
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages(only)')
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
@@ -87,6 +93,15 @@ def get_config():
     parser.add_argument('--masked_prob', type=float, default=0.4, help='masked prob is low-confidence threshold in paper(https://arxiv.org/abs/2305.06983)')
 
     # dsp config
+    # TODO model_mode will add each rag algorithm in next version
+    parser.add_argument('--model_mode', type=str, default='HFModel', choices=['HFModel', 'OpenAI'], help='raglab support OpenAI api and huggingface model' )
+    parser.add_argument('--inference_CoT', type=bool, help='Whether to use Chain of Thought for inference')
+    parser.add_argument('--signature_retrieval', type=bool, help='Whether to use signature retrieval')
+    parser.add_argument('--max_hops', type=int, help='Maximum number of hops')
+    parser.add_argument('--eval_threads', type=int, help='Number of evaluation threads')
+
+    # evaluate parameters
+    parser.add_argument('--metrics', type=str, help='Evaluation metrics')
 
 
     # config file
@@ -98,7 +113,6 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
-    pdb.set_trace()
     rag = get_algorithm(args)
     evaluation_result = rag.inference(mode = 'evaluation')
     print(evaluation_result)
