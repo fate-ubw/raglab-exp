@@ -56,10 +56,10 @@ def gold_passages_retrieved(example, pred, trace=None):
 #         return dspy.Prediction(context=context, answer=pred.answer)
     
 
-class SimplifiedBaleen(dspy.Module):
+class SimplifiedBaleen(dspy.Module): # 其实这个就是最终的dsp inference
     def __init__(self, retrieve, max_hops=2):
         super().__init__()
-
+        # 这个其实 dsp 的整个结构，init 定义所需要的modular，forward 会组合这几个 block 得出最后的结果
         self.generate_query = [dspy.ChainOfThought(GenerateSearchQuery, temperature=0.7) for _ in range(max_hops)]
         self.retrieve = retrieve
         self.generate_answer = dspy.ChainOfThought(GenerateAnswer, temperature=0.7)
@@ -67,16 +67,16 @@ class SimplifiedBaleen(dspy.Module):
     
     def forward(self, question): #debug 的时候得跳进来，来这里才能看得清楚
         context = []
-        pdb.set_trace()
         for hop in range(self.max_hops): #
-            query = self.generate_query[hop](context=context, question=question).query # 第二次生成 query 的时候，context 上一次 question 检索到的 3 个 passages
-            # -> passages = self.retrieve.search(query) # 检索对应的passages
+            query = self.generate_query[hop](context=context, question=question).query
+            # 第一次的时候好像都没有调用 llama 
             # (Pdb) query -> '"number of storeys in castle David Gregory inherited"'
             passages = self.retrieve.search(query) # 检索对应的 passages,这里的 passages 和 colbert 得到的是一样的dict[int, dict['content', 'score']]
             passages = [passages[rank]['content'] for rank in sorted(passages)] # list[str]
             context = deduplicate(context + passages) # 喔喔看来第二次的hotpot 生成之前就会将passages 拼接到 context 当中，这个 deduplicate 是去除重复的 passages
         pred = self.generate_answer(context=context, question=question)
         # (Pdb) pred = Prediction(rationale='Answer: Bob Dylan',answer='Bob Dylan')
+        # 这个应该是想要记录最后的结果，这里的 Prediction 继承了 Example 其实就是存储数据的结构，
         return dspy.Prediction(context=context, answer=pred.answer) #这里为什么又定义了一个Prediction呢，但是这里的参数是不同的，得到结果的长度是 4
     
 

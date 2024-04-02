@@ -1,137 +1,127 @@
-from raglab.dataset.utils import get_dataset
-from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
-import raglab.rag.infer_alg.dsp.utils as dsp_utils
+import sys
+import os
+import pdb
+from tqdm import tqdm
+import dspy
+from dspy import Example
 from dspy.teleprompt import BootstrapFewShot
 from dspy.evaluate.evaluate import Evaluate
 import dspy.evaluate.metrics as Metrics
-import sys
-import os
-repo_path = './raglab/rag/infer_alg/dsp'
-if repo_path not in sys.path:
-    sys.path.append(repo_path)
-os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(repo_path, 'cache')
-import dspy
 from dspy.datasets import HotPotQA
-import pdb
+from raglab.dataset.utils import get_dataset
+from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
+import raglab.rag.infer_alg.dsp.utils as dsp_utils
 
-proxy = "http://100.124.78.167:3389"
-os.environ['http_proxy'] = proxy
-os.environ['https_proxy'] = proxy
-os.environ['all_proxy'] = proxy
-os.environ['CUDA_VISIBLE_DEVICES'] = '6'
+# repo_path = './raglab/rag/infer_alg/dsp'
+# if repo_path not in sys.path:
+#     sys.path.append(repo_path)
+# os.environ["DSP_NOTEBOOK_CACHEDIR"] = os.path.join(repo_path, 'cache')
+
+# proxy = "http://100.124.78.167:3389"
+# os.environ['http_proxy'] = proxy
+# os.environ['https_proxy'] = proxy
+# os.environ['all_proxy'] = proxy
 
 class Dsp(NaiveRag):
     def __init__(self, args):
-        
         self.args = args 
-
-        # RAG method
-        self.rag = args.rag
-
-        # dataset
         self.task = args.task
         self.eval_datapath = args.eval_datapath
+        self.eval_train_datapath = args.eval_train_datapath
+        self.output_dir = args.output_dir
 
-        # language model
-        self.model_model = args.model_mode # this parameter control HFModel or Openai
+        # llm config
         self.llm_path = args.llm_path
+        self.dtype = args.dtype
+        self.use_vllm = args.use_vllm
+        self.generate_maxlength = args.generate_maxlength
+        self.temperature = args.temperature
+        self.top_p = args.top_p
+        self.generation_stop = args.generation_stop
+
+        # retrieval args
+        self.n_docs = args.n_docs
+        self.retrieval_name = args.retrieval_name
+        self.realtime_retrieval = args.realtime_retrieval
+
+        # api or local LLM
+        self.model_mode = args.model_mode
+        # openai parameters
         self.llm_api = args.llm_api
         self.api_key = args.api_key
         self.api_base = args.api_base
-        # generate parameters
-        self.generate_maxlength = args.generate_maxlength
-        self.temperature = args.temperature
-        self.output_dir = args.output_dir
 
-        # # retrieval model
-        # self.retrieval_url = args.retrieval_url
-        # # retrieval parameters
-        # self.passages_per_hop = args.passages_per_hop
+        # setup model and database 
+        self.llm = self.load_llm()
+        if self.realtime_retrieval:
+            self.retrieval = self.setup_retrieval() # retrieval model
+        self.init(args)
 
-        # retrieval model
-        self.retrieval_name = args.retrieval_name
-        self.index_dbPath = args.index_dbPath
-        self.text_dbPath = args.text_dbPath
-        self.retriever_modelPath = args.retriever_modelPath
-        # retrieval parameters
-        self.nbits = args.nbits
-        self.num_gpu = args.num_gpu
-        # self.doc_maxlen = args.doc_maxlen
-        self.n_docs = args.n_docs
-
+    def init(self, args):
         # dsp parameters
         self.inference_CoT = args.inference_CoT
         self.signature_retrieval = args.signature_retrieval
         self.max_hops = args.max_hops
         self.eval_threads = args.eval_threads
-
         # evaluate parameters
         self.mrtrics = args.metrics
-        
-        self.lm = self.load_llm()
-        self.rm = self.load_rm()
-        dspy.settings.configure(lm=self.lm, rm=self.rm) # 这个 setup 还是不太一样，需要将参数传递给 dsp
-
+        dspy.settings.configure(lm=self.llm, rm=self.retrieval) 
 
     def inference(self, query='', mode='interact'):
-        pdb.set_trace()
         assert mode in ['interact', 'evaluation']
-        generator = dspy.ChainOfThought(dsp_utils.BasicQA, temperature=self.temperature)
-        # 其实就是定义了很多组件，后期可以组装起来，感觉这个也没有那么玄学，
-        if self.signature_retrieval:
-            dataset = HotPotQA(train_seed=1, train_size=20, eval_seed=2023, dev_size=50, test_size=0)
-            trainset = [x.with_inputs('question') for x in dataset.train]
-            print(f"\nLength of traing dataset is {len(trainset)}\n")
-            print(trainset)
-            teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops) #这个地方就会 wrap dsp 的 3 个阶段，demonstration、search、predict
-            compiled_rag = teleprompter.compile(dsp_utils.SimplifiedBaleen(retrieve=self.rm), teacher=dsp_utils.SimplifiedBaleen(retrieve=self.rm), trainset=trainset)
-            # 在这里编译的时候会对所有的 trainset 中的 QA pair 进行了 augmentation ，也就是说这一步其实已经准备好了所有的代码， 
-            # 初始化一个元模型，并且给定训练集合来编译模型，大概理解是什么意思了
-            # (Pdb) compiled_rag 
-            # generate_query[0] = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateSearchQuery'>)
-            # generate_query[1] = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateSearchQuery'>)
-            # generate_answer = ChainOfThought(<class 'raglab.rag.infer_alg.dsp.utils.GenerateAnswer'>)
-            # 非常像 torch 里面里面的 sequence 这个类，将不同的 block 都添加到 dspy 这个框架里面，然后再通过一个编译器将这些 block 编译起来
-            if 'interact' == mode:
-                outputs = compiled_rag(query) # 得到的是prediction 的 class 
-                # >>> type(output) = <class 'dspy.primitives.prediction.Prediction'>
-                print(self.lm.inspect_history(n=3)) 
+        self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath, self.eval_train_datapath)
+        train_dataset = self.EvalData.load_train_dataset()
+        train_dataset = self.dic2Example(train_dataset) # transfer list[dict] -> list[Example]
+        # define model
+        teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops) 
+        compiled_rag = teleprompter.compile(dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), teacher=dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), trainset=train_dataset) 
 
-            elif 'evaluation' == mode:
-                assert self.signature_retrieval is True
-                pdb.set_trace()
-                devset = [x.with_inputs('question') for x in dataset.dev]
-                # list[Example]
-                # list[dict] 
-                print(f"Length of dev dataset is {len(trainset)}")
-                evaluator = Evaluate(devset=devset, num_threads=self.eval_threads)
-                metric = dspy.evaluate.answer_exact_match 
-                return evaluator(compiled_rag, metric=metric)
-        else:
-            print(query)
-            pred = generator(question=query)
-            print(f"Question: \n{query} \n\n")
-            print(f"Thought: \n{pred.rationale} \n\n")
-            print(f"Predicted Answer: \n{pred.answer} \n\n")
-            return pred.answer
-    
+        if 'interact' == mode:
+            outputs = compiled_rag(query)
+            return outputs['answer'] 
+        elif 'evaluation' == mode:
+            self.eval_dataset = self.EvalData.load_dataset()
+            print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
+            inference_results = []
+            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
+                question = eval_data[self.EvalData.inputStruction.question]
+                final_generation = compiled_rag(question)
+                final_generation = final_generation[self.EvalData.outputStruction.answer]
+                inference_results = self.EvalData.record_result(eval_data, final_generation, inference_results)
+                eval_result = self.EvalData.eval_acc(inference_results) 
+                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+            self.EvalData.save_result(inference_results)
+            eval_result = self.EvalData.eval_acc(inference_results)
+            print(f'{self.task} Accuracy: {eval_result}')
+            return eval_result
+
+    def dic2Example(self,dict_dataset:list[dict] )->list[Example]:
+        '''
+        The process of define dsp model need train dataset for demo whoes struction musk be list[Example]
+        '''
+        Example_dataset = []
+        for sample_dict in dict_dataset:
+            temp = {
+                self.EvalData.inputStruction.question: sample_dict[self.EvalData.inputStruction.question],
+                self.EvalData.inputStruction.answer: sample_dict[self.EvalData.inputStruction.answer]
+            }
+            Example_dataset.append(Example(temp).with_inputs(self.EvalData.inputStruction.question))
+        return Example_dataset[:5]
+
     def load_llm(self):
         try:
-            if self.model_model == "HFModel":
-                return dspy.HFModel(model=self.llm_path)
-            elif self.model_model == "OpenAI":
+            if self.model_mode == "HFModel":
+                model = dspy.HFModel(model=self.llm_path) # dsp do not have the parameter of dtype, manual transfer fp32->fp16
+                if self.dtype == 'half' or 'float16':
+                    model = model.half()
+                return model
+            elif self.model_mode == "OpenAI":
                 return dspy.OpenAI(model=self.llm_api, api_key=self.api_key, api_base=self.api_base)
             else:
                 raise ValueError(f"Invalid model_mode: {self.model_mode}. Must be 'HFModel' or 'OpenAI'.")
         except ValueError as e:
             print(e)
-    
-    def load_rm(self):
-        return super().setup_retrieval()
-    
-    # def load_rm(self):
-    #     return dspy.ColBERTv2(url=self.retrieval_url)
-        
+
     def get_instruction(self):
         return self.lm.inspect_history(n=1)
             
@@ -147,99 +137,3 @@ class Dsp(NaiveRag):
             return dspy.ChainOfThought(self.setup_Signature(), temperature=self.temperature)
         else:
             return dspy.Predict(self.setup_Signature(),temperature=self.temperature)
-        
-
-
-    # def test_for_no_retrieve(self):
-    #     from dspy.datasets import HotPotQA
-    #     # Load the dataset.
-    #     dataset = HotPotQA(train_seed=1, train_size=20, eval_seed=2023, dev_size=50, test_size=0)
-    #     # dataset = HotPotQA()
-    #     # Tell DSPy that the 'question' field is the input. Any other fields are labels and/or metadata.
-    #     trainset = [x.with_inputs('question') for x in dataset.train]
-    #     devset = [x.with_inputs('question') for x in dataset.dev]
-    #     print(len(trainset), len(devset))
-    #     dev_example = devset[18]
-    #     generate_answer_with_chain_of_thought = dspy.ChainOfThought(dsp_utils.BasicQA, temperature=0.7)
-    #     # Call the predictor on the same input.
-    #     pred = generate_answer_with_chain_of_thought(question="How many storeys are in the castle that David Gregory inherited?")
-    #     # Print the input, the chain of thought, and the prediction.
-    #     print(f"Question: \n{dev_example.question} \n\n")
-    #     print(f"Thought: \n{pred.rationale} \n\n")
-    #     print(f"Predicted Answer: \n{pred.answer} \n\n")
-        
-    # def test(self):
-    #     # turbo = dspy.OpenAI(model='gpt-3.5-turbo', api_key="sk-tFi5dr7s6tfZM9IA99570920Ea464869A88a3aB77128800b", api_base="https://api.aigcbest.top/v1")
-    #     # turbo = dspy.HFModel(model="/home/wyd/raglab-exp/model/Llama-2-7b-hf")
-    #     # colbertv2_wiki17_abstracts = dspy.ColBERTv2(url='http://20.102.90.50:2017/wiki17_abstracts')
-    #     dspy.settings.configure(lm=self.lm, rm=self.rm)
-    #     from dspy.datasets import HotPotQA
-    #     # Load the dataset.
-    #     dataset = HotPotQA(train_seed=1, train_size=20, eval_seed=2023, dev_size=50, test_size=0)
-    #     os.environ['http_proxy'] = ''
-    #     os.environ['https_proxy'] = ''
-    #     os.environ['all_proxy'] = ''
-    #     # dataset = HotPotQA()
-    #     # Tell DSPy that the 'question' field is the input. Any other fields are labels and/or metadata.
-    #     trainset = [x.with_inputs('question') for x in dataset.train]
-    #     devset = [x.with_inputs('question') for x in dataset.dev]
-    #     print(len(trainset), len(devset))
-    #     dev_example = devset[18]
-
-    #     def validate_context_and_answer_and_hops(example, pred, trace=None):
-    #         if not dspy.evaluate.answer_exact_match(example, pred): return False
-    #         if not dspy.evaluate.answer_passage_match(example, pred): return False
-
-    #         hops = [example.question] + [outputs.query for *_, outputs in trace if 'query' in outputs]
-
-    #         if max([len(h) for h in hops]) > 100: return False
-    #         if any(dspy.evaluate.answer_exact_match_str(hops[idx], hops[:idx], frac=0.8) for idx in range(2, len(hops))): return False
-
-    #         return True
-        
-    #     class GenerateSearchQuery(dspy.Signature):
-    #         """Write a simple search query that will help answer a complex question."""
-
-    #         context = dspy.InputField(desc="may contain relevant facts")
-    #         question = dspy.InputField()
-    #         query = dspy.OutputField()
-
-    #     class GenerateAnswer(dspy.Signature):
-    #         """Answer questions with short factoid answers."""
-
-    #         context = dspy.InputField(desc="may contain relevant facts")
-    #         question = dspy.InputField()
-    #         answer = dspy.OutputField(desc="often between 1 and 5 words")
-        
-    #     from dsp.utils import deduplicate
-
-    #     class SimplifiedBaleen(dspy.Module):
-    #         def __init__(self, passages_per_hop=3, max_hops=2):
-    #             super().__init__()
-
-    #             self.generate_query = [dspy.ChainOfThought(GenerateSearchQuery, temperature=0.7) for _ in range(max_hops)]
-    #             self.retrieve = dspy.Retrieve(k=passages_per_hop)
-    #             self.generate_answer = dspy.ChainOfThought(GenerateAnswer, temperature=0.7)
-    #             self.max_hops = max_hops
-            
-    #         def forward(self, question):
-    #             context = []
-                
-    #             for hop in range(self.max_hops):
-    #                 query = self.generate_query[hop](context=context, question=question).query
-    #                 passages = self.retrieve(query).passages
-    #                 context = deduplicate(context + passages)
-
-    #             pred = self.generate_answer(context=context, question=question)
-    #             return dspy.Prediction(context=context, answer=pred.answer)
-
-        
-    #     teleprompter = BootstrapFewShot(metric=validate_context_and_answer_and_hops)
-    #     compiled_baleen = teleprompter.compile(SimplifiedBaleen(), teacher=SimplifiedBaleen(passages_per_hop=2), trainset=trainset)
-    #     compiled_baleen("How many storeys are in the castle that David Gregory inherited?")
-    #     print(self.lm.inspect_history(n=3))
-        
-
-    # def test_retrieve(self):
-    #     dspy.settings.configure(rm=dspy.ColBERTv2(url='http://20.102.90.50:2017/wiki17_abstracts'))
-    #     print(dspy.Retrieve(k=1)("How many storeys are in the castle that David Gregory inherited?")) 
