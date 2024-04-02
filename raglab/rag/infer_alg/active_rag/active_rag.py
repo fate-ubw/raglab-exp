@@ -140,7 +140,6 @@ class ActiveRag(NaiveRag):
         '''
         '''
         Doc = self.nlp(llm_outputs.text)
-        # 这里有可能没有句子？？？这怎么可能真的奇怪
         first_sent = list(Doc.sents)[0].text
         first_sent_tokenid = self.tokenizer.encode(first_sent)
         first_sent_len = len(first_sent_tokenid)
