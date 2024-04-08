@@ -5,9 +5,6 @@ from tqdm import tqdm
 import dspy
 from dspy import Example
 from dspy.teleprompt import BootstrapFewShot
-from dspy.evaluate.evaluate import Evaluate
-import dspy.evaluate.metrics as Metrics
-from dspy.datasets import HotPotQA
 from raglab.dataset.utils import get_dataset
 from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 import raglab.rag.infer_alg.dsp.utils as dsp_utils
@@ -43,6 +40,13 @@ class Dsp(NaiveRag):
 
         # setup model and database 
         self.llm = self.load_llm()
+        self.llm.kwargs['max_tokens'] = self.generate_maxlength
+        self.llm.kwargs['temperature'] = self.temperature
+        self.llm.kwargs['top_p'] = self.top_p
+        if self.temperature == 0:
+            # temperature == 0 means greedy decoding 
+            self.llm.kwargs['do_sample'] = False
+
         if self.realtime_retrieval:
             self.retrieval = self.setup_retrieval() # retrieval model
         self.init(args)
@@ -54,7 +58,6 @@ class Dsp(NaiveRag):
         self.max_hops = args.max_hops
         self.eval_threads = args.eval_threads
         # evaluate parameters
-        self.mrtrics = args.metrics
         dspy.settings.configure(lm=self.llm, rm=self.retrieval) 
 
     def inference(self, query='', mode='interact'):
@@ -64,7 +67,9 @@ class Dsp(NaiveRag):
         train_dataset = self.dic2Example(train_dataset) # transfer list[dict] -> list[Example]
         # define model
         teleprompter = BootstrapFewShot(metric=dsp_utils.validate_context_and_answer_and_hops) 
-        compiled_rag = teleprompter.compile(dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), teacher=dsp_utils.SimplifiedBaleen(retrieve=self.retrieval), trainset=train_dataset) 
+        student = dsp_utils.SimplifiedBaleen(self.retrieval, self.llm, max_hops=self.max_hops, temperature=self.temperature)
+        teacher = dsp_utils.SimplifiedBaleen(self.retrieval, self.llm, max_hops=self.max_hops, temperature=self.temperature)
+        compiled_rag = teleprompter.compile(student, teacher=teacher, trainset=train_dataset)
         
         if 'interact' == mode:
             outputs = compiled_rag(query)
@@ -113,10 +118,10 @@ class Dsp(NaiveRag):
     def load_llm(self):
         try:
             if self.model_mode == "HFModel":
-                model = dspy.HFModel(model=self.llm_path) # dsp do not have the parameter of dtype, manual transfer fp32->fp16
+                llm = dspy.HFModel(model=self.llm_path) # dsp do not have the parameter of dtype, manual transfer fp32->fp16
                 if self.dtype == 'half' or 'float16':
-                    model = model.half()
-                return model
+                    llm.model.half() # 不能返回并且赋值，只能直接使用 half）
+                return llm
             elif self.model_mode == "OpenAI":
                 return dspy.OpenAI(model=self.llm_api, api_key=self.api_key, api_base=self.api_base)
             else:
