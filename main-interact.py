@@ -114,6 +114,17 @@ if __name__=='__main__':
     set_randomSeed(args)
     pdb.set_trace()
     rag = get_algorithm(args)
-    # inference_result = rag.inference("Predict the development trends in the technology industry over the next 10 years, focusing on the technological development directions and market demand changes in the company's areas of operation (e.g., artificial intelligence, cloud computing, big data, etc.).", mode = 'interact')
-    inference_result = rag.inference( query="How many storeys are in the castle that David Gregory inherited?", mode = 'interact')
+    inference_result = rag.inference("Do both films The Poet (2007 Film) and Without Her (Film) have the directors from the same country?", mode = 'interact') # 2wikimultiHop
+    inference_result = rag.inference("Who has the highest goals in men's world international football?", mode = 'interact') # ASQA
+    inference_result = rag.inference("An astronomer observes that a planet rotates faster after a meteorite impact. Which is the most likely effect of this increase in rotation?", mode = 'interact') # arc challenge
+    inference_result = rag.inference("Tell me a bio of Jessie Mae Brown Beavers.", mode = 'interact') # factscore
+    inference_result = rag.inference("Blackfin is a family of processors developed by the company that is headquartered in what city?", mode = 'interact') #hootpotQA
+    inference_result = rag.inference("As of 2016, about what percentage of adults aged 18 years or older were overweight?", mode = 'interact') # mmlu
+    inference_result = rag.inference("What is Henry Feilden's occupation?", mode = 'interact') # PopQA
+    inference_result = rag.inference("A mother revealed to her child in a letter after her death that she had just one eye because she had donated the other to him.", mode = 'interact') # PubHealth
+    inference_result = rag.inference("can you use Microsoft Office without internet?", mode = 'interact') # StrategyQA
+    inference_result = rag.inference("In Buddhism, what is the state of blissful repose or absolute existence by someone relieved of the necessity of rebirth?", mode = 'interact') # tqa
+    inference_result = rag.inference("The Golden Calf Occupation Award is one of 16 awards given to film occupations such as cameraman and music composer.", mode = 'interact') # fever
+    inference_result = rag.inference( query="How many storeys are in the castle that David Gregory inherited?", mode = 'interact') # 2hotpot question
+    inference_result = rag.inference(query = 'Explain what dark matter and dark energy are. How do modern cosmologists detect and study the properties of these mysterious substances, and what impacts do they have on the evolution of the universe?', mode = 'interact')
     print(inference_result)
