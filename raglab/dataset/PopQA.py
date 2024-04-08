@@ -97,6 +97,8 @@ class PopQA(QA):
                 answer = [data[self.outputStruction.answer]]
             elif type(data[self.outputStruction.answer]) is list:
                 answer = data[self.outputStruction.answer]
+            elif type(data[self.outputStruction.answer]) is bool: # The answer of StrategyQA is bool
+                answer = [str(data[self.outputStruction.answer])]
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
             metric_result = match(data[self.outputStruction.generation], answer)

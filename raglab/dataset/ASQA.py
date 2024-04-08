@@ -58,7 +58,7 @@ class ASQA(PopQA):
 
     def get_instruction(self, prompt):
         if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
+            prompt = TASK_INSTRUCTION + "## Input:\n\n" + prompt
         prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
         return prompt_with_instruction
 

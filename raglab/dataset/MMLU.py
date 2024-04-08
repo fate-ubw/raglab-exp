@@ -31,8 +31,6 @@ class MMLU(PubHealth):
         self.outputStruction.generation = 'generation'
     
     def preprocess(self, eval_data):
-        # target: 其实就是将 question 个 answer 拼接起来
-        # 其实也很简单就是将 question 和 choices 给拼接起来
         choices = eval_data["choices"]
         postprocess_text = ''
         for answer_text, label in zip(choices['text'], choices['label']):
