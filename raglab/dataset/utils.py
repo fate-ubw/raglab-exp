@@ -12,7 +12,7 @@ def load_jsonlines(file:str)-> list[dict]:
         lst = [obj for obj in jsonl_f]
     return lst 
 
-def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, eval_train_datapath: str) -> object:
+def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, eval_train_datapath=None) -> object:
     # base class
     from raglab.dataset.base_dataset.MultiChoiceQA import MultiChoiceQA
     from raglab.dataset.base_dataset.QA import QA
