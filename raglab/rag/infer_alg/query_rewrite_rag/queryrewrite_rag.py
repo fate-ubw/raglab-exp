@@ -1,12 +1,8 @@
 from typing import Optional, Any
-import numpy as np
-from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
 import pdb
-import pudb
-import re
 from raglab.dataset.utils import get_dataset # load dataset class
-from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
+from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag, ModeNotFoundError
 
 class QueryRewrite_rag(NaiveRag):
     def __init__(self, args):
@@ -15,54 +11,60 @@ class QueryRewrite_rag(NaiveRag):
     def inference(self, query: Optional[str] = None, mode = 'interact'):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            # rewrite the query
-            if self.realtime_retrieval:
-                instruction = self.find_instruction('query_rewrite_rag-rewrite-Multiple_choice_QA', self.task) # name 再+一个Multiple_choice_QA即可
-                query_with_instruction = instruction.format_map({'query':query})
-                rewrite_query = self.rewrite(query_with_instruction)
-                # retrieval
-                passages = self.retrieval.search(rewrite_query)
-                collated_passages = self.collate_passages(passages)
-                instruction = self.find_instruction('query_rewrite_rag-read-2', self.task)
-                query_with_instruction = instruction.format_map({'query':query, 'passages':collated_passages})
-            else:
-                instruction = self.find_instruction('query_rewrite_rag-read-without_retrieval', self.task)
-                query_with_instruction = instruction.format_map({'query':query})
-            # read
-            outputs = self.llm_inference(query_with_instruction)
-            return outputs
+            final_response, generation_track = self.infer(query)
+            return final_response, generation_track
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
-            self.eval_dataset = self.EvalData.load_dataset() # right
+            self.eval_dataset = self.EvalData.load_dataset() 
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 question = eval_data[self.EvalData.inputStruction.question]
-
-                if self.realtime_retrieval:
-                    # rewrite the query
-                    instruction = self.find_instruction('query_rewrite_rag-rewrite-Multiple_choice_QA', self.task)
-                    query_with_instruction = instruction.format_map({'query':question})
-                    rewrite_query = self.rewrite(query_with_instruction)
-                    # retrieval
-                    passages = self.retrieval.search(rewrite_query)
-                    collated_passages = self.collate_passages(passages)
-                    instruction = self.find_instruction('query_rewrite_rag-read-2', self.task)
-                    query_with_instruction = instruction.format_map({'query':question, 'passages':collated_passages})
-                else:
-                    instruction = self.find_instruction('query_rewrite_rag-read-without_retrieval', self.task)
-                    query_with_instruction = instruction.format_map({'query':question})
-                # read
-                outputs = self.llm_inference(query_with_instruction)
-                inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
-                eval_result = self.EvalData.eval_acc(inference_results)
-                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+                # infer
+                final_response, generation_track = self.infer(question)
+                inference_results = self.EvalData.record_result(eval_data, final_response, inference_results)
+                # calculate metric
+                acc = self.EvalData.eval_acc(inference_results)
+                EM = self.EvalData.eval_exact_match(inference_results)
+                f1_score = self.EvalData.eval_f1_score(inference_results)
+                print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            # end of for loop
             self.EvalData.save_result(inference_results)
-            eval_result = self.EvalData.eval_acc(inference_results) 
-            print(f'{self.task} Accuracy: {eval_result}')
-        return eval_result 
+            # calculate metric
+            acc = self.EvalData.eval_acc(inference_results)
+            EM = self.EvalData.eval_exact_match(inference_results)
+            f1_score = self.EvalData.eval_f1_score(inference_results)
+            print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
+            return eval_result 
+        else:
+            raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
+            
 
-    def rewrite(self, query):
+    def infer(self, query:str)->tuple[str, dict[str,Any]]:
+        '''
+        infer function of rrr
+        paper:[https://arxiv.org/abs/2305.14283]
+        source code: [https://github.com/xbmxb/RAG-query-rewriting/tree/main]
+        '''
+        # rewrite the query
+        generation_track = {}
+        instruction = self.find_instruction('query_rewrite_rag-rewrite', self.task)
+        query_with_instruction = instruction.format_map({'query':query})
+        rewrite_query = self._rewrite(query_with_instruction)
+        generation_track['rewrite query'] = rewrite_query
+        # retrieval
+        passages = self.retrieval.search(rewrite_query)
+        generation_track['cited passages'] = passages
+        collated_passages = self.collate_passages(passages)
+        instruction = self.find_instruction('query_rewrite_rag-read', self.task)
+        query_with_instruction = instruction.format_map({'query':query, 'passages':collated_passages})
+        # read
+        output = self.llm_inference(query_with_instruction)
+        generation_track['final answer'] = output
+        return output, generation_track
+
+    def _rewrite(self, query):
         rewrite_query = self.llm_inference(query)
         return rewrite_query
 

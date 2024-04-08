@@ -66,7 +66,6 @@ class SelfRag_Original(NaiveRag):
             _, evidences = process_data_evidences(eval_data, self.n_docs) # use pre-given passages from the eval_data.jsonl
             
             if 'short_form' == self.inference_form:
-                pu.db
                 input = PROMPT_DICT["prompt_no_input"].format_map(eval_data) 
                 response, generation_track, do_retrieve = self.short_form_generation(prompt=input, source_question=source_question, evidences=evidences,
                                                         use_seqscore = self.use_seqscore, threshold = self.threshold,
@@ -77,7 +76,6 @@ class SelfRag_Original(NaiveRag):
                     response = "true" 
                 elif "REFUTES" in response: 
                     response = "false"
-                # TODO seperate data from logic
                 temp['question'] = source_question
                 temp['answers'] = eval_data['answers']
                 temp['generation'] = response

@@ -1,14 +1,10 @@
-from typing import Optional, Any
-import numpy as np
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from typing import Optional
 from tqdm import tqdm
 import pdb
-import pudb
-import re
 from dataclasses import dataclass
 import spacy
 from raglab.dataset.utils import get_dataset # load dataset class
-from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
+from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag, ModeNotFoundError
 
 class ActiveRag(NaiveRag):
     def __init__(self, args):
@@ -29,9 +25,8 @@ class ActiveRag(NaiveRag):
     def inference(self, query:Optional[str]=None, mode = 'interact'):
         assert mode in ['interact', 'evaluation']
         self.nlp = spacy.load("en_core_web_sm")
-
         if 'interact' == mode:
-            final_generation = self.active_rag_generation(query)
+            final_generation = self.infer(query)
             return final_generation
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
@@ -39,28 +34,39 @@ class ActiveRag(NaiveRag):
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                generation_track = {} #TODO generation 最重要的是记录信息，尤其是中间的信息，但是只有在评测 ASQA 的时候才会需要这个东西
                 question = eval_data[self.EvalData.inputStruction.question]
-                final_generation = self.active_rag_generation(question)
+                # infer
+                final_generation = self.infer(question)
                 inference_results = self.EvalData.record_result(eval_data, final_generation, inference_results)
-                eval_result = self.EvalData.eval_acc(inference_results)
-                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+                # calculate metric
+                acc = self.EvalData.eval_acc(inference_results)
+                EM = self.EvalData.eval_exact_match(inference_results)
+                f1_score = self.EvalData.eval_f1_score(inference_results)
+                print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            # end of for loop
             self.EvalData.save_result(inference_results)
-            eval_result = self.EvalData.eval_acc(inference_results)
-            print(f'{self.task} Accuracy: {eval_result}')
+            # calculate metric
+            acc = self.EvalData.eval_acc(inference_results)
+            EM = self.EvalData.eval_exact_match(inference_results)
+            f1_score = self.EvalData.eval_f1_score(inference_results)
+            print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
             return eval_result
-        # end of elif
+        else:
+            raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
+            
 
-    def active_rag_generation(self, query:str)->str:
+
+    def infer(self, query:str)->tuple[str,dict]:
         next_iter_flag = True
         answer_len = 0
         final_generation = ''
-        iter_step = 0
-        generation_track = {}
+        iter_step = 1
+        generation_track = {} # TODO: active rag generation track
         generation_track[iter_step] = {'instruction': None, 'retrieval_input': query, 'passages':None, 'generation':None}
         print(f'source question -> {query}')
         while next_iter_flag and answer_len < self.max_fianl_answer_length:
-            if iter_step == 0:
+            if iter_step == 1:
                 retrieval_input = query
                 passages = self.retrieval.search(retrieval_input)
             collated_passages = self.collate_passages(passages)
@@ -73,10 +79,10 @@ class ActiveRag(NaiveRag):
             if len(outputs.text)==0:
                 break
             # get first sentence from look_ahead
-            look_ahead = self.truncate_text(outputs)
+            look_ahead = self._truncate_text(outputs)
             print(f'look ahead -> {look_ahead.text}')
             # mask low prob tokens in look_ahead
-            masked_look_ahead = self.mask_lowprob_tokens(look_ahead)
+            masked_look_ahead = self._mask_lowprob_tokens(look_ahead)
             if len(masked_look_ahead.tokens_id) > 0: 
                 # re-retrieve passages based on look_ahead
                 print(f'retrieval input/masked look ahead:{ masked_look_ahead.text}')
@@ -110,7 +116,7 @@ class ActiveRag(NaiveRag):
                 next_iter_flag = False
             iter_step += 1
         # end of while
-        return final_generation
+        return final_generation, generation_track
         
     def llm_inference(self, inputs:str)-> LLMoutputs : 
         '''
@@ -136,7 +142,7 @@ class ActiveRag(NaiveRag):
             tokens_prob.append(token_prob)
         return self.LLMoutputs(text, tokens_id.tolist(), tokens_prob)
 
-    def truncate_text(self, llm_outputs)->LLMoutputs: 
+    def _truncate_text(self, llm_outputs)->LLMoutputs: 
         '''
         '''
         Doc = self.nlp(llm_outputs.text)
@@ -146,7 +152,7 @@ class ActiveRag(NaiveRag):
         first_sent_prob = llm_outputs.tokens_prob[0:first_sent_len]
         return self.LLMoutputs(first_sent, first_sent_tokenid,first_sent_prob)
 
-    def mask_lowprob_tokens(self, llm_outputs):
+    def _mask_lowprob_tokens(self, llm_outputs):
         '''
         raglab rerpoduce the Masked sentences as implicit queries in active rag algorithm(https://arxiv.org/abs/2305.06983)
         '''

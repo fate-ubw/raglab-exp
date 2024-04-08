@@ -1,18 +1,17 @@
 import os
-import argparse
 from datetime import datetime
 import pdb
 from tqdm import tqdm
 import json
-from typing import Optional
+from pprint import pprint
+from typing import Optional, Any
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from vllm import LLM, SamplingParams
 import torch
 from raglab.dataset.utils import get_dataset # load dataset class
-from raglab.rag.infer_alg.naive_rag.utils import load_evaldataset, save_inference_result
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
-import pudb
+
 import pdb
 class NaiveRag:
     def __init__(self, args):
@@ -22,7 +21,7 @@ class NaiveRag:
         self.output_dir = args.output_dir
 
         # llm config
-        self.llm_path = args.llm_path # __init__ 只进行参数的传递，尤其是传递路径什么的
+        self.llm_path = args.llm_path
         self.dtype = args.dtype
         self.use_vllm = args.use_vllm
         self.generate_maxlength = args.generate_maxlength
@@ -35,7 +34,6 @@ class NaiveRag:
         self.retrieval_name = args.retrieval_name
         self.realtime_retrieval = args.realtime_retrieval
 
-
         # setup model and database 
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
         if self.realtime_retrieval:
@@ -45,19 +43,11 @@ class NaiveRag:
     def init(self, args):
         pass
 
-    def inference(self, query: Optional[str] = None, mode = 'interact'):# mode 不会冲突因为这个mode 是函数内在的 mode
+    def inference(self, query: Optional[str] = None, mode = 'interact'):
         assert mode in ['interact', 'evaluation']
         if 'interact' == mode:
-            if self.realtime_retrieval:
-                passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
-                collated_passages = self.collate_passages(passages)
-                target_instruction = self.find_instruction('Naive_rag-interact', '')
-                inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
-            else:
-                target_instruction = self.find_instruction('Naive_rag-interact-without_retrieval', '')
-                inputs = target_instruction.format_map({'query': query})
-            outputs = self.llm_inference(inputs)
-            return outputs
+            final_answer, generation_track = self.infer(query)
+            return final_answer, generation_track
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset()
@@ -67,27 +57,46 @@ class NaiveRag:
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 eval_data = self.EvalData.preprocess(eval_data) # some dataset need preprocess such as: arc_challenge
                 question = eval_data[self.EvalData.inputStruction.question] 
-                if self.realtime_retrieval:
-                    passages = self.retrieval.search(question) #self.retrieval.search(query) -> dict[int,dict] 
-                    # passages: dict of dict
-                    collated_passages = self.collate_passages(passages)
-                    target_instruction = self.find_instruction('Naive_rag-evaluation', self.task)
-                    inputs = target_instruction.format_map({'passages': collated_passages, 'query': question})
-                else:
-                    target_instruction = self.find_instruction('Naive_rag-evaluation-without_retrieval', self.task)
-                    inputs = target_instruction.format_map({'query': question})
-                outputs = self.llm_inference(inputs)
+                # infer
+                outputs, generation_track = self.infer(question)
+                pprint(generation_track)
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
-                eval_result = self.EvalData.eval_acc(inference_results)
-                print(f'{self.task} Accuracy in {idx} turn: {eval_result}')
+                print(f'output:{inference_results} \n eval_data: {eval_data[self.EvalData.inputStruction.answer]}')
+                # calculate metric
+                acc = self.EvalData.eval_acc(inference_results)
+                EM = self.EvalData.eval_exact_match(inference_results)
+                f1_score = self.EvalData.eval_f1_score(inference_results)
+                print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
             # end of for loop
             self.EvalData.save_result(inference_results)
-            eval_result = self.EvalData.eval_acc(inference_results) 
-            print(f'{self.task} Accuracy: {eval_result}')
+            # calculate metric
+            acc = self.EvalData.eval_acc(inference_results)
+            EM = self.EvalData.eval_exact_match(inference_results)
+            f1_score = self.EvalData.eval_f1_score(inference_results)
+            pprint(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
             return eval_result
         else:
             raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
-            
+
+    def infer(self, query: str)->tuple[str,dict[str,Any]]:
+        '''
+        infer function of naive rag
+        '''
+        generation_track = {}
+        if self.realtime_retrieval:
+            passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
+            collated_passages = self.collate_passages(passages)
+            target_instruction = self.find_instruction('Naive_rag', self.task)
+            input = target_instruction.format_map({'passages': collated_passages, 'query': query})
+            generation_track['cited passages'] = passages
+        else:
+            target_instruction = self.find_instruction('Naive_rag-without_retrieval', self.task)
+            input = target_instruction.format_map({'query': query})
+        outputs = self.llm_inference(input)
+        generation_track['final answer'] = outputs
+        return outputs, generation_track
+
     def load_llm(self):
         llm = None
         tokenizer = None
@@ -100,7 +109,7 @@ class NaiveRag:
                 sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
             tokenizer = llm.get_tokenizer()
         else:
-            if self.dtype == 'half' or self.dtype == 'float16': # 这个逻辑扩展性太差，因为另一个可能是 float16
+            if self.dtype == 'half' or self.dtype == 'float16':
                 llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto", torch_dtype=torch.float16)
             else:
                 llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
@@ -124,19 +133,19 @@ class NaiveRag:
             collate += f'Passages{rank_id}: ' + tmp['content'] +'\n'  
         return collate
 
-    def llm_inference(self, inputs): 
+    def llm_inference(self, input): 
         if self.use_vllm:
-            output = self.llm.generate(inputs, self.sampling_params)
+            output = self.llm.generate(input, self.sampling_params)
             output_text = output[0].outputs[0].text
         else:
-            input_ids = self.tokenizer.encode(inputs, return_tensors="pt")
+            input_ids = self.tokenizer.encode(input, return_tensors="pt")
             instruction_len = input_ids.shape[1]
             output_ids = self.llm.generate(input_ids, do_sample = False, max_length =instruction_len + self.generate_maxlength)
             output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
         if '</s>' in output_text:
-            return output_text.replace("<s> " + inputs, "").replace("</s>", "").strip()
+            return output_text.replace("<s> " + input, "").replace("</s>", "").strip()
         else:
-            return output_text.replace("<s> " + inputs, "").strip()
+            return output_text.replace("<s> " + input, "").strip()
 
     def find_instruction(self, rag_name:str, dataset_name:str) -> str:
         file_path = './instruction_lab/instruction_lab.json'
