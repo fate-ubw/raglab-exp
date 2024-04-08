@@ -4,7 +4,7 @@ algorithm_name: dsp
 task: HotPotQA
 # eval_datapath: 
 # language model
-llm_path: ./model/Llama-2-7b-hf
+llm_path: ./model/Llama-2-7b-chat-hf
 model_mode: HFModel # HFModel # OpenAI
 llm_api: gpt-3.5-turbo
 api_key: sk-tFi5dr7s6tfZM9IA99570920Ea464869A88a3aB77128800b

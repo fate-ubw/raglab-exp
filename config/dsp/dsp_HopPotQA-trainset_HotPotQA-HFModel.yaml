@@ -11,26 +11,17 @@ eval_train_datapath: ./data/eval_datasets/HotPotQA/hotpot_train_v1.1.json
 # language model
 model_mode: HFModel # HFModel # OpenAI
 llm_path: ./model/Llama-2-7b-hf
-llm_api: gpt-3.5-turbo
-api_key: sk-tFi5dr7s6tfZM9IA99570920Ea464869A88a3aB77128800b
-api_base: https://api.aigcbest.top/v1
 # generate parameters
-generate_maxlength: 1024
-temperature: 0.7
+generate_maxlength: 500
+temperature: 0.0
 output_dir: /home/zxw/raglab-exp/1-eval_output
-
-# # retrieval model
-# retrieval_url: http://20.102.90.50:2017/wiki17_abstracts
-# # retrieval paramters
-# passages_per_hop: 2
-
 # retrieval model
 realtime_retrieval: True
 retrieval_name: colbert
 index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding
 text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/lotte/lifestyle/dev/collection.tsv
 retriever_modelPath: ./model/colbertv2.0
-n_docs: 2
+n_docs: 10
 nbits: 2
 # dsp paramters
 inference_CoT: False
@@ -40,7 +31,5 @@ signature_retrieval: True
 #     True             False        Generate as llm with chain-of-thought
 #     False            True         Generate as RAG
 #     True             True         Generate as RAG with chain-of-thought
-max_hops: 3
+max_hops: 2
 eval_threads: 1
-# evaluate parametes
-metrics: EM # EM F1
