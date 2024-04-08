@@ -61,6 +61,7 @@ class NaiveRag:
         elif 'evaluation' == mode:
             self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset()
+            pdb.set_trace()
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
@@ -83,8 +84,10 @@ class NaiveRag:
             self.EvalData.save_result(inference_results)
             eval_result = self.EvalData.eval_acc(inference_results) 
             print(f'{self.task} Accuracy: {eval_result}')
-        return eval_result 
-    
+            return eval_result
+        else:
+            raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
+            
     def load_llm(self):
         llm = None
         tokenizer = None
@@ -137,11 +140,19 @@ class NaiveRag:
 
     def find_instruction(self, rag_name:str, dataset_name:str) -> str:
         file_path = './instruction_lab/instruction_lab.json'
+        target_instruction = ''
         with open(file_path, 'r') as file:
             instructions = json.load(file)
         for instruction in instructions:
             if instruction['rag_name'] == rag_name and instruction['dataset_name'] == dataset_name:
                 target_instruction = instruction['instruction']
                 break
+        if target_instruction == '':
+            raise InstructionNotFoundError('Instruction name not recognized. Please provide a valid instruction name.')
         return target_instruction
 
+class ModeNotFoundError(Exception):
+    pass
+
+class InstructionNotFoundError(Exception):
+    pass
