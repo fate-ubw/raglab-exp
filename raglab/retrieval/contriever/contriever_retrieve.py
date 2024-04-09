@@ -1,23 +1,16 @@
 import os
-import argparse
 from tqdm import tqdm
 import time
 import glob
-import json
-import jsonlines
 import pickle
-from pathlib import Path
 import numpy as np
 import torch
-import transformers
 
 from raglab.retrieval.contriever.src.index import Indexer
 from raglab.retrieval.contriever.src.contriever import load_retriever
 from raglab.retrieval.contriever.src.slurm import init_distributed_mode
 from raglab.retrieval.contriever.src.data import load_passages
-from raglab.retrieval.contriever.src.evaluation import calculate_matches
 from raglab.retrieval.contriever.src.normalize_text import normalize
-from raglab.retrieval.contriever.utils import PROMPT_DICT, TASK_INST, load_jsonlines, control_tokens, load_special_tokens
 from raglab.retrieval.retrieve import Retrieve
 import pudb
 
@@ -29,7 +22,7 @@ class ContrieverRrtieve(Retrieve):
         self.text_dbPath = args.text_dbPath
         self.retriever_modelPath = args.retriever_modelPath
         self.projection_size = args.projection_size
-        self.indexing_batch_size = args.indexing_batch_size # TODO indexing_batch_size是否可以和 colbert 的 batchsize 统一起来
+        self.indexing_batch_size = args.indexing_batch_size # TODO Can indexing_batch_size be unified with colbert's batchsize?
         self.n_subquantizers = args.n_subquantizers 
         self.n_bits = args.n_bits 
         self.n_docs = args.n_docs
@@ -41,18 +34,16 @@ class ContrieverRrtieve(Retrieve):
         self.model.eval()
         self.model = self.model.cuda()
         self.model = self.model.half() # (32-bit) floating-point -> (16-bit) floating-point  
-        self.index = Indexer(self.projection_size, self.n_subquantizers, self.n_bits) # 貌似self rag 里面也存在这个东西
+        self.index = Indexer(self.projection_size, self.n_subquantizers, self.n_bits) 
         input_paths = glob.glob(self.index_dbPath) # path of embedding
         input_paths = sorted(input_paths)
-        # embeddings_dir = os.path.dirname(input_paths[0]) 
-        # index_path = os.path.join(embeddings_dir, "index.faiss")
         print(f"Indexing passages from files {input_paths}")
         start_time_indexing = time.time()
         self.index_encoded_data(self.index, input_paths, self.indexing_batch_size) # load all embedding files（index_encoded_data）& （add_embeddings）
         print(f"Indexing time: {time.time()-start_time_indexing:.1f} s.")
         print("loading passages") 
         self.passages = load_passages(self.text_dbPath) # return list of passages
-        self.passage_id_map = {x["id"]: x for x in tqdm(self.passages)} # 将passages定义为{'n':conent} 
+        self.passage_id_map = {x["id"]: x for x in tqdm(self.passages)} # define passages->{'n':conent}  
         print("passages have been loaded") 
 
     def search(self, query)-> dict[int,dict]:
