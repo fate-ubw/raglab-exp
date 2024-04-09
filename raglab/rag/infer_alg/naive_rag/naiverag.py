@@ -127,10 +127,13 @@ class NaiveRag:
     
     def collate_passages(self, passages:dict[int, Optional[dict]])-> str:
         collate = ''
-        for rank_id, tmp in passages.items(): 
-            if tmp is None:
+        for rank_id, doc in passages.items(): 
+            if doc is None:
                 continue
-            collate += f'Passages{rank_id}: ' + tmp['content'] +'\n'  
+            if 'title' in doc:
+                collate += f'#Passages{rank_id}: ' '##Title: '+ doc['title'] + ' ##Content: ' + doc['content'] +'\n' 
+            else:
+                collate += f'#Passages{rank_id}: ' + doc['content'] +'\n'
         return collate
 
     def llm_inference(self, input): 
