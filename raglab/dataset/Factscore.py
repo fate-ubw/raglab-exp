@@ -13,16 +13,12 @@ class OutputStruction:
     output:str
     topic:str
 
-input_strction = {'qeustion': 'query','answer':"answers"}
-
 class Factscore(PopQA):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
         self.set_data_struction()
 
-    # @abstruct 这个类是必须重写的
     def set_data_struction(self):
-        # if task == 'PopQA':
         self.inputStrction = InputStruction
         self.inputStrction.question = 'query'
         self.inputStrction.answer = 'answer'
@@ -33,7 +29,7 @@ class Factscore(PopQA):
     def record_result(self, eval_data, final_prediction_with_citation, catation_docs, response_id, generation_track, inference_results):
         postprocessed_result = final_prediction_with_citation[response_id]
         inference_results.append({"input": eval_data["input"], "output": postprocessed_result, "topic": eval_data["topic"],
-                        "cat": eval_data["cat"], "intermediate": generation_track["original_splitted_sentences"][response_id]}) 
+                        "cat": eval_data["cat"], "intermediate": generation_track["original_splitted_sentences"][response_id]}) # 这部分还是有一些问题因为，不是所有的数据都有这个 key，那么我就需要一个机制，当 key 不存在的时候取出来的 key 是 none
         return inference_results
 
     def save_result(self, inference_result: list[dict])-> None: 
