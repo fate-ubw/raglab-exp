@@ -11,7 +11,7 @@
     {
         "rag_name": "Naive_rag",
         "dataset_name": "",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "Naive_rag-without_retrieval",
@@ -398,6 +398,11 @@
         "rag_name": "self_ask-read",
         "dataset_name": "PopQA",
         "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "self_ask-read-without_unkonw",
+        "dataset_name": "PopQA",
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n If multiple possible answers are derived from the Background Knowledge, please generate the most likely one, without providing information such as unknown or uncertain. \n ### Response:\n"
     },
     {
         "rag_name": "self_ask-followup_question",
