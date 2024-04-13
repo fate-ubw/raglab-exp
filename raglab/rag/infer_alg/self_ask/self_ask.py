@@ -61,7 +61,7 @@ class SelfAsk(NaiveRag):
                     break
                 passages = self.retrieval.search(followup_question)
                 collated_passages = self.collate_passages(passages)
-                target_instruction = self.find_instruction('self_ask-read', self.task) 
+                target_instruction = self.find_instruction('self_ask-read-without_unkonw', self.task) 
                 input_with_passages = target_instruction.format_map({'passages': collated_passages, 'query': followup_question})
                 intermediate_answer = self.llm_inference(input_with_passages) 
                 generation_track[turn_idx] = {
