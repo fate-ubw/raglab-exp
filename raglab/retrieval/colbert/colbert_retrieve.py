@@ -30,6 +30,7 @@ class ColbertRetrieve(Retrieve):
             with Run().context(RunConfig(experiment = self.index_dbPath)): 
                 self.searcher = Searcher(index = index_name)
         except:
+            print('warning!!! Your preprocessed wiki database has issues, so RagLab will enabe colbert to generate a vector database, which will take a long time. Please download the preprocessed wiki database from RagLab.')
             with Run().context(RunConfig(nranks = self.num_gpu, experiment = self.index_dbPath)):  # nranks specifies the number of GPUs to use.
                 config = ColBERTConfig(doc_maxlen = self.doc_maxlen, nbits = self.nbits, kmeans_niters = 4) # colbert default setting
                 indexer = Indexer(checkpoint = self.retriever_modelPath, config = config)
