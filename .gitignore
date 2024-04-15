@@ -1,3 +1,7 @@
+# api key
+api_keys*.txt
+
+
 # data
 data/
 test/
