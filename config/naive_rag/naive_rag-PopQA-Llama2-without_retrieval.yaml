@@ -7,6 +7,7 @@ task: PopQA
 eval_datapath: ./data/eval_datasets/popqa_longtail_w_gs.jsonl
 output_dir: ./1-eval_output/
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/Llama-2-7b-chat-hf
 use_vllm: True
 temperature: 0.0

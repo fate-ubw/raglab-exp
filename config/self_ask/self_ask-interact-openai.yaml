@@ -2,23 +2,26 @@ use_seed: True
 seed: 633
 num_gpu: 1
 # eval config
-algorithm_name: naive_rag
+algorithm_name: self_ask
 task: ''
 # llm config
-llm_mode: HF_Model
-llm_path: ./model/Llama-2-7b-chat-hf
-dtype: 'half'
-use_vllm: True
+llm_mode: Openai_api
+llm_name: gpt-3.5-turbo
+api_key_path: ./api_keys.txt
+api_base: https://api.aigcbest.top/v1
+api_logprobs: True
+api_top_logprobs: 1
 temperature: 0.0
 top_p: 1.0
-generation_stop: ''
+generation_stop: 'Intermediate Answer:'
 generate_maxlength: 300
 # retrieval config
 realtime_retrieval: True
 retrieval_name: colbert
 index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding/wikipedia2018
 text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/wikipedia2018/wiki2018_10samples_idxfrom_0.tsv
+eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
 retriever_modelPath: ./model/colbertv2.0
 # max length should bigger than the length of input_ids
-n_docs: 1
+n_docs: 5
 nbits: 2

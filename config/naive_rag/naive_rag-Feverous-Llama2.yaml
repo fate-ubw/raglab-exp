@@ -7,6 +7,7 @@ eval_datapath: ./data/eval_datasets/feverous/feverous_dev_challenges.jsonl
 task: Feverous
 output_dir: ./1-eval_output/
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/Llama-2-7b-chat-hf
 use_vllm: True
 temperature: 0.0

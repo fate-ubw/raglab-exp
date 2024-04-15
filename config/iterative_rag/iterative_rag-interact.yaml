@@ -5,6 +5,7 @@ num_gpu: 1
 algorithm_name: iter_retgen
 task: ''
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/Llama-2-7b-chat-hf
 dtype: "half"
 use_vllm: True
