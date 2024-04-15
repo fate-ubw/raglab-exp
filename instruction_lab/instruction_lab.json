@@ -395,6 +395,11 @@
         "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
     },
     {
+        "rag_name": "self_ask-read-without_unkonw",
+        "dataset_name": "",
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n If multiple possible answers are derived from the Background Knowledge, please generate the most likely one, without providing information such as unknown or not mentioned. \n ### Response:\n"
+    },
+    {
         "rag_name": "self_ask-read",
         "dataset_name": "PopQA",
         "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Answer the question based on Background Knowledge. ### Background Knowledge:\n {passages} \n\n### Response:\n"
