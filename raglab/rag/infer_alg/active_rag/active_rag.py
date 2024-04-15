@@ -1,10 +1,8 @@
 from typing import Optional
-from tqdm import tqdm
 import pdb
 from dataclasses import dataclass
 import spacy
-from raglab.dataset.utils import get_dataset # load dataset class
-from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag, ModeNotFoundError
+from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag, LanguageModelError
 
 class ActiveRag(NaiveRag):
     def __init__(self, args):
@@ -15,49 +13,16 @@ class ActiveRag(NaiveRag):
         self.filter_prob = args.filter_prob
         self.masked_prob = args.masked_prob
         self.max_fianl_answer_length = args.max_fianl_answer_length
+        self.nlp = spacy.load("en_core_web_sm")
 
     @dataclass
     class LLMoutputs:
-        text: str
-        tokens_id: list[int]
-        tokens_prob: list[float]
-    
-    def inference(self, query:Optional[str]=None, mode = 'interact'):
-        assert mode in ['interact', 'evaluation']
-        self.nlp = spacy.load("en_core_web_sm")
-        if 'interact' == mode:
-            final_generation = self.infer(query)
-            return final_generation
-        elif 'evaluation' == mode:
-            self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
-            self.eval_dataset = self.EvalData.load_dataset()
-            print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
-            inference_results = []
-            for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
-                question = eval_data[self.EvalData.inputStruction.question]
-                # infer
-                final_generation = self.infer(question)
-                inference_results = self.EvalData.record_result(eval_data, final_generation, inference_results)
-                # calculate metric
-                acc = self.EvalData.eval_acc(inference_results)
-                EM = self.EvalData.eval_exact_match(inference_results)
-                f1_score = self.EvalData.eval_f1_score(inference_results)
-                print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
-            # end of for loop
-            self.EvalData.save_result(inference_results)
-            # calculate metric
-            acc = self.EvalData.eval_acc(inference_results)
-            EM = self.EvalData.eval_exact_match(inference_results)
-            f1_score = self.EvalData.eval_f1_score(inference_results)
-            print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
-            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
-            return eval_result
-        else:
-            raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
-            
-
+        text: Optional[str] = None
+        tokens_id: Optional[list[int]] = None
+        tokens_prob: Optional[list[float]] = None
 
     def infer(self, query:str)->tuple[str,dict]:
+        pdb.set_trace()
         next_iter_flag = True
         answer_len = 0
         final_generation = ''
@@ -68,24 +33,24 @@ class ActiveRag(NaiveRag):
         while next_iter_flag and answer_len < self.max_fianl_answer_length:
             if iter_step == 1:
                 retrieval_input = query
-                passages = self.retrieval.search(retrieval_input)
-            collated_passages = self.collate_passages(passages)
+                passages = self.retrieval.search(retrieval_input) # 为什么当初要先检索呢？
+            collated_passages = self.collate_passages(passages) # 请问这里的 passages 指的是什么呢？？？？？
             target_instruction = self.find_instruction('active_rag-read', self.task)
             inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
             inputs = inputs + final_generation 
             # get look_ahead
-            outputs = self.llm_inference(inputs)
+            outputs = self.llm_inference(inputs) # 第一次就要先进行rag吗？难道不应该是让 llm 直接生成吗？？？？这里有问题啊
             print(f'whole look ahead -> {outputs.text}')
             if len(outputs.text)==0:
                 break
             # get first sentence from look_ahead
-            look_ahead = self._truncate_text(outputs)
+            look_ahead = self._truncate_text(outputs) # 其实就是需要获得第一个句子的 text，id，probs
             print(f'look ahead -> {look_ahead.text}')
             # mask low prob tokens in look_ahead
             masked_look_ahead = self._mask_lowprob_tokens(look_ahead)
-            if len(masked_look_ahead.tokens_id) > 0: 
+            if len(masked_look_ahead.tokens_id) > 0:
                 # re-retrieve passages based on look_ahead
-                print(f'retrieval input/masked look ahead:{ masked_look_ahead.text}')
+                print(f'retrieval input/masked look ahead -> { masked_look_ahead.text}')
                 # retrieval
                 passages = self.retrieval.search(masked_look_ahead.text)
                 collated_passages = self.collate_passages(passages)
@@ -103,7 +68,7 @@ class ActiveRag(NaiveRag):
             # get the first sentence from outputs 
             Doc = self.nlp(outputs.text)
             first_sentence = list(Doc.sents)[0].text
-            final_generation += first_sentence
+            final_generation += ' ' + first_sentence
             print(f'final generation -> {final_generation}')
             # clculate the len of current generation length
             truncated_outputs_id = self.tokenizer.encode(first_sentence)
@@ -118,29 +83,37 @@ class ActiveRag(NaiveRag):
         # end of while
         return final_generation, generation_track
         
-    def llm_inference(self, inputs:str)-> LLMoutputs : 
+    def llm_inference(self, input:str)-> LLMoutputs : 
         '''
         Because of the inconsistency between the VLLM and tokenizer, 
         the current version of Active RAG cannot use the VLLM for inference acceleration. 
         The next version of RAGLab will work on improving this issue.
         '''
-        input_ids = self.tokenizer.encode(inputs, return_tensors="pt").cuda() # The output of tokenizer need convert to GPU, because tokenize which is stored in CPU is a pure python object.
-        instruction_len = input_ids.shape[1]
-        outputs = self.llm.generate(input_ids, do_sample = False, max_length = instruction_len + self.generate_maxlength, output_scores=True, return_dict_in_generate=True)
-        # get generation tokens id
-        tokens_id = outputs.sequences[0][instruction_len:] 
-        text = self.tokenizer.decode(tokens_id, skip_special_tokens = False)
-        # replace special tokens
-        if '</s>' in text:
-            text =  text.replace("<s> ", "").replace("</s>", "").strip()
+        if self.llm_mode == 'HF_Model':
+            input_ids = self.tokenizer.encode(input, return_tensors="pt").cuda() # The output of tokenizer need convert to GPU, because tokenize which is stored in CPU is a pure python object.
+            instruction_len = input_ids.shape[1]
+            outputs = self.llm.generate(input_ids, do_sample = False, max_length = instruction_len + self.generate_maxlength, output_scores=True, return_dict_in_generate=True)
+            # get generation tokens id
+            tokens_id = outputs.sequences[0][instruction_len:] 
+            text = self.tokenizer.decode(tokens_id, skip_special_tokens = False)
+            # replace special tokens
+            if '</s>' in text:
+                text =  text.replace("<s> ", "").replace("</s>", "").strip()
+            else:
+                text =  text.replace("<s> ", "").strip()
+            # calculate the probs of each tokens
+            tokens_prob = []
+            for idx, token_id in enumerate(tokens_id):
+                token_prob = outputs.scores[idx].log_softmax(-1).exp()[0][token_id].item() # `outputs.scores` only records the logits of the generated tokens, so its length is equal to `generation_maxlength`.
+                tokens_prob.append(token_prob)
+        elif self.llm_mode == 'Openai_api':
+            Apioutputs = self.llm.generate(input)
+            text = Apioutputs.text
+            tokens_id = Apioutputs.tokens_id
+            tokens_prob = Apioutputs.tokens_prob
         else:
-            text =  text.replace("<s> ", "").strip()
-        # calculate the probs of each tokens
-        tokens_prob = []
-        for idx, token_id in enumerate(tokens_id):
-            token_prob = outputs.scores[idx].log_softmax(-1).exp()[0][token_id].item()
-            tokens_prob.append(token_prob)
-        return self.LLMoutputs(text, tokens_id.tolist(), tokens_prob)
+            raise LanguageModelError("Language model must be huggingface or openai api.")
+        return self.LLMoutputs(text, list(tokens_id), tokens_prob)
 
     def _truncate_text(self, llm_outputs)->LLMoutputs: 
         '''
@@ -148,9 +121,9 @@ class ActiveRag(NaiveRag):
         Doc = self.nlp(llm_outputs.text)
         first_sent = list(Doc.sents)[0].text
         first_sent_tokenid = self.tokenizer.encode(first_sent)
-        first_sent_len = len(first_sent_tokenid)
+        first_sent_len = len(first_sent_tokenid) # 其实最重要的是拿到第一个 tokens 的长度，这部分其实好像是可以不用动的，只需要
         first_sent_prob = llm_outputs.tokens_prob[0:first_sent_len]
-        return self.LLMoutputs(first_sent, first_sent_tokenid,first_sent_prob)
+        return self.LLMoutputs(first_sent, first_sent_tokenid, first_sent_prob)
 
     def _mask_lowprob_tokens(self, llm_outputs):
         '''
