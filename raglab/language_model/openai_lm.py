@@ -3,47 +3,23 @@ import openai
 import sys
 import time
 import logging
-from pprint import pprint
-from typing import Optional
+from tqdm import tqdm
+from typing import Union
 import numpy as np
-from dataclasses import dataclass
+from raglab.language_model.base_lm import BaseLM
 import tiktoken
 import pdb
-
-class OpenaiModel:
+class OpenaiModel(BaseLM):
     def __init__(self,args):
-        self.llm_name = args.llm_name
-        self.api_key_path = args.api_key_path
-        self.api_base = args.api_base
-        self.temperature = args.temperature
+        super().__init__(args)
         self.generation_stop = args.generation_stop
         if self.generation_stop == '':
             self.generation_stop = None
-        self.generate_maxlength = args.generate_maxlength
-        self.top_p = args.top_p
+        self.llm_name = args.llm_name
+        self.api_key_path = args.api_key_path
+        self.api_base = args.api_base
         self.api_logprobs = args.api_logprobs
         self.api_top_logprobs = args.api_top_logprobs
-
-    @dataclass
-    class Apioutputs:
-        '''
-        Apioutputs unify all kinds of output of openai api
-        '''
-        text: Optional[str] = None
-        tokens_id: Optional[list[int]] = None
-        completion_tokens: Optional[int] = None
-        prompt_tokens: Optional[int] = None
-        tokens:Optional[list[str]] = None
-        tokens_prob: Optional[list[float]]= None
-        tokens_logprob: Optional[list[float]]= None
-        
-        def __repr__(self):
-            # TODO 但是不知道为什么没有被调用，直接打印也不行，非常的奇怪
-            return (f"Apioutputs(text={self.text}, "
-                f"tokens_id={self.tokens_id}, "
-                f"tokens_prob={self.tokens_prob}, "
-                f"completion_tokens={self.completion_tokens}, "
-                f"prompt_tokens={self.prompt_tokens})")
 
     def load_model(self):
         # load api key
@@ -57,27 +33,62 @@ class OpenaiModel:
         print(f"Current API: {api_key.strip()}")
         self.tokenizer = tiktoken.encoding_for_model(self.llm_name)
 
-    def generate(self,input:str)-> Apioutputs:
+    def generate(self, inputs: Union[str,list[str]])-> list[BaseLM.Outputs]:
         '''
         Current version of OpenaiModel batch inference was not implemented
         '''
-        for i in range(1,11): # max time of recall is 10 times
-            print(f'The {i}-th API call')
-            message = [{"role": "user", "content": input}] #TODO logprobs 如何设置 
-            response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop, logprobs=self.api_logprobs, top_logprobs=self.api_top_logprobs)
-            # collate Apioutputs
-            self.Apioutputs.text = response["choices"][0]["message"]["content"]
-            self.Apioutputs.completion_tokens = response["usage"]["completion_tokens"]
-            self.Apioutputs.prompt_tokens = response["usage"]["prompt_tokens"]
-            if self.api_logprobs is True and response["choices"][0]['logprobs'] is not None:
-                # some situation api will not return logprobs althought the setting is right
-                self.Apioutputs.tokens = [content['token'] for content in response["choices"][0]['logprobs']['content']]
-                self.Apioutputs.tokens_logprob = [content['logprob'] for content in response["choices"][0]['logprobs']['content']]
-                self.Apioutputs.tokens_prob = np.exp(self.Apioutputs.tokens_logprob).tolist()
-                self.Apioutputs.tokens_id = self.tokenizer.encode(self.Apioutputs.text)
+        if isinstance(inputs,str):
+            inputs = [inputs]
+        apioutputs_list = []
+        for input_text in tqdm(inputs, desc="Generating outputs"):
+            message = [{"role": "user", "content": input_text}] #TODO batch inference
+            if self.api_logprobs is False:
+                response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop)
+                # collate Apioutputs
+                apioutput = self.Outputs()
+                apioutput.text = response["choices"][0]["message"]["content"]
+                apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
+                apioutputs_list.append(apioutput)
                 print(f'API call success')
                 break
-        return self.Apioutputs
+            else:
+                for i in range(1,11): # max time of recall is 10 times
+                    print(f'The {i}-th API call')
+                    response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop, logprobs=self.api_logprobs, top_logprobs=self.api_top_logprobs)
+                    # collate Apioutputs
+                    if response["choices"][0]['logprobs'] is not None:
+                        apioutput = self.Outputs()
+                        apioutput.text = response["choices"][0]["message"]["content"]
+                        apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
+                        apioutput.tokens_num = len(apioutput.tokens_ids)
+                        apioutput.tokens = [content['token'] for content in response["choices"][0]['logprobs']['content']]
+                        apioutput.tokens_logprob = [content['logprob'] for content in response["choices"][0]['logprobs']['content']]
+                        apioutput.tokens_prob = np.exp(apioutput.tokens_logprob).tolist()
+                        apioutput.cumulative_logprob = float(np.prod(apioutput.tokens_prob) / max(len(apioutput.tokens_prob), 1))
+                        apioutput.logprobs = []
+                        for content in response["choices"][0]['logprobs']['content']: # content:dict[token/logprobs/top_logprobs] 每个content都包含一个 token 的信息
+                            top_logprobs = content['top_logprobs']
+                            one_token_vocab = {}
+                            for log_prob in top_logprobs: # top_logprobs:list[dict[token/logprobs/bytes]]
+                                token_str = log_prob['token']
+                                try:
+                                    token_id = self.tokenizer.encode_single_token(token_str)
+                                except KeyError:
+                                    print(f"Token '{token_str}' not found in vocabulary")
+                                    continue
+                                token_logprob = log_prob['logprob']
+                                one_token_vocab[token_id] = float(token_logprob)
+                            apioutput.logprobs.append(one_token_vocab)
+                        # end of for loop
+                        apioutputs_list.append(apioutput)
+                        print(f'API call success')
+                        break
+                    else:
+                        pass # logprob is None so recall chatgpt in next turn
+                # end of recall loop
+            # end of else
+        # end of main loop
+        return apioutputs_list
 
     def call_ChatGPT(self,message, model_name="gpt-3.5-turbo", max_len=1024, temp=0.7, top_p = 1.0, stop = None, logprobs = False, top_logprobs = None, verbose=False):
         # call GPT-3 API until result is provided and then return it
