@@ -135,7 +135,8 @@ class NaiveRag:
                 output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
         elif self.llm_mode == 'Openai_api':
             # naive rag only need text
-            Output = self.llm.generate(input)
+            output_list = self.llm.generate(input)
+            Output = output_list[0]
             output_text = Output.text
         else:
             raise LanguageModelError("Language model must be huggingface or openai api.")

@@ -18,7 +18,7 @@ class ActiveRag(NaiveRag):
     @dataclass
     class LLMoutputs:
         text: Optional[str] = None
-        tokens_id: Optional[list[int]] = None
+        tokens_ids: Optional[list[int]] = None
         tokens_prob: Optional[list[float]] = None
 
     def infer(self, query:str)->tuple[str,dict]:
@@ -48,7 +48,7 @@ class ActiveRag(NaiveRag):
             print(f'look ahead -> {look_ahead.text}')
             # mask low prob tokens in look_ahead
             masked_look_ahead = self._mask_lowprob_tokens(look_ahead)
-            if len(masked_look_ahead.tokens_id) > 0:
+            if len(masked_look_ahead.tokens_ids) > 0:
                 # re-retrieve passages based on look_ahead
                 print(f'retrieval input/masked look ahead -> { masked_look_ahead.text}')
                 # retrieval
@@ -94,8 +94,8 @@ class ActiveRag(NaiveRag):
             instruction_len = input_ids.shape[1]
             outputs = self.llm.generate(input_ids, do_sample = False, max_length = instruction_len + self.generate_maxlength, output_scores=True, return_dict_in_generate=True)
             # get generation tokens id
-            tokens_id = outputs.sequences[0][instruction_len:] 
-            text = self.tokenizer.decode(tokens_id, skip_special_tokens = False)
+            tokens_ids = outputs.sequences[0][instruction_len:] 
+            text = self.tokenizer.decode(tokens_ids, skip_special_tokens = False)
             # replace special tokens
             if '</s>' in text:
                 text =  text.replace("<s> ", "").replace("</s>", "").strip()
@@ -103,17 +103,18 @@ class ActiveRag(NaiveRag):
                 text =  text.replace("<s> ", "").strip()
             # calculate the probs of each tokens
             tokens_prob = []
-            for idx, token_id in enumerate(tokens_id):
+            for idx, token_id in enumerate(tokens_ids):
                 token_prob = outputs.scores[idx].log_softmax(-1).exp()[0][token_id].item() # `outputs.scores` only records the logits of the generated tokens, so its length is equal to `generation_maxlength`.
                 tokens_prob.append(token_prob)
         elif self.llm_mode == 'Openai_api':
-            Apioutputs = self.llm.generate(input)
+            apioutput_list = self.llm.generate(input)
+            Apioutputs = apioutput_list[0]
             text = Apioutputs.text
-            tokens_id = Apioutputs.tokens_id
+            tokens_ids = Apioutputs.tokens_ids
             tokens_prob = Apioutputs.tokens_prob
         else:
             raise LanguageModelError("Language model must be huggingface or openai api.")
-        return self.LLMoutputs(text, list(tokens_id), tokens_prob)
+        return self.LLMoutputs(text, list(tokens_ids), tokens_prob)
 
     def _truncate_text(self, llm_outputs)->LLMoutputs: 
         '''
@@ -130,18 +131,18 @@ class ActiveRag(NaiveRag):
         raglab rerpoduce the Masked sentences as implicit queries in active rag algorithm(https://arxiv.org/abs/2305.06983)
         '''
         masked_text = ''
-        masked_tokens_id = []
+        masked_tokens_ids = []
         masked_tokens_prob = []
         filered_prob = [prob for prob in llm_outputs.tokens_prob if prob < self.filter_prob]
         if len(filered_prob)>0:
-            for token_id, token_prob in zip(llm_outputs.tokens_id, llm_outputs.tokens_prob):
+            for token_id, token_prob in zip(llm_outputs.tokens_ids, llm_outputs.tokens_prob):
                 if token_prob > self.masked_prob:
-                    masked_tokens_id.append(token_id)
+                    masked_tokens_ids.append(token_id)
                     masked_tokens_prob.append(token_prob)
-            masked_text = self.tokenizer.decode(masked_tokens_id)
+            masked_text = self.tokenizer.decode(masked_tokens_ids)
         # end of if
         if '</s>' in masked_text:
             masked_text =  masked_text.replace("<s> ", "").replace("</s>", "").strip()
         else:
             masked_text =  masked_text.replace("<s> ", "").strip()
-        return self.LLMoutputs(masked_text, masked_tokens_id, masked_tokens_prob)
+        return self.LLMoutputs(masked_text, masked_tokens_ids, masked_tokens_prob)
