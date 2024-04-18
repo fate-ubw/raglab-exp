@@ -126,8 +126,8 @@ def get_config():
 if __name__=='__main__':
     args = get_config()
     set_randomSeed(args)
-    pdb.set_trace()
     rag = get_algorithm(args)
     for query in TEST_QUESTIONS:
         inference_result, generation_track = rag.inference(query, mode = 'interact')# sampled from ChatGPT
         pprint(generation_track)
+        print(query)
