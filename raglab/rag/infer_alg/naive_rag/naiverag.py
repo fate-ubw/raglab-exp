@@ -1,12 +1,7 @@
 import os
-from datetime import datetime
 from tqdm import tqdm
-import json
 from pprint import pprint
 from typing import Optional, Any
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from vllm import LLM, SamplingParams
-import torch
 from raglab.dataset.utils import get_dataset # load dataset class
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve

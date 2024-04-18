@@ -3,7 +3,6 @@ from vllm import LLM, SamplingParams
 import numpy as np
 from typing import Any
 from tqdm import tqdm
-import pudb
 import pdb
 
 from raglab.dataset.base_dataset import MultiChoiceQA 
