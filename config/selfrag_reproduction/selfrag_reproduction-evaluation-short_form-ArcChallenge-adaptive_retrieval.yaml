@@ -1,12 +1,14 @@
 use_seed: True
 seed: 633
 # GPU config
-num_gpu: 2
+num_gpu: 1
 # eval config
-eval_datapath: ./data/eval_datasets/arc_challenge_processed.jsonl
+algorithm_name: selfrag_reproduction
+eval_datapath: ./data/eval_datasets/Arc_Challenge/arc_challenge_processed.jsonl
 task: ArcChallenge
 output_dir: ./1-eval_output/
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/selfrag_llama2_7b
 dtype: "half"
 generate_maxlength: 50
@@ -17,8 +19,8 @@ generation_stop: ''
 # retrieval common config
 realtime_retrieval: True
 retrieval_name: contriever
-index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings/*
-text_dbPath: ./data/retrieval/contriever_passages/psgs_w100.tsv
+index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
+text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
 retriever_modelPath: ./model/contriever-msmarco
 n_docs: 10
 # colbert configs 
@@ -31,9 +33,7 @@ n_subquantizers: 0
 per_gpu_batch_size: 64 #Batch size for question encoding 为什么 question 的时候是 64 维度，可能得看一下论文
 question_maxlength: 512 # Maximum number of tokens in a question
 # self rag configs
-download_dir: ".cache"
 world_size: 1
-
   # decoding args
 threshold: 0.2
 use_seqscore: True

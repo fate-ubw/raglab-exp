@@ -3,10 +3,12 @@ seed: 633
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: ./data/eval_datasets/asqa_eval_gtr_top100.json
+algorithm_name: selfrag_reproduction
+eval_datapath: ./data/eval_datasets/ASQA/asqa_eval_gtr_top100.json
 task: ASQA
 output_dir: ./1-eval_output/
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/selfrag_llama2_7b
 dtype: "half"
 generate_maxlength: 300
@@ -31,7 +33,6 @@ n_subquantizers: 0
 per_gpu_batch_size: 64 #Batch size for question encoding 为什么 question 的时候是 64 维度，可能得看一下论文
 question_maxlength: 512 # Maximum number of tokens in a question
 # self rag configs
-download_dir: ".cache"
 world_size: 1
   # decoding args
 threshold: 0.2

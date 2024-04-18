@@ -1,18 +1,21 @@
 use_seed: True
 seed: 633
 # GPU config
-num_gpu: 2
+num_gpu: 1
 # eval config
-output_dir: ./1-eval_output/
+algorithm_name: selfrag_reproduction
+task: ''
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/selfrag_llama2_7b/
-download_dir: ".cache"
-generate_maxlength: 500
+dtype: 'half'
 use_vllm: True
+generate_maxlength: 500
 temperature: 0.0
 top_p: 1.0
 generation_stop: ''
 # retrieval common config
+realtime_retrieval: True
 retrieval_name: contriever
 index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
 text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
@@ -27,8 +30,7 @@ n_bits: 8
 n_subquantizers: 0
 per_gpu_batch_size: 64
 question_maxlength: 512 # Maximum number of tokens in a question
-# self rag 
-download_dir: ".cache"
+# self rag
 world_size: 1
   # decoding args
 threshold: 0.2
@@ -43,7 +45,6 @@ w_use: 0.5
   # mode and 
 inference_form: 'short_form'
 retrieval_mode: "adaptive_retrieval"
-realtime_retrieval: True
 show_specialtokens: True
 ignore_cont: False
 use_citation: True

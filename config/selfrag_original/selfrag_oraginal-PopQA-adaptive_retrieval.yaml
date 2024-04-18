@@ -1,23 +1,24 @@
 use_seed: True
 seed: 633
 # GPU config
-num_gpu: 2
+num_gpu: 1
 # eval config
-eval_datapath: ./data/eval_datasets/popqa_longtail_w_gs.jsonl
+algorithm_name: selfrag_original
+eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs.jsonl
 task: PopQA
 output_dir: ./1-eval_output/
 # llm config
+llm_mode: HF_Model
 llm_path: ./model/selfrag_llama2_7b/
 dtype: "half"
-generate_maxlength: 100
 use_vllm: True
+generate_maxlength: 100
 temperature: 0.0
 top_p: 1.0
 generation_stop: ''
 # retrieval common config
 n_docs: 10
-# self rag 
-download_dir: ".cache"
+# self rag
 world_size: 1
 threshold: 0.2  
 use_seqscore: True

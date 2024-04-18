@@ -12,7 +12,7 @@ api_base: https://api.aigcbest.top/v1
 use_vllm: True
 temperature: 0.0
 top_p: 1.0
-generation_stop: ''
+generation_stop: '**'
 generate_maxlength: 300
 # retrieval config
 realtime_retrieval: True
