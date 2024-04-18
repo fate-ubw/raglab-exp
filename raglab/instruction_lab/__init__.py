@@ -1,0 +1,1 @@
+from raglab.instruction_lab.instruction_lab import INSTRUCTION_LAB
