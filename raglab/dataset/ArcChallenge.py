@@ -1,13 +1,26 @@
 from raglab.dataset.PubHealth import PubHealth
-
+from dataclasses import dataclass
 TASK_INSTRUCTION = "Given four answer candidates, A, B, C and D, choose the best answer choice."
 
 PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
+
 class ArcChallenge(PubHealth):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    
+
+    @dataclass
+    class InputStruction:
+        question:str = 'question'
+        answer:str = 'answerKey'
+        choices:str = 'choices'
+
+    @dataclass
+    class OutputStruction:
+        question:str = 'question'
+        answer:str = 'answerKey'
+        generation:str = 'generation'
+
     def preprocess(self, eval_data):
         choices = eval_data["choices"]
         answer_labels = {}
@@ -33,7 +46,8 @@ class ArcChallenge(PubHealth):
         if "E" in answer_labels:
             choices += "\nE: {}".format(answer_labels["E"])
         self.choices = choices
-        eval_data["answers"] = [eval_data["answerKey"]]
+        eval_data[self.OutputStruction.answer] = [eval_data[self.InputStruction.answer]]
+        eval_data[self.InputStruction.question] += choices
         return eval_data
 
     def get_instruction(self, prompt):

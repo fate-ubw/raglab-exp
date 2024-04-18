@@ -2,18 +2,8 @@ import os
 import jsonlines
 from raglab.dataset.PopQA import  PopQA
 from datetime import datetime
+from dataclasses import dataclass
 
-class InputStruction:
-    question:str
-    answer:str
-    pregiven_passages:str
-
-class OutputStruction:
-    question:str
-    answer:str
-    generation:str
-    cite_passages:str
-    generation_track:str
 
 TASK_INSTRUCTION = "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers."
 
@@ -23,22 +13,23 @@ class ASQA(PopQA):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
 
-    def set_data_struction(self):
+    @dataclass
+    class InputStruction:
         '''
         The goal of constructing InputStruction and OutputStruction is to achieve the separation of algorithm logic and data, 
         so that users only need to add new dataset structures according to the rules without modifying the algorithm logic.
         '''
-        self.inputStruction = InputStruction
-        self.inputStruction.question = 'question'
-        self.inputStruction.answer = 'answer'
-        self.inputStruction.pregiven_passages = 'docs'
-        
-        self.outputStruction = OutputStruction
-        self.outputStruction.question = 'question'
-        self.outputStruction.answer = 'answer'
-        self.outputStruction.generation = 'output'
-        self.outputStruction.cite_passages = 'docs'
-        self.outputStruction.generation_track = 'intermediate'
+        question:str = 'question'
+        answer:str = 'answer'
+        pregiven_passages:str = 'docs'
+
+    @dataclass
+    class OutputStruction:
+        question:str = 'question'
+        answer:str = 'answer'
+        generation:str = 'output'
+        cite_passages:str = 'docs'
+        generation_track:str = 'intermediate'
 
     def save_result(self, inference_result: list[dict])-> None: 
         print('storing result....')
@@ -69,20 +60,20 @@ class ASQA(PopQA):
         if "original_splitted_sentences" in generation_track:
             inference_results.append(
                 {
-                    self.inputStruction.question: eval_data[self.inputStruction.question],
-                    self.inputStruction.answer: eval_data[self.inputStruction.answer],
-                    self.outputStruction.generation: final_prediction_with_citation[response_id],
-                    self.outputStruction.cite_passages: catation_docs[response_id],
-                    self.outputStruction.generation_track: generation_track['original_splitted_sentences'][response_id]
+                    self.OutputStruction.question: eval_data[self.InputStruction.question],
+                    self.OutputStruction.answer: eval_data[self.InputStruction.answer],
+                    self.OutputStruction.generation: final_prediction_with_citation[response_id],
+                    self.OutputStruction.cite_passages: catation_docs[response_id],
+                    self.OutputStruction.generation_track: generation_track['original_splitted_sentences'][response_id]
                 }
                     )
         else:
             inference_results.append(
                 {
-                    self.inputStruction.question: eval_data[self.inputStruction.question],
-                    self.inputStruction.answer: eval_data[self.inputStruction.answer],
-                    self.outputStruction.generation: final_prediction_with_citation[response_id],
-                    self.outputStruction.cite_passages: catation_docs[response_id]
+                    self.OutputStruction.question: eval_data[self.InputStruction.question],
+                    self.OutputStruction.answer: eval_data[self.InputStruction.answer],
+                    self.OutputStruction.generation: final_prediction_with_citation[response_id],
+                    self.OutputStruction.cite_passages: catation_docs[response_id]
                 }
                     )
         return inference_results

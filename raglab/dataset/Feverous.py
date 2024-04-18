@@ -1,28 +1,21 @@
 from raglab.dataset.PubHealth import PubHealth
-
-class InputStruction:
-    question:str
-    answer:str
-
-class OutputStruction:
-    question:str
-    answer:str
-    generation:str
+from dataclasses import dataclass
 
 class Feverous(PubHealth):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
 
-    def set_data_struction(self):
+    @dataclass
+    class InputStruction:
         '''
         The goal of constructing InputStruction and OutputStruction is to achieve the separation of algorithm logic and data, 
         so that users only need to rewrite  set_data_struction() without modifying the algorithm logic.
         '''
-        self.inputStruction = InputStruction
-        self.inputStruction.question = 'claim'
-        self.inputStruction.answer = 'label'
+        question:str = 'claim'
+        answer:str = 'label'
 
-        self.outputStruction = OutputStruction
-        self.outputStruction.question = 'claim'
-        self.outputStruction.answer = 'label'
-        self.outputStruction.generation = 'generation'
+    @dataclass
+    class OutputStruction:
+        question:str = 'claim'
+        answer:str = 'label'
+        generation:str = 'generation'

@@ -1,34 +1,24 @@
 import pdb
+from dataclasses import dataclass
 from raglab.dataset.PubHealth import PubHealth
 
-class InputStruction:
-    question:str
-    answer:str
-    choices:str
 
-class OutputStruction:
-    question:str
-    answer:str
-    generation:str
 
 class MMLU(PubHealth):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
 
-    def set_data_struction(self):
-        '''
-        The goal of constructing InputStruction and OutputStruction is to achieve the separation of algorithm logic and data, 
-        so that users only need to rewrite  set_data_struction() without modifying the algorithm logic.
-        '''
-        self.inputStruction = InputStruction
-        self.inputStruction.question = 'question'
-        self.inputStruction.answer = 'answerKey'
-        self.inputStruction.choices = 'choices'
+    @dataclass
+    class InputStruction:
+        question:str = 'question'
+        answer:str = 'answerKey'
+        choices:str = 'choices'
 
-        self.outputStruction = OutputStruction
-        self.outputStruction.question = 'question'
-        self.outputStruction.answer = 'answerKey'
-        self.outputStruction.generation = 'generation'
+    @dataclass
+    class OutputStruction:
+        question:str = 'question'
+        answer:str = 'answerKey'
+        generation:str = 'generation'
     
     def preprocess(self, eval_data):
         choices = eval_data["choices"]

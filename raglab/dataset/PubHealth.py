@@ -3,21 +3,12 @@ import jsonlines
 import json
 from tqdm import tqdm
 from datetime import datetime
+from dataclasses import dataclass
 import numpy as np
-
 from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metrics import match, exact_match, F1
 from raglab.dataset.base_dataset import MultiChoiceQA
 
-class InputStruction:
-    question:str
-    answer:str
-    pregiven_passages:str
-
-class OutputStruction:
-    question:str
-    answer:str
-    generation:str
 
 TASK_INSTRUCTION = "Is the following statement correct or not? Say true if it's correct; otherwise say false."
 
@@ -26,21 +17,18 @@ PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 class PubHealth(MultiChoiceQA):
     def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
         super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
-        self.set_data_struction()
 
-    def set_data_struction(self):
-        '''
-        The goal of constructing InputStruction and OutputStruction is to achieve the separation of algorithm logic and data, 
-        so that users only need to add new dataset structures according to the rules without modifying the algorithm logic.
-        '''
-        self.inputStruction = InputStruction
-        self.inputStruction.question = 'question'
-        self.inputStruction.answer = 'answers'
-        self.inputStruction.pregiven_passages = 'ctxs'
-        self.outputStruction = OutputStruction
-        self.outputStruction.question = 'question'
-        self.outputStruction.answer = 'answers'
-        self.outputStruction.generation = 'generation'
+    @dataclass
+    class InputStruction:
+        question = 'question'
+        answer = 'answers'
+        pregiven_passages = 'ctxs'
+
+    @dataclass
+    class OutputStruction:
+        question = 'question'
+        answer = 'answers'
+        generation = 'generation'
 
     def load_dataset(self)-> list[dict]:
         if self.eval_datapath.endswith(".json"):
@@ -68,9 +56,9 @@ class PubHealth(MultiChoiceQA):
     def record_result(self, eval_data:dict, final_prediction:str, inference_results:list) -> list[dict]:
         inference_results.append(
             {
-             self.outputStruction.question: eval_data[self.inputStruction.question],
-             self.outputStruction.answer: eval_data[self.inputStruction.answer],
-             self.outputStruction.generation: final_prediction
+             self.OutputStruction.question: eval_data[self.InputStruction.question],
+             self.OutputStruction.answer: eval_data[self.InputStruction.answer],
+             self.OutputStruction.generation: final_prediction
             })
         return inference_results
     
@@ -80,32 +68,32 @@ class PubHealth(MultiChoiceQA):
         prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
         return prompt_with_instruction
 
-
     def eval_acc(self, infer_results: list[dict]):
         print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(infer_results):
-            if type(data[self.outputStruction.answer]) is str:
-                answer = [data[self.outputStruction.answer]]
-            elif type(data[self.outputStruction.answer]) is list:
-                answer = data[self.outputStruction.answer]
+            if type(data[self.OutputStruction.answer]) is str:
+                answer = [data[self.OutputStruction.answer]]
+            elif type(data[self.OutputStruction.answer]) is list:
+                answer = data[self.OutputStruction.answer]
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
-            metric_result = match(data[self.outputStruction.generation], answer)
+            metric_result = match(data[self.OutputStruction.generation], answer)
             eval_results.append(metric_result)
         # TODO save result in ***.json.eval_result file 
         return np.mean(eval_results)
+    
     def eval_exact_match(self, infer_results: list[dict]) -> float:
         print('Start calcualte exact match!')
         eval_reaults = []
         for _, data in enumerate(infer_results):
-            if type(data[self.outputStruction.answer]) is str:
-                answer = [data[self.outputStruction.answer]]
-            elif type(data[self.outputStruction.answer]) is list:
-                answer = data[self.outputStruction.answer]
+            if type(data[self.OutputStruction.answer]) is str:
+                answer = [data[self.OutputStruction.answer]]
+            elif type(data[self.OutputStruction.answer]) is list:
+                answer = data[self.OutputStruction.answer]
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
-            metric_result = exact_match(data[self.outputStruction.generation], answer)
+            metric_result = exact_match(data[self.OutputStruction.generation], answer)
             eval_reaults.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_reaults))
@@ -114,14 +102,14 @@ class PubHealth(MultiChoiceQA):
         print('Start calcualte F1 score!')
         eval_reaults = []
         for _, data in enumerate(infer_results):
-            if type(data[self.outputStruction.answer]) is str:
-                answer = [data[self.outputStruction.answer]]
-            elif type(data[self.outputStruction.answer]) is list:
-                answer = data[self.outputStruction.answer]
+            if type(data[self.OutputStruction.answer]) is str:
+                answer = [data[self.OutputStruction.answer]]
+            elif type(data[self.OutputStruction.answer]) is list:
+                answer = data[self.OutputStruction.answer]
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
             
-            metric_result = F1(data[self.outputStruction.generation], answer)
+            metric_result = F1(data[self.OutputStruction.generation], answer)
             eval_reaults.append(metric_result)
         # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_reaults))
