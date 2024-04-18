@@ -18,7 +18,7 @@ class HF_Model(BaseLM):
             self.llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto", torch_dtype=torch.float16)
         else:
             self.llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
-        self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False, padding_side="left")
 
     def generate(self, inputs: Union[str,list[str]])->list[BaseLM.Outputs]:
         if isinstance(inputs,str):
