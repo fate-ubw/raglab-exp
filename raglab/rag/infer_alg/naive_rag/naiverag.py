@@ -10,7 +10,8 @@ import torch
 from raglab.dataset.utils import get_dataset # load dataset class
 from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
 from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
-from raglab.language_model.openai_lm import OpenaiModel
+from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM
+from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
 class NaiveRag:
     def __init__(self, args):
@@ -18,26 +19,17 @@ class NaiveRag:
         self.task = args.task
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
-
         # llm config
+            #(other configs check raglab/language_model/*.py files)
         self.llm_mode = args.llm_mode
-        self.llm_path = args.llm_path
-        self.dtype = args.dtype
         self.use_vllm = args.use_vllm
-        self.generate_maxlength = args.generate_maxlength
-        self.temperature = args.temperature
-        self.top_p = args.top_p
-        self.generation_stop = args.generation_stop # TODO 转义符号的问题
-        if  self.generation_stop == '\\n':
-            self.generation_stop = '\n'
-        
         # retrieval args
         self.n_docs = args.n_docs
         self.retrieval_name = args.retrieval_name
         self.realtime_retrieval = args.realtime_retrieval
-
         # setup model and database 
-        self.llm, self.tokenizer, self.sampling_params = self.load_llm()
+        self.llm = self.steup_llm()
+        # steup retrieval
         if self.realtime_retrieval:
             self.retrieval = self.setup_retrieval() # retrieval model
         self.init(args)
@@ -51,23 +43,23 @@ class NaiveRag:
             final_answer, generation_track = self.infer(query)
             return final_answer, generation_track
         elif 'evaluation' == mode:
-            self.EvalData = get_dataset(self.task, self.output_dir, self.llm_path, self.eval_datapath)
+            self.EvalData = get_dataset(self.task, self.output_dir, self.llm.llm_path, self.eval_datapath)
             self.eval_dataset = self.EvalData.load_dataset()
             print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 eval_data = self.EvalData.preprocess(eval_data) # some dataset need preprocess such as: arc_challenge
-                question = eval_data[self.EvalData.inputStruction.question] 
+                question = eval_data[self.EvalData.InputStruction.question] 
                 # infer
                 outputs, generation_track = self.infer(question)
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
-                print(f'output:{outputs} \n eval_data: {eval_data[self.EvalData.inputStruction.answer]}')
+                print(f'output:{outputs} \n eval_data: {eval_data[self.EvalData.IutputStruction.answer]}')
                 # calculate metric
                 acc = self.EvalData.eval_acc(inference_results)
                 EM = self.EvalData.eval_exact_match(inference_results)
                 f1_score = self.EvalData.eval_f1_score(inference_results)
                 print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
-            # end of for loop
+            # --> end of for loop
             self.EvalData.save_result(inference_results)
             # calculate metric
             acc = self.EvalData.eval_acc(inference_results)
@@ -93,64 +85,26 @@ class NaiveRag:
         else:
             target_instruction = self.find_instruction('Naive_rag-without_retrieval', self.task)
             input = target_instruction.format_map({'query': query})
-        outputs = self.llm_inference(input)
-        generation_track['final answer'] = outputs
-        return outputs, generation_track
+        outputs_list = self.llm.generate(input) # llm.generate() -> list[BaseOutputs] so you have to get the text from BaseOutputs.text
+        Outputs = outputs_list[0]
+        outputs_text = Outputs.text
+        generation_track['final answer'] = outputs_text
+        return outputs_text, generation_track
 
-    def load_llm(self):
-        llm = None
-        tokenizer = None
-        sampling_params = None
+    def steup_llm(self):
         if self.llm_mode == 'HF_Model':
             if self.use_vllm:
-                llm = LLM(model=self.llm_path, tokenizer=self.llm_path, dtype=self.dtype)
-                if self.generation_stop != '':
-                    sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop=[self.generation_stop], repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
-                else:
-                    sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
-                tokenizer = llm.get_tokenizer()
+                llm = HF_VLLM(self.args)
+                llm.load_model() # load_model() will load local model and tokenizer  
             else:
-                if self.dtype == 'half' or self.dtype == 'float16':
-                    llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto", torch_dtype=torch.float16)
-                else:
-                    llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
-                tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False)
+                llm = HF_Model(self.args)
+                llm.load_model() # load_model() will load local model and tokenizer
         elif self.llm_mode == 'Openai_api':
             llm = OpenaiModel(self.args)
-            llm.load_model()
-            tokenizer = llm.tokenizer
+            llm.load_model() # load_model() will load api configs and tiktoken
         else:
             raise LanguageModelError("Language model must be huggingface or openai api.")
-        return llm, tokenizer, sampling_params
-    
-    def llm_inference(self, input:str)->str: 
-        if self.llm_mode == 'HF_Model':
-            if self.use_vllm:
-                output = self.llm.generate(input, self.sampling_params)
-                output_text = output[0].outputs[0].text
-            else:
-                input_ids = self.tokenizer.encode(input, return_tensors="pt")
-                instruction_len = input_ids.shape[1]
-                output_ids = self.llm.generate(input_ids, do_sample = False, max_length =instruction_len + self.generate_maxlength)
-                output_text = self.tokenizer.decode(output_ids[0], skip_special_tokens = False)
-        elif self.llm_mode == 'Openai_api':
-            # naive rag only need text
-            output_list = self.llm.generate(input)
-            Output = output_list[0]
-            output_text = Output.text
-        else:
-            raise LanguageModelError("Language model must be huggingface or openai api.")
-        # stop function cat the answer based on stop str
-        if self.generation_stop != '':
-            stop_index = output_text.find(self.generation_stop) # 为什么这里的\n 变成了\n
-            if stop_index != -1:
-                output_text = output_text[:stop_index].strip()
-        
-        # remove special tokens
-        if '</s>' in output_text:
-            return output_text.replace("<s> " + input, "").replace("</s>", "").strip()
-        else:
-            return output_text.replace("<s> " + input, "").strip()    
+        return llm
     
     def setup_retrieval(self):
         if 'colbert' == self.retrieval_name:
@@ -173,11 +127,7 @@ class NaiveRag:
         return collate
 
     def find_instruction(self, rag_name:str, dataset_name:str) -> str:
-        file_path = './instruction_lab/instruction_lab.json'
-        target_instruction = ''
-        with open(file_path, 'r') as file:
-            instructions = json.load(file)
-        for instruction in instructions:
+        for instruction in INSTRUCTION_LAB:
             if instruction['rag_name'] == rag_name and instruction['dataset_name'] == dataset_name:
                 target_instruction = instruction['instruction']
                 break

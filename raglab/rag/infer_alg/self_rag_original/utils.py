@@ -97,7 +97,7 @@ def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
     rel_tokens = {}
     for token in ["[Irrelevant]", "[Relevant]"]:
         rel_tokens[token] = tokenizer.convert_tokens_to_ids(token)
-
+        
     grd_tokens = None
     if use_grounding is True:
         grd_tokens = {}

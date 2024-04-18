@@ -26,11 +26,16 @@ class QueryRewrite_rag(NaiveRag):
         instruction = self.find_instruction('query_rewrite_rag-read', self.task)
         query_with_instruction = instruction.format_map({'query':query, 'passages':collated_passages})
         # read
-        output = self.llm_inference(query_with_instruction)
-        generation_track['final answer'] = output
-        return output, generation_track
+        output_list = self.llm.generate(query_with_instruction)
+        Output = output_list[0]
+        output_text = Output.text
+        # output = self.llm_inference(query_with_instruction)
+        generation_track['final answer'] = output_text
+        return output_text, generation_track
 
     def _rewrite(self, query):
-        rewrite_query = self.llm_inference(query)
+        output_list = self.llm.generate(query)
+        Output = output_list[0]
+        rewrite_query = Output.text
         return rewrite_query
 

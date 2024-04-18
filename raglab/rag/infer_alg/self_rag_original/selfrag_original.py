@@ -23,15 +23,24 @@ class SelfRag_Original(NaiveRag):
         self.use_vllm = args.use_vllm
         self.eval_datapath = args.eval_datapath
         self.output_dir = args.output_dir
-        # setup model and database 
+        # llm config
+        self.llm_path = args.llm_path
         self.dtype = args.dtype
-        self.world_size = args.world_size
+        self.generate_maxlength = args.generate_maxlength
+        self.temperature = args.temperature
+        self.top_p = args.top_p
+        self.generation_stop = args.generation_stop
+        if  self.generation_stop == '\\n':
+            self.generation_stop = '\n'
+        self.dtype = args.dtype
+        self.world_size = args.world_size        
+        # llm config
         self.llm, self.tokenizer, self.sampling_params = self.load_llm()
         #retrieval args
         self.n_docs = args.n_docs
         # self.retrieval = self.setup_retrieval()
         '''
-        Diff:  we have maintained the original self rag code in slefrag_original.py. 
+        Diff:  we have maintained the original self_rag code in slefrag_original.py. 
         As a result, the real-time retrieval functionality has not been implemented.
         '''
         # SelfRag args
@@ -52,7 +61,7 @@ class SelfRag_Original(NaiveRag):
         self.use_citation = args.use_citation
 
     def inference(self, mode='evaluation'):
-        assert mode in ['evaluation'] 
+        assert mode in ['evaluation']
         # get dataset
         self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
         self.eval_dataset = self.EvalData.load_dataset()
@@ -88,7 +97,7 @@ class SelfRag_Original(NaiveRag):
             elif 'long_form' == self.inference_form:
                 if self.task in TASK_INST:
                     instructions = TASK_INST[self.task]
-                    prompt = instructions + "## Input:\n\n" + source_question # 这个地方的format 应该严格对齐，等 reproductiond 的时候可以重新写
+                    prompt = instructions + "## Input:\n\n" + source_question
                 elif self.task == 'Factscore':
                     prompt = eval_data['input']
                 input = PROMPT_DICT["prompt_no_input"].format_map({"instruction": prompt})
