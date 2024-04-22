@@ -3,7 +3,6 @@ channels:
   - pytorch/label/nightly
   - nvidia
   - defaults
-  - conda-forge
 dependencies:
   - _libgcc_mutex=0.1=main
   - _openmp_mutex=5.1=1_gnu
@@ -40,38 +39,53 @@ dependencies:
   - pip:
       - absl-py==2.1.0
       - accelerate==0.25.0
-      - aiohttp==3.9.1
+      - aiohttp==3.9.3
       - aioprometheus==23.12.0
       - aiosignal==1.3.1
+      - alembic==1.13.1
       - anyio==4.2.0
+      - asttokens==2.4.1
       - async-timeout==4.0.3
       - attrs==23.2.0
+      - backoff==2.2.1
+      - beautifulsoup4==4.12.3
+      - beir==2.0.0
       - bitarray==2.9.2
       - bitsandbytes==0.42.0
       - blinker==1.7.0
       - blis==0.7.11
+      - bs4==0.0.2
       - bypy==1.8.4
       - cachetools==5.3.2
       - catalogue==2.0.10
-      - certifi==2023.11.17
+      - certifi==2024.2.2
       - charset-normalizer==3.3.2
       - click==8.1.7
       - cloudpathlib==0.16.0
+      - cloudpickle==3.0.0
       - colbert-ai==0.2.18
       - colorama==0.4.6
+      - colorlog==6.8.2
+      - comm==0.2.1
       - confection==0.1.4
       - cymem==2.0.8
       - dataclasses==0.6
       - dataclasses-json==0.6.4
-      - datasets==2.15.0
+      - datasets==2.14.7
+      - debugpy==1.8.1
+      - decorator==5.1.1
       - deepspeed==0.12.6
       - deprecated==1.2.14
       - dill==0.3.7
       - dirtyjson==1.0.8
       - distro==1.9.0
+      - dspy-ai==2.1.10
       - einops==0.7.0
+      - elasticsearch==7.9.1
+      - en-core-web-sm==3.7.1
       - evaluate==0.4.1
       - exceptiongroup==1.2.0
+      - executing==2.0.1
       - faiss-cpu==1.7.4
       - fastapi==0.109.0
       - filelock==3.13.1
@@ -84,8 +98,11 @@ dependencies:
       - gitpython==3.1.41
       - google-auth==2.26.2
       - google-auth-oauthlib==1.0.0
+      - google-search-results==2.4.2
       - greenlet==3.0.3
       - grpcio==1.60.0
+      - gym==0.26.2
+      - gym-notices==0.0.8
       - h11==0.14.0
       - hjson==3.1.0
       - httpcore==1.0.2
@@ -94,6 +111,8 @@ dependencies:
       - huggingface-hub==0.20.3
       - idna==3.6
       - importlib-metadata==7.0.1
+      - ipykernel==6.29.2
+      - ipython==8.18.1
       - itsdangerous==2.1.2
       - jedi==0.19.1
       - jinja2==3.1.3
@@ -103,16 +122,16 @@ dependencies:
       - jsonpointer==2.4
       - jsonschema==4.21.1
       - jsonschema-specifications==2023.12.1
-      - langchain==0.1.5
-      - langchain-community==0.0.18
-      - langchain-core==0.1.19
+      - jupyter-client==8.6.0
+      - jupyter-core==5.7.1
       - langcodes==3.3.0
       - langsmith==0.0.86
-      - llama-index==0.9.44
       - lxml==5.1.0
+      - mako==1.3.2
       - markdown==3.5.2
       - markupsafe==2.1.4
       - marshmallow==3.20.2
+      - matplotlib-inline==0.1.6
       - mauve-text==0.3.0
       - mpmath==1.3.0
       - msgpack==1.0.7
@@ -138,18 +157,24 @@ dependencies:
       - nvidia-nvtx-cu12==12.1.105
       - oauthlib==3.2.2
       - onnx==1.15.0
-      - openai==1.11.1
+      - openai==0.28.0
+      - optuna==3.4.0
       - orjson==3.9.12
       - packaging==23.2
-      - pandas==2.2.0
+      - pandas==2.1.4
       - parso==0.8.3
       - peft==0.7.1
+      - pexpect==4.9.0
       - pillow==10.2.0
+      - platformdirs==4.2.0
       - portalocker==2.8.2
       - preshed==3.0.9
+      - prompt-toolkit==3.0.43
       - protobuf==4.25.2
       - psutil==5.9.8
+      - ptyprocess==0.7.0
       - pudb==2024.1
+      - pure-eval==0.2.2
       - py-cpuinfo==9.0.0
       - pyarrow==15.0.0
       - pyarrow-hotfix==0.6
@@ -160,18 +185,21 @@ dependencies:
       - pynvml==11.5.0
       - python-dateutil==2.8.2
       - python-dotenv==1.0.1
+      - pytrec-eval==0.5
       - pytz==2023.3.post1
       - pyyaml==6.0.1
+      - pyzmq==25.1.2
       - quantile-python==1.1
       - ragatouille==0.0.6b5
       - ranger-fm==1.9.3
       - ray==2.9.1
       - referencing==0.32.1
-      - regex==2023.12.25
+      - regex==2023.10.3
       - requests==2.31.0
       - requests-oauthlib==1.3.1
       - requests-toolbelt==1.0.0
       - responses==0.18.0
+      - rouge==1.0.1
       - rouge-score==0.1.2
       - rpds-py==0.17.1
       - rsa==4.9
@@ -184,15 +212,18 @@ dependencies:
       - scipy==1.12.0
       - sentence-transformers==2.3.1
       - sentencepiece==0.1.99
+      - serpapi==0.1.5
       - six==1.16.0
       - smart-open==6.4.0
       - smmap==5.0.1
       - sniffio==1.3.0
+      - soupsieve==2.5
       - spacy==3.7.2
       - spacy-legacy==3.0.12
       - spacy-loggers==1.0.5
       - sqlalchemy==2.0.25
       - srsly==2.4.8
+      - stack-data==0.6.3
       - starlette==0.35.1
       - svgwrite==1.4.3
       - sympy==1.12
@@ -205,7 +236,9 @@ dependencies:
       - tiktoken==0.5.2
       - tokenizers==0.15.0
       - torch==2.1.2
-      - tqdm==4.66.1
+      - tornado==6.4
+      - tqdm==4.66.2
+      - traitlets==5.14.1
       - transformers==4.36.2
       - tree==0.2.4
       - triton==2.1.0
@@ -213,7 +246,7 @@ dependencies:
       - typing-extensions==4.9.0
       - typing-inspect==0.9.0
       - tzdata==2023.4
-      - ujson==5.9.0
+      - ujson==5.8.0
       - urllib3==2.1.0
       - urwid==2.5.2
       - urwid-readline==0.13
@@ -223,6 +256,7 @@ dependencies:
       - voyager==2.0.2
       - wasabi==1.1.2
       - watchfiles==0.21.0
+      - wcwidth==0.2.13
       - weasel==0.3.4
       - websockets==12.0
       - werkzeug==3.0.1
@@ -232,4 +266,4 @@ dependencies:
       - xxhash==3.4.1
       - yarl==1.9.4
       - zipp==3.17.0
-prefix: /home/zxw/miniconda3/envs/selfrag
+prefix: /home/wyd/miniconda3/envs/selfrag
