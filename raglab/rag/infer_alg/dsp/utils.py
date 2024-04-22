@@ -50,7 +50,7 @@ class SimplifiedBaleen(dspy.Module):
             pdb.set_trace()
             query = self.generate_query[hop](context=context, question=question).query
             passages = self.retrieve.search(query) 
-            passages = [passages[rank]['content'] for rank in sorted(passages)] # list[str]
+            passages = [passages[rank]['text'] for rank in sorted(passages)] # list[str]
             context = deduplicate(context + passages) 
         pred = self.generate_answer(context=context, question=question)
         return dspy.Prediction(context=context, answer=pred.answer)
