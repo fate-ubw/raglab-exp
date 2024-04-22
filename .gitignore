@@ -2,6 +2,8 @@
 api_keys*.txt
 
 # data
+config-debug/
+run-debug/
 data/
 test/
 1-eval_output/
