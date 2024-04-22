@@ -46,7 +46,7 @@ def get_config():
     parser.add_argument('--task', type=str, default='', choices= TASK_LIST,  help='name of evaluation dataset, different task will select different format and instruction')
     parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')
     parser.add_argument('--eval_train_datapath', type= str, help='path to train dataset')
-    parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
+    parser.add_argument('--output_dir', type = str, default='./',help = 'the output dir of evaluation')
 
     # llm config
     parser.add_argument('--llm_mode', type = str, default='HF_Model', choices=['HF_Model','Openai_api'], help='flag of language or api')
@@ -60,7 +60,7 @@ def get_config():
     parser.add_argument('--generation_stop', type=str, default='', help='early_stop is one of the setting of generate() function, early_stop to control the outputs of llm')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     # api config
-    parser.add_argument('--model_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
+    parser.add_argument('--llm_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
     parser.add_argument('--llm_api', type=str, help='API language model name')
     parser.add_argument('--api_key', type=str, help='API key for accessing the model')
     parser.add_argument('--api_base', type=str, help='Base URL for the API')
@@ -131,3 +131,4 @@ if __name__=='__main__':
         inference_result, generation_track = rag.inference(query, mode = 'interact')# sampled from ChatGPT
         pprint(generation_track)
         print(query)
+        pdb.set_trace()

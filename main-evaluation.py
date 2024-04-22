@@ -44,7 +44,7 @@ def get_config():
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     
     # api config
-    parser.add_argument('--model_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
+    parser.add_argument('--llm_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
     parser.add_argument('--llm_api', type=str, help='API language model name')
     parser.add_argument('--api_key', type=str, help='API key for accessing the model')
     parser.add_argument('--api_base', type=str, help='Base URL for the API')
