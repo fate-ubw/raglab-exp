@@ -5,7 +5,6 @@ import re
 import string
 import torch
 import copy
-
 from nltk import sent_tokenize
 import numpy as np
 from rouge_score import rouge_scorer, scoring
@@ -30,7 +29,6 @@ AUTOAIS_MODEL="/home/wyd/model/t5_xxl_true_nli_mixture"
 
 global autoais_model, autoais_tokenizer
 autoais_model, autoais_tokenizer = None, None
-
 
 def compute_f1(a_gold, a_pred):
     """Compute F1 score between two strings."""
@@ -250,7 +248,6 @@ def compute_mauve(data):
         # Truncate by 100 words
         human_data.append(' '.join((item['question'] + " " + item['answer'].strip()).split()[:100]).rstrip(string.punctuation))
         model_data.append(' '.join((item['question'] + " " + item['output'].strip()).split()[:100]).rstrip(string.punctuation))
-
     import mauve
     out = mauve.compute_mauve(
         p_text=human_data,
