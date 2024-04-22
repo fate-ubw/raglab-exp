@@ -1,17 +1,16 @@
 import faiss
 import os
-from colbert.data import Queries, Collection
+from colbert.data import Collection
 from colbert import Indexer, Searcher
 from colbert.infra import Run, RunConfig, ColBERTConfig
-
 from raglab.retrieval.retrieve import Retrieve
+import pdb
 
 class ColbertRetrieve(Retrieve):
     def __init__(self, args):
         self.index_dbPath = args.index_dbPath
         self.text_dbPath = args.text_dbPath
         self.retriever_modelPath = args.retriever_modelPath
-        
         self.nbits = args.nbits
         self.num_gpu = args.num_gpu
         self.doc_maxlen = args.doc_maxlen
@@ -45,7 +44,7 @@ class ColbertRetrieve(Retrieve):
             # print(f"\t [{passage_rank}] \t\t {passage_score:.1f} \t\t {self.searcher.collection[passage_id]}")
             if '|' in self.searcher.collection[passage_id]:
                 title, content = self.searcher.collection[passage_id].split('|',1) # max split is 1. The first place is title
-                passages[passage_rank] = {'id':passage_id,'title':title.strip(),'content': content.strip(), 'score':passage_score}
+                passages[passage_rank] = {'id':passage_id,'title':title.strip(),'text': content.strip(), 'score':passage_score}
             else:
-                passages[passage_rank] = {'id':passage_id,'content': self.searcher.collection[passage_id], 'score':passage_score}
+                passages[passage_rank] = {'id':passage_id,'text': self.searcher.collection[passage_id], 'score':passage_score}
         return passages

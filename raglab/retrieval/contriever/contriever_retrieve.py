@@ -12,7 +12,7 @@ from raglab.retrieval.contriever.src.slurm import init_distributed_mode
 from raglab.retrieval.contriever.src.data import load_passages
 from raglab.retrieval.contriever.src.normalize_text import normalize
 from raglab.retrieval.retrieve import Retrieve
-import pudb
+import pdb
 
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 class ContrieverRrtieve(Retrieve):
@@ -110,6 +110,6 @@ class ContrieverRrtieve(Retrieve):
     def add_passages(self, passages, top_passages_and_scores):
         docs = {}
         for rank, (doc_id, score) in enumerate(zip(top_passages_and_scores[0][0], top_passages_and_scores[0][1])):
-            passages_info = {'id':passages[doc_id]['id'], 'title': passages[doc_id]['title'], 'content':passages[doc_id]['text'],'score':float(score)}
+            passages_info = {'id':passages[doc_id]['id'], 'title': passages[doc_id]['title'], 'text':passages[doc_id]['text'],'score':float(score)}
             docs[rank+1] = passages_info
         return docs
