@@ -3,7 +3,7 @@ from datetime import datetime
 import jsonlines
 import json
 from ruamel.yaml import YAML
-
+import pdb
 TASK_LIST = ['PopQA','PubHealth','ArcChallenge', 'TriviaQA', 'ASQA', 'Factscore', 
              'HotPotQA', 'StrategyQA', '2WikiMultiHopQA','Feverous', 'MMLU']
 
@@ -12,7 +12,7 @@ def load_jsonlines(file:str)-> list[dict]:
         lst = [obj for obj in jsonl_f]
     return lst 
 
-def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, eval_train_datapath=None) -> object:
+def get_dataset(args) -> object:
     # base class
     from raglab.dataset.base_dataset.MultiChoiceQA import MultiChoiceQA
     from raglab.dataset.base_dataset.QA import QA
@@ -29,31 +29,75 @@ def get_dataset(task: str, output_dir:str, llm_path: str, eval_datapath: str, ev
     from raglab.dataset.Feverous import Feverous
     from raglab.dataset.MMLU import MMLU
 
-    if 'PopQA' == task:
-        EvalData = PopQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'PubHealth' == task:
-        EvalData = PubHealth(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'ArcChallenge' == task:
-        EvalData = ArcChallenge(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'TriviaQA' == task:
-        EvalData = TriviaQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'ASQA' == task:
-        EvalData = ASQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'Factscore' == task:
-        EvalData = Factscore(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'HotPotQA' == task:
-        EvalData = HotPotQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'StrategyQA' == task:
-        EvalData = StrategyQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif '2WikiMultiHopQA' == task:
-        EvalData = WikiMultiHopQA(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'Feverous' == task:
-        EvalData = Feverous(output_dir, llm_path, eval_datapath, eval_train_datapath)
-    elif 'MMLU' == task:
-        EvalData = MMLU(output_dir, llm_path, eval_datapath, eval_train_datapath)
+    if 'PopQA' == args.task:
+        EvalData = PopQA(args)
+    elif 'PubHealth' == args.task:
+        EvalData = PubHealth(args)
+    elif 'ArcChallenge' == args.task:
+        EvalData = ArcChallenge(args)
+    elif 'TriviaQA' == args.task:
+        EvalData = TriviaQA(args)
+    elif 'ASQA' == args.task:
+        EvalData = ASQA(args)
+    elif 'Factscore' == args.task:
+        EvalData = Factscore(args)
+    elif 'HotPotQA' == args.task:
+        EvalData = HotPotQA(args)
+    elif 'StrategyQA' == args.task:
+        EvalData = StrategyQA(args)
+    elif '2WikiMultiHopQA' == args.task:
+        EvalData = WikiMultiHopQA(args)
+    elif 'Feverous' == args.task:
+        EvalData = Feverous(args)
+    elif 'MMLU' == args.task:
+        EvalData = MMLU(args)
     else:
-        raise TaskNotFoundError("Task not recognized. Please provide a valid task.")
+        raise TaskNotFoundError("Task not recognized. Please provide a valid args.task.")
     return EvalData
+
+def get_args_form_config(yml)-> dict:
+    """
+    """
+    # blacklist = ['num_gpu','eval_datapath', 'output_dir', 
+    #              'index_dbPath', 'text_dbPath', 'retriever_modelPath', 
+    #              'nbits', 'llm_mode', 'api_key_path', 'api_base','use_vllm','realtime_retrieval',
+    #              'use_seed', 'seed']
+    if yml == '':
+        return
+    yaml = YAML(typ='rt') # rt is (round-trip) mode
+    with open(yml, 'r', encoding='utf-8') as f:
+        dic = yaml.load(f.read())
+        # for k in dic:
+        #     if k not in blacklist:
+        #         if k == 'llm_path':
+        #             dic[k] = os.path.basename(dic[k].rstrip('/'))
+        #         file_name += f'{k}={str(dic[k])}|'
+    return dic
 
 class TaskNotFoundError(Exception):
     pass
+
+if __name__ == "__main__":
+    '''
+    test program
+    '''
+    def find_yaml_files(folder_path: str) -> list:
+        """
+        Find all YAML files in the specified folder path.
+        """
+        yaml_files = []
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                if file.endswith('.yaml') or file.endswith('.yml'):
+                    yaml_files.append(os.path.join(root, file))
+        return yaml_files
+ 
+    def main():
+        # Test get_name_form_config function
+        folder_path = '/home/wyd/raglab-exp/config/iterative_rag'  # Provide the path to your YAML file here
+        yaml_files = find_yaml_files(folder_path)
+        for yml_file in yaml_files:
+            file_name = get_name_form_config(yml_file)
+            print(f"Generated filename: {file_name}")
+    # --> end of def
+    main()

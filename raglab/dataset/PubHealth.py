@@ -1,22 +1,27 @@
 import os
 import jsonlines
 import json
-from tqdm import tqdm
 from datetime import datetime
 from dataclasses import dataclass
 import numpy as np
 from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metrics import match, exact_match, F1
 from raglab.dataset.base_dataset import MultiChoiceQA
-
+from raglab.dataset.utils import get_args_form_config
 
 TASK_INSTRUCTION = "Is the following statement correct or not? Say true if it's correct; otherwise say false."
 
 PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
 class PubHealth(MultiChoiceQA):
-    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
+    def __init__(self, args):
+        self.args = args
+        self.print_fn = args.print_fn
+        self.file_name = args.file_name
+        self.time = args.time
+        self.output_file = args.output_dir
+        self.config = args.config
+        super().__init__(args)
 
     @dataclass
     class InputStruction:
@@ -38,20 +43,29 @@ class PubHealth(MultiChoiceQA):
         return eval_dataset
 
     def save_result(self, inference_result: list[dict])-> None: 
-        print('storing result....')
-        if not os.path.exists(self.output_dir): 
-            os.makedirs(self.output_dir)
-        model_name = os.path.basename(self.llm_path)
-        input_filename = os.path.basename(self.eval_datapath)
-        eval_Dataname = os.path.splitext(input_filename)[0]
-        time = datetime.now().strftime('%m%d_%H%M')
-        output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl'
-        output_file = os.path.join(self.output_dir, output_name)
-        
+        '''
+        save rag inference results
+        '''
+        self.print_fn('storing inference result....')
+        file_name = 'rag_output-' + self.file_name + f'time={self.time}.jsonl'
+        output_file = os.path.join(self.output_dir, file_name)
         with jsonlines.open(output_file, 'w') as outfile: 
-            outfile.write(inference_result)
-        print(f'output file path:{output_file}')
-        print('success!')
+            outfile.write_all(inference_result)
+        self.print_fn(f'output file path:{output_file}')
+        self.print_fn('success!')
+    
+    def save_evaluation_results(self, eval_results:dict[str,float]) -> None:
+        '''
+        save evaluation results and all args
+        '''
+        args_dict = get_args_form_config(self.config)
+        eval_results.update(args_dict)
+        file_name = 'rag_output-' + self.file_name + f'time={self.time}.jsonl.evaluation'  
+        output_file = os.path.join(self.output_dir, file_name)
+        with jsonlines.open(output_file, 'w') as outfile: 
+            outfile.write_all([eval_results])
+        self.print_fn(f'evaluation file path:{output_file}')
+        self.print_fn('success!')
 
     def record_result(self, eval_data:dict, final_prediction:str, inference_results:list) -> list[dict]:
         inference_results.append(
@@ -69,49 +83,48 @@ class PubHealth(MultiChoiceQA):
         return prompt_with_instruction
 
     def eval_acc(self, infer_results: list[dict]):
-        print('start evaluation!')
         eval_results = []
         for idx, data in enumerate(infer_results):
             if type(data[self.OutputStruction.answer]) is str:
                 answer = [data[self.OutputStruction.answer]]
             elif type(data[self.OutputStruction.answer]) is list:
                 answer = data[self.OutputStruction.answer]
+            elif data[self.OutputStruction.answer] is None:
+                return 'No answer in dataset'
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
             metric_result = match(data[self.OutputStruction.generation], answer)
             eval_results.append(metric_result)
-        # TODO save result in ***.json.eval_result file 
         return np.mean(eval_results)
     
     def eval_exact_match(self, infer_results: list[dict]) -> float:
-        print('Start calcualte exact match!')
         eval_reaults = []
         for _, data in enumerate(infer_results):
             if type(data[self.OutputStruction.answer]) is str:
                 answer = [data[self.OutputStruction.answer]]
             elif type(data[self.OutputStruction.answer]) is list:
                 answer = data[self.OutputStruction.answer]
+            elif data[self.OutputStruction.answer] is None:
+                return 'No answer in dataset'
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
             metric_result = exact_match(data[self.OutputStruction.generation], answer)
             eval_reaults.append(metric_result)
-        # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_reaults))
 
     def eval_f1_score(self, infer_results: list[dict]) -> float:
-        print('Start calcualte F1 score!')
         eval_reaults = []
         for _, data in enumerate(infer_results):
             if type(data[self.OutputStruction.answer]) is str:
                 answer = [data[self.OutputStruction.answer]]
             elif type(data[self.OutputStruction.answer]) is list:
                 answer = data[self.OutputStruction.answer]
+            elif data[self.OutputStruction.answer] is None:
+                return 'No answer in dataset'
             else:
                 raise InvalidAnswerType("The type of answer is invalid. Only str and list[str] is valid. Check the answer in your raw data.")
-            
             metric_result = F1(data[self.OutputStruction.generation], answer)
             eval_reaults.append(metric_result)
-        # TODO 这里应该把结果存储下来***.json.eval_result 
         return float(np.mean(eval_reaults))
 
 class InvalidAnswerType(Exception):

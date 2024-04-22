@@ -2,44 +2,47 @@ import os
 import jsonlines
 from raglab.dataset.PopQA import  PopQA
 from datetime import datetime
-
+from dataclasses import dataclass
 
 class Factscore(PopQA):
-    def __init__(self, output_dir, llm_path, eval_datapath, eval_train_datapath):
-        super().__init__(output_dir, llm_path, eval_datapath, eval_train_datapath)
+    def __init__(self, args):
+        super().__init__(args)
 
+    @dataclass
     class InputStruction:
-        qeustion:str = 'query'
-        answer:str = 'answers'
+        question:str = 'input'
+        answer:str = 'output'
         topic:str = 'topic'
-        cat = 'cat'
+        category = 'cat'
 
+    @dataclass
     class OutputStruction:
-        question:str = 'quesiton'
+        question:str = 'input'
         answer:str = 'answers'
         generation:str = 'output'
         topic:str = 'topic'
-        cat = 'cat'
+        category = 'cat'
         intermediate = 'intermediate'
 
-    def record_result(self, eval_data, final_prediction_with_citation, catation_docs, response_id, generation_track, inference_results):
-        postprocessed_result = final_prediction_with_citation[response_id]
-        inference_results.append({"input": eval_data["input"], "output": postprocessed_result, "topic": eval_data["topic"],
-                        "cat": eval_data["cat"], "intermediate": generation_track["original_splitted_sentences"][response_id]}) # 这部分还是有一些问题因为，不是所有的数据都有这个 key，那么我就需要一个机制，当 key 不存在的时候取出来的 key 是 none
+    def record_result(self, eval_data, final_prediction_with_citation, inference_results, catation_docs=None, response_id=None, generation_track=None):
+        if catation_docs is None and response_id is None and generation_track is None:
+            inference_results.append(
+                {
+                    self.OutputStruction.question: eval_data[self.InputStruction.question], 
+                    self.OutputStruction.answer: None ,
+                    self.OutputStruction.generation: final_prediction_with_citation, 
+                    self.OutputStruction.topic: eval_data[self.InputStruction.topic],
+                    self.OutputStruction.category: eval_data[self.InputStruction.category], 
+                }) 
+        else:
+            postprocessed_result = final_prediction_with_citation[response_id]
+            inference_results.append(
+                {
+                    self.OutputStruction.question: eval_data[self.InputStruction.question], 
+                    self.OutputStruction.answer: None ,
+                    self.OutputStruction.generation: postprocessed_result, 
+                    self.OutputStruction.topic: eval_data[self.InputStruction.topic],
+                    self.OutputStruction.category: eval_data[self.InputStruction.category], 
+                    self.OutputStruction.intermediate: generation_track["original_splitted_sentences"][response_id]
+                }) 
         return inference_results
-
-    def save_result(self, inference_result: list[dict])-> None: 
-        print('storing result....')
-        if not os.path.exists(self.output_dir): 
-            os.makedirs(self.output_dir)
-        model_name = os.path.basename(self.llm_path)
-        input_filename = os.path.basename(self.eval_datapath)
-        eval_Dataname = os.path.splitext(input_filename)[0]
-        time = datetime.now().strftime('%m%d_%H%M')
-        output_name = f'infer_output-{eval_Dataname}-{model_name}-{time}.jsonl'
-        output_file = os.path.join(self.output_dir, output_name)
-        
-        with jsonlines.open(output_file, 'w') as outfile: 
-            outfile.write_all(inference_result)
-        print(f'output file path:{output_file}')
-        print('success!')
