@@ -135,10 +135,16 @@ class NaiveRag:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG) # Set the log level to DEBUG
         # build file_name based on args
-        self.output_dir = os.path.join(args.output_dir, args.task)
+        self.time = datetime.now().strftime('%m%d_%H%M')
+        if args.llm_mode == 'HF_Model':
+            model_name = os.path.basename(self.llm_path.rstrip('/'))
+            dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
+        else:
+            dir_name = args.algorithm_name + '-' + args.task + '-' + args.llm_name + '-' + args.retrieval_name + '-' + f'{self.time}'
+
+        self.output_dir = os.path.join(args.output_dir, args.task, dir_name)
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
-        self.time = datetime.now().strftime('%m%d_%H%M')
         if args.llm_mode == 'HF_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             self.file_name = args.algorithm_name + '|' + args.task + '|' + model_name + '|' + args.retrieval_name + '|'
