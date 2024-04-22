@@ -20,7 +20,6 @@ realtime_retrieval: True
 retrieval_name: colbert
 index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding/wikipedia2018
 text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/wikipedia2018/wiki2018_10samples_idxfrom_0.tsv
-eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
 retriever_modelPath: ./model/colbertv2.0
 # max length should bigger than the length of input_ids
 n_docs: 5

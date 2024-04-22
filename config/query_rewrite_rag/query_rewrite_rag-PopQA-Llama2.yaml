@@ -2,12 +2,14 @@ use_seed: True
 seed: 633
 num_gpu: 1
 # eval config
+algorithm_name: query_rewrite_rag
 eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs.jsonl
 task: PopQA
 output_dir: ./1-eval_output/
 # llm config
 llm_mode: HF_Model
 llm_path: ./model/Llama-2-7b-chat-hf
+dtype: "half"
 use_vllm: True
 temperature: 0.0
 top_p: 1.0
@@ -21,4 +23,3 @@ text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
 retriever_modelPath: ./model/contriever-msmarco
 n_docs: 10
 # max length should bigger than the length of input_ids
-nbits: 2

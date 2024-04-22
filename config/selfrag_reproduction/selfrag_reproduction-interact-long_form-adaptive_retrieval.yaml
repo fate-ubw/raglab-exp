@@ -20,7 +20,6 @@ text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
 retriever_modelPath: ./model/contriever-msmarco
 n_docs: 5
 # self rag 
-world_size: 1
   # decoding config
 threshold: 0.5
 use_seqscore: True

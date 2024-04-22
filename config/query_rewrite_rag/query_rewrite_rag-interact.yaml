@@ -20,5 +20,4 @@ index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings-debug/*
 text_dbPath: ./data/retrieval/contriever_passages/psgs_w100-debug.tsv
 retriever_modelPath: ./model/contriever-msmarco
 n_docs: 10
-nbits: 2
 # query rewrite rag has no special config
