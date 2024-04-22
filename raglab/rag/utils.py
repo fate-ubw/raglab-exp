@@ -1,13 +1,12 @@
 from raglab.rag.infer_alg.naive_rag import NaiveRag
 from raglab.rag.infer_alg.iterative_rag import ItertiveRag
 from raglab.rag.infer_alg.query_rewrite_rag import QueryRewrite_rag
-from raglab.rag.infer_alg.dsp import Dsp
 from raglab.rag.infer_alg.active_rag import ActiveRag
 from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
 from raglab.rag.infer_alg.self_rag_reproduction import SelfRag_Reproduction
 from raglab.rag.infer_alg.self_ask import SelfAsk
 
-ALGOROTHM_LIST = ['naive_rag', 'selfrag_original', 'selfrag_reproduction', 'iter_retgen', 'query_rewrite_rag', 'dsp', 'active_rag', 'self_ask']
+ALGOROTHM_LIST = ['naive_rag', 'selfrag_original', 'selfrag_reproduction', 'iter_retgen', 'query_rewrite_rag', 'active_rag', 'self_ask']
 def get_algorithm(args):
     if args.algorithm_name == 'naive_rag':
         Rag = NaiveRag(args)
@@ -19,8 +18,6 @@ def get_algorithm(args):
         Rag = ItertiveRag(args)
     elif args.algorithm_name == 'query_rewrite_rag':
         Rag = QueryRewrite_rag(args)
-    elif args.algorithm_name == 'dsp':
-        Rag = Dsp(args)
     elif args.algorithm_name == 'active_rag':
         Rag = ActiveRag(args)
     elif args.algorithm_name == 'self_ask':
