@@ -57,15 +57,14 @@ class SelfRag_Reproduction(NaiveRag):
                 final_prediction_with_citation, catation_docs = self._aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)      
                 return  final_prediction_with_citation, generation_track
         elif 'evaluation' == mode:
-            self.EvalData = get_dataset(self.task, self.output_dir, self.llm.llm_path, self.eval_datapath)
+            self.EvalData = get_dataset(self)
             self.eval_dataset = self.EvalData.load_dataset()
-            print(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
+            self.print_fn(f"\n\n{'*' * 20} \nNow, You are evaluating Task: {self.task} with Dataset {self.eval_datapath} \n{'*' * 20}\n\n")
             inference_results = []
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 eval_data = self.EvalData.preprocess(eval_data)
                 target_instruction = self.find_instruction('selfrag_reproduction-read', self.task)
                 input = target_instruction.format_map({'query': eval_data[self.EvalData.InputStruction.question]})
-                pdb.set_trace()
                 source_question = eval_data[self.EvalData.InputStruction.question]
                 if self.realtime_retrieval == True:
                     pregiven_passages = []
@@ -76,7 +75,8 @@ class SelfRag_Reproduction(NaiveRag):
                     final_prediction, generation_track = self.short_form_infer(input, source_question, pregiven_passages,
                                                                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, mode = mode)
-                    if "SUPPORTS" in final_prediction: # In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
+                    # In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
+                    if "SUPPORTS" in final_prediction: 
                         final_prediction = "true" 
                     elif "REFUTES" in final_prediction:
                         final_prediction = "false"
@@ -85,7 +85,7 @@ class SelfRag_Reproduction(NaiveRag):
                     acc = self.EvalData.eval_acc(inference_results)
                     EM = self.EvalData.eval_exact_match(inference_results)
                     f1_score = self.EvalData.eval_f1_score(inference_results)
-                    print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+                    self.print_fn(f'{self.task} in {idx+1} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
                 elif 'long_form' == self.inference_form:
                     final_prediction, generation_track = self.long_form_infer(input, source_question, pregiven_passages, 
                                                                 beam_width=self.beam_width, max_depth=self.max_depth, 
@@ -93,20 +93,18 @@ class SelfRag_Reproduction(NaiveRag):
                                                                 use_seqscore=self.use_seqscore,ignore_cont=self.ignore_cont)
                     final_prediction_with_citation, catation_docs = self._aggregate_response_with_citation(final_prediction, generation_track, add_citation=self.use_citation)  
                     response_id = 0
-                    inference_results = self.EvalData.record_result(eval_data, final_prediction_with_citation,
-                                                                    catation_docs, response_id, generation_track,
-                                                                    inference_results)
+                    inference_results = self.EvalData.record_result(eval_data, final_prediction_with_citation, inference_results,
+                                                                    catation_docs, response_id, generation_track )
+                # 是否要给 ASQA 和 factscore 也计算 acc 什么的
+                self.print_fn(f'{self.task} in {idx+1} turn:\n Question:{source_question} \n Rag Output:{final_prediction} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
+
             # --> end of dataset loop
             self.EvalData.save_result(inference_results) 
-            if 'short' == self.inference_form:
-                # calculate metric
-                acc = self.EvalData.eval_acc(inference_results)
-                EM = self.EvalData.eval_exact_match(inference_results)
-                f1_score = self.EvalData.eval_f1_score(inference_results)
-                print(f'{self.task} in {idx} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+            if 'short_form' == self.inference_form:
                 eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
+                self.EvalData.save_evaluation_results(eval_result)
                 return eval_result
-            elif 'long' == self.inference_form:
+            elif 'long_form' == self.inference_form:
                 return 'Inference completion'
         # --> end of evaluation
         else:
@@ -130,7 +128,7 @@ class SelfRag_Reproduction(NaiveRag):
         if do_retrieve is True:   
             if self.realtime_retrieval == True:
                 passages = self.retrieval.search(source_question)
-                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["content"]) for rank, passage in passages.items()] 
+                evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["text"]) for rank, passage in passages.items()] 
             else:
                 evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in pregiven_passages] 
             outputs_list = self.llm.generate(evidence_augmented_inputs)
@@ -563,7 +561,7 @@ class SelfRag_Reproduction(NaiveRag):
                                   w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore=False) -> tuple[list[str], list[float], dict]:
         if self.realtime_retrieval == True:
             passages = self.retrieval.search(current_retrieval_input)
-            evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["content"]) for rank, passage in passages.items()] 
+            evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["text"]) for rank, passage in passages.items()] 
         else:
             evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in pregiven_passages] 
         outputs_list = self.llm.generate(evidence_augmented_inputs, self.llm.sampling_params)
@@ -574,7 +572,6 @@ class SelfRag_Reproduction(NaiveRag):
         final_preds = []
         for p_idx, Outputs in enumerate(outputs_list): 
             pred_text = Outputs.text
-            print(f'output_text"{pred_text}')
             # calculate seq score
             seq_score = self._sequence_score(Outputs)
             # init dict in each loop
@@ -725,8 +722,7 @@ class SelfRag_Reproduction(NaiveRag):
             if tok == retrieval_tokens["[No Retrieval]"]:
                 ret_token_appear_indices.append(tok_idx)
                 substrings
-                print("retrieval_tokens")
-
+        # --> end for loop
         ret_token_score_dict = {}
         retrieval_remap = {}
         for order, idx in enumerate(ret_token_appear_indices):
@@ -750,7 +746,6 @@ class SelfRag_Reproduction(NaiveRag):
             else:
                 processed_pred += substring + "[No Retrieval]"
         return processed_pred
-    
 
 class InvalidRetrievalModeError(Exception):
     pass
