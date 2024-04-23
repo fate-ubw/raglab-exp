@@ -1,27 +1,34 @@
 import json
 import re
+from tqdm import tqdm
+import pdb
 
-# 读取JSON行文件
-with open('full_output_1005.jsonl', 'r') as file:
+def process(pred) -> str:
+    # remove all special tokens
+    special_tokens = ["[Fully supported]", "[Partially supported]", "[No support / Contradictory]", 
+                      "[No Retrieval]", "[Retrieval]", "[Continue to Use Evidence]",
+                      "[Irrelevant]", "[Relevant]",
+                      "[Utility:1]", "[Utility:2]", "[Utility:3]", "[Utility:4]", "[Utility:5]"]
+    for item in special_tokens:
+        if item in pred:
+            pred = pred.replace(item, "")
+    return pred
+
+# read JSONL
+with open('/home/wyd/raglab-exp/data/train_data/selfrag/full_output_1005.jsonl', 'r') as file:
     data = file.readlines()
 
-# 提取output字段并去除特殊标记
 processed_data = []
-
-for line in data:
+for line in tqdm(data):
     json_data = json.loads(line.strip())
     output = json_data['output']
-    
-    # 去除特殊标记
-    output_cleaned = re.sub(r'<[^>]*>', '', output)
-    output_cleaned = re.sub(r'\[.*?\]', '', output_cleaned)
-    
-    # 添加到处理后的数据列表
-    json_data['output_cleaned'] = output_cleaned.strip()
+    # Call the process function to remove special tokens from output
+    output_cleaned = process(output)
+    json_data['output'] = output_cleaned.strip()
     processed_data.append(json_data)
 
-# 保存处理后的数据
-with open('processed_output_1005.jsonl', 'w') as file:
+# Save processed data
+with open('/home/wyd/raglab-exp/data/train_data/selfrag/processed_output_1005.jsonl', 'w') as file:
     for item in processed_data:
         json.dump(item, file)
         file.write('\n')
