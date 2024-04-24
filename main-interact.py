@@ -129,6 +129,6 @@ if __name__=='__main__':
     rag = get_algorithm(args)
     for query in TEST_QUESTIONS:
         inference_result, generation_track = rag.inference(query, mode = 'interact')# sampled from ChatGPT
+        print(f'query:{query}')
+        print(f'rag response:{inference_result}')
         pprint(generation_track)
-        print(query)
-        pdb.set_trace()
