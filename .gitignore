@@ -4,7 +4,7 @@ api_keys*.txt
 # data
 config-debug/
 run-debug/
-data/
+wiki2023/
 test/
 1-eval_output/
 raglab/rag/infer_alg/dsp/scripts/cache/
