@@ -29,6 +29,7 @@ class NaiveRag:
         self.n_docs = args.n_docs
         self.retrieval_name = args.retrieval_name
         self.realtime_retrieval = args.realtime_retrieval
+        self.passages_max_length = args.passages_max_length
         # setup model and database 
         self.llm = self.steup_llm(args)
         # steup retrieval
@@ -82,6 +83,7 @@ class NaiveRag:
         generation_track = {}
         if self.realtime_retrieval:
             passages = self.retrieval.search(query) #self.retrieval.search(query) -> dict[int,dict]
+            passages = self._truncate_passages(passages)
             collated_passages = self.collate_passages(passages)
             target_instruction = self.find_instruction('Naive_rag', self.task)
             input = target_instruction.format_map({'passages': collated_passages, 'query': query})
@@ -129,6 +131,28 @@ class NaiveRag:
             else:
                 collate += f'#Passages{rank_id}: ' + doc['text'] +'\n'
         return collate
+
+    def _truncate_passages(self, passages: dict[int, dict]) -> dict[int, dict]:
+        '''
+        The passages provided by wiki2023 contain an average of 700 words
+        If n_doc set to 10, then 7000 words passages clearly exceed the LLM's window length
+        As a result, adding _truncate_passages limits the length of each passage
+        '''
+        truncated_passages = {}
+        for rank, passage_dict in passages.items():
+            truncated_passages[rank] = {
+                'id': passage_dict['id'],
+                'title': passage_dict['title'],
+                'text': self.truncate_text(passage_dict['text'], self.passages_max_length),
+                'score': passage_dict['score']
+            }
+        return truncated_passages
+
+    def truncate_text(self, passages:str, max_words:int)->str:
+        words = passages.split() # "Split the passages into a list of words by space"
+        truncated_words = words[:max_words] # "Take the first max_words words"
+        truncated_passages = ' '.join(truncated_words) # "Join the list of words back into a string"
+        return truncated_passages
 
     def setup_logger(self, args):
         # set logger

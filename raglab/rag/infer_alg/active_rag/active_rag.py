@@ -26,6 +26,7 @@ class ActiveRag(NaiveRag):
             if iter_step == 1:
                 retrieval_input = query
                 passages = self.retrieval.search(retrieval_input)
+                passages = self._truncate_passages(passages)
             collated_passages = self.collate_passages(passages) 
             target_instruction = self.find_instruction('active_rag-read', self.task)
             inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})
@@ -46,6 +47,7 @@ class ActiveRag(NaiveRag):
                 print(f'retrieval input/masked look ahead -> { masked_look_ahead.text}')
                 # retrieval
                 passages = self.retrieval.search(masked_look_ahead.text)
+                passages = self._truncate_passages(passages)
                 collated_passages = self.collate_passages(passages)
                 target_instruction = self.find_instruction('active_rag-read', self.task)
                 inputs = target_instruction.format_map({'passages': collated_passages, 'query': query})

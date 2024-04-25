@@ -128,6 +128,7 @@ class SelfRag_Reproduction(NaiveRag):
         if do_retrieve is True:   
             if self.realtime_retrieval == True:
                 passages = self.retrieval.search(source_question)
+                passages = self._truncate_passages(passages)
                 evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["text"]) for rank, passage in passages.items()] 
             else:
                 evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in pregiven_passages] 
@@ -561,6 +562,7 @@ class SelfRag_Reproduction(NaiveRag):
                                   w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore=False) -> tuple[list[str], list[float], dict]:
         if self.realtime_retrieval == True:
             passages = self.retrieval.search(current_retrieval_input)
+            passages = self._truncate_passages(passages)
             evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["text"]) for rank, passage in passages.items()] 
         else:
             evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in pregiven_passages] 

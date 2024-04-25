@@ -21,6 +21,7 @@ class QueryRewrite_rag(NaiveRag):
         generation_track['rewrite query'] = rewrite_query
         # retrieval
         passages = self.retrieval.search(rewrite_query)
+        passages = self._truncate_passages(passages)
         generation_track['cited passages'] = passages
         collated_passages = self.collate_passages(passages)
         instruction = self.find_instruction('query_rewrite_rag-read', self.task)

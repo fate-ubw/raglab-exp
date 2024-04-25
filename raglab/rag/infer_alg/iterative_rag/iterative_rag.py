@@ -21,6 +21,7 @@ class ItertiveRag(NaiveRag):
         for iter in range(self.max_iteration):
             retrieval_input = generation_track[iter]['retrieval_input']
             passages = self.retrieval.search(retrieval_input)
+            passages = self._truncate_passages(passages)
             collated_passages = self.collate_passages(passages)
             target_instruction = self.find_instruction('Iterative_rag-read', self.task)
             input = target_instruction.format_map({'passages': collated_passages, 'query': query})

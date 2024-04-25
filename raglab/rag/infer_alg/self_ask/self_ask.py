@@ -14,7 +14,6 @@ class SelfAsk(NaiveRag):
         '''
         target_instruction = self.find_instruction('self_ask-followup_question', self.task)
         input_with_followup = target_instruction.format_map({'query': query})
-        # follow_up = self.llm_inference(input_with_followup)
         output_list = self.llm.generate(input_with_followup)
         Output = output_list[0]
         follow_up = Output.text
@@ -29,10 +28,10 @@ class SelfAsk(NaiveRag):
                     print(f'Bad case!!!')
                     break
                 passages = self.retrieval.search(followup_question)
+                passages = self._truncate_passages(passages)
                 collated_passages = self.collate_passages(passages)
                 target_instruction = self.find_instruction('self_ask-read', self.task) 
                 input_with_passages = target_instruction.format_map({'passages': collated_passages, 'query': followup_question})
-                # intermediate_answer = self.llm_inference(input_with_passages) 
                 output_list = self.llm.generate(input_with_passages)
                 Output = output_list[0]
                 intermediate_answer = Output.text
@@ -43,7 +42,7 @@ class SelfAsk(NaiveRag):
                                               }
                 turn_idx += 1
                 input_with_followup = input_with_followup + follow_up + ' \n Intermediate Answer: ' + intermediate_answer + ' \n '
-                # follow_up = self.llm_inference(input_with_followup)
+                pdb.set_trace()
                 output_list = self.llm.generate(input_with_followup)
                 Output = output_list[0]
                 follow_up = Output.text
@@ -54,7 +53,6 @@ class SelfAsk(NaiveRag):
                 follow_up = self._extract_final_answer_2(follow_up)
             elif follow_up == '':
                 # some special case will generate ''. In this situation we need add instruction for self ask finish the whole inference
-                # follow_up = self.llm_inference(input_with_followup + 'So the final answer is:')
                 output_list = self.llm.generate(input_with_followup + 'So the final answer is:')
                 Output = output_list[0]
                 follow_up = Output.text
@@ -62,11 +60,10 @@ class SelfAsk(NaiveRag):
                 print(f'Wrong final answer pattern!!!')
         else:
             passages = self.retrieval.search(query)
+            passages = self._truncate_passages(passages)
             collated_passages = self.collate_passages(passages)
             target_instruction = self.find_instruction('self_ask-read', self.task)
             input = target_instruction.format_map({'passages': collated_passages, 'query': query})
-            # follow_up = self.llm_inference(input)
-
             output_list = self.llm.generate(input)
             Output = output_list[0]
             follow_up = Output.text
