@@ -1,6 +1,5 @@
 import argparse
 import pdb
-import pudb
 import random
 import torch
 import numpy as np
@@ -72,11 +71,13 @@ def get_config():
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
     parser.add_argument("--index_dbPath", type = str, help = 'path to index database. Index is index and embedding pairs')
     parser.add_argument('--text_dbPath', type = str, help='path to text database')
-    parser.add_argument("--retriever_modelPath", type = str, help = 'path to colbert model')
+    parser.add_argument("--retriever_modelPath", type = str, help = 'path to colbert model or retrieval model')
     parser.add_argument("--n_docs", type= int, default=10, help="Number of documents to retrieve per questions")
-    parser.add_argument('--doc_maxlen', type = int, default = 300, help = 'the doc max len decided by the wikidata format, here we set 300')
+    parser.add_argument('--passages_max_length',type=int, default=100, help = "wiki2023 passaegs contain around 700 words in average, and 10 passages will exceed max length of LLM, so we truncate each passages")
+    # colbert config
+    parser.add_argument('--doc_maxlen', type = int, default = 300, help = '[colbert configs] doc max len decided by the wikidata format, here we set 300')
     parser.add_argument('--nbits', type = int, default = 2, help = 'encode each dimension with n bits')
-    # contrieval conefig
+    # contrieval config
     parser.add_argument('--projection_size', type = int, default=768, help = 'size of embedding for contrieval')
     parser.add_argument('--n_subquantizers', type = int, default=0, help="Number of subquantizer used for vector quantization, if 0 flat index is used")
     parser.add_argument('--n_bits', type = int, default = 8, help="Number of bits per subquantizer")
@@ -132,3 +133,4 @@ if __name__=='__main__':
         print(f'query:{query}')
         print(f'rag response:{inference_result}')
         pprint(generation_track)
+        pdb.set_trace()
