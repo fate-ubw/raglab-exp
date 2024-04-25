@@ -17,3 +17,4 @@ generate_maxlength: 300
 # retrieval config
 realtime_retrieval: False
 n_docs: 10
+passages_max_length: 100

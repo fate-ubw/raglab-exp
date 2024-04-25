@@ -16,11 +16,12 @@ top_p: 1.0
 generation_stop: ''
 # retrieval common config
 realtime_retrieval: True
-retrieval_name: contriever
-index_dbPath: ./data/retrieval/contriever_embedding/wikipedia_embeddings/*
-text_dbPath: ./data/retrieval/contriever_passages/psgs_w100.tsv
-retriever_modelPath: ./model/contriever-msmarco
+retrieval_name: colbert
+index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
+text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
+retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
+passages_max_length: 100
 # colbert configs 
 nbits: 2
 # self rag configs

@@ -16,10 +16,9 @@ generate_maxlength: 300
 # retrieval config
 realtime_retrieval: True
 retrieval_name: colbert
-index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding/wikipedia2018
-text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/wikipedia2018/wiki2018_10samples_idxfrom_0.tsv
-eval_datapath: /home/wyd/raglab-exp/data/eval_datasets/popqa_longtail_w_gs.jsonl
+index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
+text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
 retriever_modelPath: ./model/colbertv2.0
 # max length should bigger than the length of input_ids
-n_docs: 5
-nbits: 2
+n_docs: 10
+passages_max_length: 100
