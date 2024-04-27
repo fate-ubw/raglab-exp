@@ -1,0 +1,24 @@
+use_seed: True
+seed: 633
+num_gpu: 1
+# eval config
+algorithm_name: naive_rag
+task: ''
+# llm config
+llm_mode: HF_Model
+llm_path: ./model/Meta-Llama-3-8B-Instruct
+dtype: 'half'
+use_vllm: True
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: True
+retrieval_name: colbert
+index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
+text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
+retriever_modelPath: ./model/colbertv2.0
+# max length should bigger than the length of input_ids
+n_docs: 10
+passages_max_length: 100

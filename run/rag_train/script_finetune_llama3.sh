@@ -1,7 +1,7 @@
 export CUDA_VISIBLE_DEVICES=0
 export NCCL_P2P_LEVEL=NVL
 
-MODEL_SIZE=7B
+MODEL_SIZE=8B
 NUM_GPUS=1
 BATCH_SIZE_PER_GPU=1
 TOTAL_BATCH_SIZE=128
@@ -14,9 +14,9 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --use_deepspeed \
     --deepspeed_config_file ./raglab/rag/train_alg/stage3_no_offloading_accelerate.conf \
     ./raglab/rag/train_alg/finetune.py \
-    --model_name_or_path ./model/Llama-2-7b-hf\
+    --model_name_or_path ./model/Meta-Llama-3-8B-Instruct\
     --use_flash_attn \
-    --tokenizer_name ./model/Llama-2-7b-hf \
+    --tokenizer_name ./model/Meta-Llama-3-8B-Instruct \
     --use_slow_tokenizer \
     --train_file ./data/train_data/full_output_1005-10samples.jsonl \
     --max_seq_length 2048 \
