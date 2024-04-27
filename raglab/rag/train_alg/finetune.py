@@ -18,7 +18,7 @@ from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from typing import Optional, Dict, Sequence
 import json
-
+import pdb
 import transformers
 from transformers import (
     AutoConfig,
@@ -31,7 +31,8 @@ from transformers import (
     get_scheduler,
     GPTNeoXTokenizerFast,
     GPT2Tokenizer,
-    OPTForCausalLM
+    OPTForCausalLM,
+    PreTrainedTokenizerFast
 )
 from peft import LoraConfig, TaskType, get_peft_model
 
@@ -238,7 +239,6 @@ def _tokenize_fn(text: str, tokenizer: transformers.PreTrainedTokenizer, max_seq
             truncation=True,
     ).input_ids
     input_ids_lens = labels_lens = input_ids.ne(tokenizer.pad_token_id).sum().item()
-    # print(input_ids_lens)
 
     return dict(
         input_ids=input_ids,
@@ -445,11 +445,28 @@ def main():
 
     # no default pad token for llama!
     # here we add all special tokens again, because the default ones are not in the special_tokens_map
-    if isinstance(tokenizer, LlamaTokenizer) or isinstance(tokenizer, LlamaTokenizerFast):
+    if isinstance(tokenizer, LlamaTokenizer) or isinstance(tokenizer, LlamaTokenizerFast) :
         if args.use_special_tokens is True:
             special_token_dict = {"additional_special_tokens": ["[No Retrieval]", "[Retrieval]", "[Continue to Use Evidence]", "[Irrelevant]", "[Relevant]", "<paragraph>", "</paragraph>", "[Utility:1]", "[Utility:2]", "[Utility:3]", "[Utility:4]", "[Utility:5]", "[Fully supported]", "[Partially supported]", "[No support / Contradictory]"]}
         special_token_dict["bos_token"] = "<s>"
         special_token_dict["eos_token"] = "</s>"
+        special_token_dict["unk_token"] = "<unk>"
+        special_token_dict["pad_token"] = "<pad>"
+        num_added_tokens = tokenizer.add_special_tokens(special_token_dict)
+        
+        context_markups = []
+        for token in ["<paragraph>", "</paragraph>"]:
+            context_markups.append(tokenizer.convert_tokens_to_ids(token))
+        if args.use_special_tokens is False:
+            assert num_added_tokens in [0, 1], "LlamaTokenizer should only add one special token - the pad_token, or no tokens if pad token present."
+        else:
+            assert num_added_tokens > 10, "special tokens must be added to the original tokenizers."
+    elif isinstance(tokenizer, PreTrainedTokenizerFast):
+        # llama3 
+        if args.use_special_tokens is True:
+            special_token_dict = {"additional_special_tokens": ["[No Retrieval]", "[Retrieval]", "[Continue to Use Evidence]", "[Irrelevant]", "[Relevant]", "<paragraph>", "</paragraph>", "[Utility:1]", "[Utility:2]", "[Utility:3]", "[Utility:4]", "[Utility:5]", "[Fully supported]", "[Partially supported]", "[No support / Contradictory]"]}
+        special_token_dict["bos_token"] = "<|begin_of_text|>"
+        special_token_dict["eos_token"] = "<|end_of_text|>"
         special_token_dict["unk_token"] = "<unk>"
         special_token_dict["pad_token"] = "<pad>"
         num_added_tokens = tokenizer.add_special_tokens(special_token_dict)
@@ -516,14 +533,9 @@ def main():
 
     train_dataset = lm_datasets["train"]
     print(train_dataset[0])
-    # print(train_dataset[1000])
-    # print(train_dataset[500])
-    # print(train_dataset[2000])
-    # print(train_dataset[10000])
     with open("processed.json", "w") as outfile:
         new_data = []
         for item in train_dataset:
-            # print(item)
             labels = [int(i) for i in item["labels"]]
             input_ids = [int(i) for i in item["input_ids"]]
             new_data.append({"labels": labels, "input_ids": input_ids})
