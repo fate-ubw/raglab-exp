@@ -13,16 +13,22 @@ class HF_VLLM(BaseLM):
 
     def load_model(self):
         self.llm = LLM(model=self.llm_path, tokenizer=self.llm_path, dtype=self.dtype)
-        if self.generation_stop != '':
-            self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop=[self.generation_stop], repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
-        else:
-            self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
         self.tokenizer = self.llm.get_tokenizer()
+        # In current version of vllm llama3 need add eos_token_id & "<|eot_id|>" for stop generation
+        if self.generation_stop != '':
+            self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")], stop = [self.generation_stop], repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
+        else:
+            self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] , repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=32000, skip_special_tokens = False)
 
     def generate(self, inputs: Union[str,list[str]], sampling_params = None)->list[BaseLM.Outputs]:
         if isinstance(inputs,str):
             inputs = [inputs]
         outputs_list = []
+        # add chat template
+        inputs_with_chat_template = []
+        for input in inputs:
+            inputs_with_chat_template.append(self.tokenizer.apply_chat_template([{'role': 'user', 'content': input}], tokenize=False))
+        inputs = inputs_with_chat_template
         if sampling_params is None:
             outputs = self.llm.generate(inputs, self.sampling_params)
         else:
@@ -30,11 +36,18 @@ class HF_VLLM(BaseLM):
         for RequestOutput in outputs:
             Outputs = self.Outputs()
             text = RequestOutput.outputs[0].text
-            # replace special tokens
-            if '</s>' in text:
-                Outputs.text =  text.replace("<s> ", "").replace("</s>", "").strip()
+            pdb.set_trace()
+            # replace eos bos
+            if "<|eot_id|>" in text:
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").replace("<|eot_id|>", "").strip()
             else:
-                Outputs.text =  text.replace("<s> ", "").strip()
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").strip()
+            if '</s>' in text:
+                text =  text.replace("<s> ", "").replace("</s>", "").strip()
+            else:
+                text =  text.replace("<s> ", "").strip()
+            Outputs.text = text
+            pdb.set_trace()
             Outputs.tokens_ids = RequestOutput.outputs[0].token_ids
             Outputs.cumulative_logprob = RequestOutput.outputs[0].cumulative_logprob
             Outputs.tokens_num = len(Outputs.tokens_ids)
