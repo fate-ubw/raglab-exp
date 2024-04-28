@@ -58,6 +58,7 @@ def get_config():
     parser.add_argument('--top_p', type=float, default=1.0, help='top-p of decoding algorithm')
     parser.add_argument('--generation_stop', type=str, default='', help='early_stop is one of the setting of generate() function, early_stop to control the outputs of llm')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
+    parser.add_argument('--use_chat_template', type = int, default=False, help = 'llama2-chat and llama3-instruction ues official chat template will get a better performance, but finetune model will mess up by this template')
     # api config
     parser.add_argument('--llm_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
     parser.add_argument('--llm_api', type=str, help='API language model name')
