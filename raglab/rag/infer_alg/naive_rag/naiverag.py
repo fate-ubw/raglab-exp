@@ -64,15 +64,21 @@ class NaiveRag:
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
                 self.print_fn(f'{self.task} in {idx+1} turn:\n Question:{question} \n Rag Output:{outputs} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
                 # calculate metric
+                if self.task in ['ASQA','Factscore']:
+                    # This two dataset need ALCE and Factscore to calculate the metrics
+                    continue
                 acc = self.EvalData.eval_acc(inference_results)
                 EM = self.EvalData.eval_exact_match(inference_results)
                 f1_score = self.EvalData.eval_f1_score(inference_results)
                 self.print_fn(f'{self.task} in {idx+1} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
             # --> end of for loop
             self.EvalData.save_result(inference_results)
-            eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
-            self.EvalData.save_evaluation_results(eval_result)
-            return eval_result
+            if self.task in ['ASQA','Factscore']:
+                return 'Inference completion'
+            else:
+                eval_result = {'Accuracy':acc, 'Exact match': EM, 'F1 score':f1_score}
+                self.EvalData.save_evaluation_results(eval_result)
+                return eval_result
         else:
             raise ModeNotFoundError("Mode must be interact or evaluation. Please provide a valid mode.")
 

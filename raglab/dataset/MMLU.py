@@ -25,6 +25,5 @@ class MMLU(PubHealth):
         postprocess_text = ''
         for answer_text, label in zip(choices['text'], choices['label']):
             postprocess_text += '\n'+ label + ': ' + answer_text
-        pdb.set_trace()
         eval_data[self.inputStruction.question] += postprocess_text
         return eval_data

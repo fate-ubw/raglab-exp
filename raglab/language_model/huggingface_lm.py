@@ -12,6 +12,7 @@ class HF_Model(BaseLM):
         self.llm_path = args.llm_path
         self.dtype = args.dtype
         self.generation_stop = args.generation_stop
+        self.use_chat_template = args.use_chat_template
 
     def load_model(self):
         if self.dtype == 'half' or self.dtype == 'float16':
@@ -19,30 +20,57 @@ class HF_Model(BaseLM):
         else:
             self.llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False, padding_side="left")
+        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
     def generate(self, inputs: Union[str,list[str]])->list[BaseLM.Outputs]:
         if isinstance(inputs,str):
             inputs = [inputs]
         outputs_list = []
         for prompt in tqdm(inputs, desc="Generating outputs"):
-            input_ids = self.tokenizer.encode(prompt, return_tensors="pt").cuda()
+            if self.use_chat_template is True:
+                messages = [{"role": "user", "content": prompt}]
+                input_ids = self.tokenizer.apply_chat_template(messages, add_generation_prompt=True, return_tensors="pt").cuda(self.llm.device)
+            else:
+                input_ids = self.tokenizer.encode(prompt, return_tensors="pt").cuda(self.llm.device)
             instruction_len = input_ids.shape[1]
-            hf_outputs = self.llm.generate(
-                input_ids=input_ids,
-                do_sample=False,
-                max_length=input_ids.shape[1] + self.generate_maxlength,
-                output_scores=True,
-                return_dict_in_generate=True
-            )
+            if self.temperature > 0 or self.top_p <1:
+                # nuelcus
+                hf_outputs = self.llm.generate(
+                    input_ids=input_ids,
+                    do_sample=True,
+                    temperature = self.temperature,
+                    top_p = self.top_p,
+                    max_length=instruction_len + self.generate_maxlength,
+                    eos_token_id = [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")],
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    pad_token_id = self.tokenizer.eos_token_id
+                )
+            else :
+                # greedy 
+                hf_outputs = self.llm.generate(
+                    input_ids=input_ids,
+                    do_sample=False,
+                    max_length=instruction_len + self.generate_maxlength,
+                    eos_token_id = [self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")],
+                    output_scores=True,
+                    return_dict_in_generate=True,
+                    pad_token_id = self.tokenizer.eos_token_id
+                )
             Outputs = self.Outputs()
             Outputs.tokens_ids = hf_outputs.sequences[0][instruction_len:].tolist()
             Outputs.tokens_num = len(Outputs.tokens_ids)
             text = self.tokenizer.decode(Outputs.tokens_ids, skip_special_tokens = False)
             # replace special tokens
-            if '</s>' in text:
-                Outputs.text =  text.replace("<s> ", "").replace("</s>", "").strip()
+            if "<|eot_id|>" in text:
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").replace("<|eot_id|>", "").strip()
             else:
-                Outputs.text =  text.replace("<s> ", "").strip()
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").strip()
+            if '</s>' in text:
+                text =  text.replace("<s> ", "").replace("</s>", "").strip()
+            else:
+                text =  text.replace("<s> ", "").strip()
+            Outputs.text = text
             # calculate the probs of each tokens
             tokens_prob = []
             tokens_logprob = []

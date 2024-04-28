@@ -10,6 +10,7 @@ class HF_VLLM(BaseLM):
         self.llm_path = args.llm_path
         self.dtype = args.dtype
         self.generation_stop = args.generation_stop
+        self.use_chat_template = args.use_chat_template
 
     def load_model(self):
         self.llm = LLM(model=self.llm_path, tokenizer=self.llm_path, dtype=self.dtype)
@@ -26,9 +27,11 @@ class HF_VLLM(BaseLM):
         outputs_list = []
         # add chat template
         inputs_with_chat_template = []
-        for input in inputs:
-            inputs_with_chat_template.append(self.tokenizer.apply_chat_template([{'role': 'user', 'content': input}], tokenize=False))
-        inputs = inputs_with_chat_template
+        if self.use_chat_template is True:
+            # llama2 & llama3-instruction need add chat template to get the best performance
+            for input in inputs:
+                inputs_with_chat_template.append(self.tokenizer.apply_chat_template([{'role': 'user', 'content': input}], add_generation_prompt=True, tokenize=False))
+            inputs = inputs_with_chat_template            
         if sampling_params is None:
             outputs = self.llm.generate(inputs, self.sampling_params)
         else:
@@ -36,7 +39,6 @@ class HF_VLLM(BaseLM):
         for RequestOutput in outputs:
             Outputs = self.Outputs()
             text = RequestOutput.outputs[0].text
-            pdb.set_trace()
             # replace eos bos
             if "<|eot_id|>" in text:
                 text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").replace("<|eot_id|>", "").strip()
@@ -47,7 +49,6 @@ class HF_VLLM(BaseLM):
             else:
                 text =  text.replace("<s> ", "").strip()
             Outputs.text = text
-            pdb.set_trace()
             Outputs.tokens_ids = RequestOutput.outputs[0].token_ids
             Outputs.cumulative_logprob = RequestOutput.outputs[0].cumulative_logprob
             Outputs.tokens_num = len(Outputs.tokens_ids)

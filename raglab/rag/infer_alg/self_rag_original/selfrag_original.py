@@ -65,7 +65,6 @@ class SelfRag_Original(NaiveRag):
         self.EvalData = get_dataset(self.task, self.output_dir,self.llm_path, self.eval_datapath)
         self.eval_dataset = self.EvalData.load_dataset()
         #TODO seperate instruction and preprocess from logic. Combine instruction and dataset class
-        pdb.set_trace()
         self.eval_dataset = preprocess_input_data(self.eval_dataset, task = self.task) # find task instruction 
         inference_results = []
         for instance_idx, eval_data in enumerate(tqdm(self.eval_dataset)):
@@ -219,7 +218,6 @@ class SelfRag_Original(NaiveRag):
                             continue
                         if "[Retrieval]" in prev_pred:
                             curr_prompt = prompt + prev_generation # get new prompt
-                            pdb.set_trace()
                             curr_preds, curr_scores, overall_score_dict = self.run_step_generation_batch(curr_prompt, ctxs,
                                                                                                          rel_tokens=rel_tokens,grd_tokens=grd_tokens,
                                                                                                         ret_tokens=ret_tokens, ut_tokens=ut_tokens,

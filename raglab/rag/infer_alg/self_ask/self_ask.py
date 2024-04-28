@@ -42,7 +42,6 @@ class SelfAsk(NaiveRag):
                                               }
                 turn_idx += 1
                 input_with_followup = input_with_followup + follow_up + ' \n Intermediate Answer: ' + intermediate_answer + ' \n '
-                pdb.set_trace()
                 output_list = self.llm.generate(input_with_followup)
                 Output = output_list[0]
                 follow_up = Output.text
