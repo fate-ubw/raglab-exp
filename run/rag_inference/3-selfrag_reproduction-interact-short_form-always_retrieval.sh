@@ -1,3 +1,3 @@
 export CUDA_VISIBLE_DEVICES=0
-python -i ./main.py\
+python -i ./main-interact.py\
     --config ./config/selfrag_reproduction/selfrag_reproduction-interact-short_form-always_retrieval.yaml

@@ -23,7 +23,6 @@ retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
 passages_max_length: 100
 # colbert configs 
-nbits: 2
 # self rag configs
   # decoding args
 threshold: 0.2
