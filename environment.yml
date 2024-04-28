@@ -1,4 +1,4 @@
-name: selfrag_finetune
+name: raglab
 channels:
   - pytorch/label/nightly
   - nvidia
@@ -307,4 +307,4 @@ dependencies:
       - yarg==0.1.9
       - yarl==1.9.4
       - zipp==3.17.0
-prefix: /workspace/miniconda3/envs/selfrag_finetune
+prefix: /workspace/miniconda3/envs/raglab
