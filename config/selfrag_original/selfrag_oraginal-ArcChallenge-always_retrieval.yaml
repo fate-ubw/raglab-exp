@@ -5,7 +5,7 @@ num_gpu: 1
 # eval config
 eval_datapath: ./data/eval_datasets/Arc_Challenge/arc_challenge_processed.jsonl
 task: ArcChallenge
-output_dir: ./1-eval_output/
+output_dir: ./data/eval_results/
 # llm config
 llm_mode: HF_Model
 llm_path: ./model/selfrag_llama2_7b/

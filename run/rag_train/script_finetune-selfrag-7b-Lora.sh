@@ -18,7 +18,7 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --use_flash_attn \
     --tokenizer_name ./model/Llama-2-7b-hf \
     --use_slow_tokenizer \
-    --train_file ./data/train_data/full_output_1005-10samples.jsonl \
+    --train_file ./data/train_data/full_output_1005.jsonl \
     --max_seq_length 2048 \
     --preprocessing_num_workers 32 \
     --per_device_train_batch_size $BATCH_SIZE_PER_GPU \
