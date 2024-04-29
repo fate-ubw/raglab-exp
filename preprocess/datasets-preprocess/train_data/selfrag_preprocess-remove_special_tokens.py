@@ -15,7 +15,7 @@ def process(pred) -> str:
     return pred
 
 # read JSONL
-with open('/home/wyd/raglab-exp/data/train_data/selfrag/full_output_1005.jsonl', 'r') as file:
+with open('./data/train_data/full_output_1005.jsonl', 'r') as file:
     data = file.readlines()
 
 processed_data = []
@@ -28,7 +28,7 @@ for line in tqdm(data):
     processed_data.append(json_data)
 
 # Save processed data
-with open('/home/wyd/raglab-exp/data/train_data/selfrag/processed_output_1005.jsonl', 'w') as file:
+with open('./data/train_data/full_output_1005-remove_special_tokens.jsonl', 'w') as file:
     for item in processed_data:
         json.dump(item, file)
         file.write('\n')
