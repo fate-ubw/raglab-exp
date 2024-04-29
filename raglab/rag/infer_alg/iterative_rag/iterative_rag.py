@@ -29,7 +29,6 @@ class ItertiveRag(NaiveRag):
             Output = output_list[0]
             output_text = Output.text
             generation_track[iter]['instruction'] = input
-            # generation_track[iter]['cited passages'] = passages
             generation_track[iter]['generation'] = output_text
             # save outputs as next iter retrieval inputs
             generation_track[iter+1] = {'retrieval_input': output_text, 'generation':None,'instruction': None, 'passages': None}

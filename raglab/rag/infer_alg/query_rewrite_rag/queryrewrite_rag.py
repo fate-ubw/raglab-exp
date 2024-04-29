@@ -15,8 +15,8 @@ class QueryRewrite_rag(NaiveRag):
         '''
         # rewrite the query
         generation_track = {}
-        instruction = self.find_instruction('query_rewrite_rag-rewrite', self.task)
-        query_with_instruction = instruction.format_map({'query':query})
+        target_instruction = self.find_instruction('query_rewrite_rag-rewrite', self.task)
+        query_with_instruction = target_instruction.format_map({'query':query})
         rewrite_query = self._rewrite(query_with_instruction)
         generation_track['rewrite query'] = rewrite_query
         # retrieval
@@ -24,13 +24,12 @@ class QueryRewrite_rag(NaiveRag):
         passages = self._truncate_passages(passages)
         generation_track['cited passages'] = passages
         collated_passages = self.collate_passages(passages)
-        instruction = self.find_instruction('query_rewrite_rag-read', self.task)
-        query_with_instruction = instruction.format_map({'query':query, 'passages':collated_passages})
+        target_instruction = self.find_instruction('query_rewrite_rag-read', self.task)
+        query_with_instruction = target_instruction.format_map({'query':query, 'passages':collated_passages})
         # read
         output_list = self.llm.generate(query_with_instruction)
         Output = output_list[0]
         output_text = Output.text
-        # output = self.llm_inference(query_with_instruction)
         generation_track['final answer'] = output_text
         return output_text, generation_track
 
