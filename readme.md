@@ -135,6 +135,6 @@ sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
  sh run/rag_train/script_finetune-llama3-baseline-full_weight.sh
 ~~~
 # Inference exp
-- 完成上述实验之后即可开始所有实验的推理
+- 完成上述实验之后即可开始所有算法的推理
 - baseline 的 temperature 以及 top_p 参数还需要讨论
 - 因为需要推理的脚本非常多，需要使用 gpu 调度算法[simple_gpu_scheduler](https://github.com/ExpectationMax/simple_gpu_scheduler)来实现一个脚本调用所有的 bash 脚本进行所有的实验
