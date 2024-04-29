@@ -9,9 +9,6 @@ from raglab.dataset.metrics import match, exact_match, F1
 from raglab.dataset.base_dataset import MultiChoiceQA
 from raglab.dataset.utils import get_args_form_config
 
-TASK_INSTRUCTION = "Is the following statement correct or not? Say true if it's correct; otherwise say false."
-
-PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
 class PubHealth(MultiChoiceQA):
     def __init__(self, args):
@@ -75,12 +72,6 @@ class PubHealth(MultiChoiceQA):
              self.OutputStruction.generation: final_prediction
             })
         return inference_results
-    
-    def get_instruction(self, prompt:str) ->str:
-        if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
-        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
-        return prompt_with_instruction
 
     def eval_acc(self, infer_results: list[dict]):
         eval_results = []

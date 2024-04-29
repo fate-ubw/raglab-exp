@@ -2,10 +2,6 @@ from raglab.dataset.PopQA import  PopQA
 from dataclasses import dataclass
 import pdb
 
-TASK_INSTRUCTION = "Answer the following question. The question may be ambiguous and have multiple correct answers, and in that case, you have to provide a long-form answer including all correct answers."
-
-PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
-
 class ASQA(PopQA):
     def __init__(self, args):
         super().__init__(args)
@@ -35,12 +31,6 @@ class ASQA(PopQA):
         '''
         new_results = [{"data": inference_result, "args": [], "total_cost": 0.0, "azure_filter_fail": ""}]
         super().save_result(new_results)
-
-    def get_instruction(self, prompt):
-        if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "## Input:\n\n" + prompt
-        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
-        return prompt_with_instruction
 
     def record_result(self, eval_data, final_prediction_with_citation, inference_results, catation_docs = None, response_id = None, generation_track = None):
         '''

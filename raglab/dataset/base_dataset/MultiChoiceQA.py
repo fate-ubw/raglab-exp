@@ -14,9 +14,5 @@ class MultiChoiceQA(ABC):
     def save_result(self):# The class that inherits the class must override save_inference_result() methods
         pass
     
-    @abstractmethod
-    def get_instruction(self):
-        pass
-    
     def preprocess(self,input):
         return input

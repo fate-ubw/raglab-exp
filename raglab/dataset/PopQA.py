@@ -9,9 +9,6 @@ from raglab.dataset.utils import load_jsonlines
 from raglab.dataset.metrics import match, exact_match, F1
 from raglab.dataset.base_dataset import QA
 from raglab.dataset.utils import get_args_form_config
-TASK_INSTRUCTION = '' # open QA no need special instruction for inference
-
-PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
 
 class PopQA(QA):
     def __init__(self, args):
@@ -76,11 +73,6 @@ class PopQA(QA):
             })
         return inference_results
 
-    def get_instruction(self, prompt:str)->str:
-        if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt
-        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
-        return prompt_with_instruction
 
     def eval_acc(self, infer_results: list[dict]) -> Union[float,str]:
         eval_results = []

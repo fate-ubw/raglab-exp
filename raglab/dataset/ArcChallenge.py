@@ -1,9 +1,5 @@
 from raglab.dataset.PubHealth import PubHealth
 from dataclasses import dataclass
-TASK_INSTRUCTION = "Given four answer candidates, A, B, C and D, choose the best answer choice."
-
-PROMPT_INSTRUCTION = "### Instruction:\n{instruction}\n\n### Response:\n"
-
 
 class ArcChallenge(PubHealth):
     def __init__(self, args):
@@ -50,8 +46,3 @@ class ArcChallenge(PubHealth):
         eval_data[self.InputStruction.question] += choices
         return eval_data
 
-    def get_instruction(self, prompt):
-        if len(TASK_INSTRUCTION) > 0:
-            prompt = TASK_INSTRUCTION + "\n\n## Input:\n\n" + prompt + self.choices
-        prompt_with_instruction = PROMPT_INSTRUCTION.format_map({"instruction": prompt})
-        return prompt_with_instruction
