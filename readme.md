@@ -11,7 +11,7 @@ git clone https://github.com/fate-ubw/raglab-exp.git
 ~~~
 - create environment from yml 
 ~~~bash
-cd raglab
+cd raglab-exp
 conda create -f environment.yml
 ~~~
 - install flash-attn, en_core_web_sm, punkt manually
