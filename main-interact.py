@@ -134,4 +134,3 @@ if __name__=='__main__':
         print(f'query:{query}')
         print(f'rag response:{inference_result}')
         pprint(generation_track)
-        pdb.set_trace()
