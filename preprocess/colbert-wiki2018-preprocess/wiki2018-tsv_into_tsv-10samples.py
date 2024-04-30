@@ -1,7 +1,7 @@
 import pdb
 with open('/home/wyd/raglab-exp/data/retrieval/contriever_passages/psgs_w100-debug.tsv', 'r') as file:
     lines = file.readlines()
-pdb.set_trace()
+
 
 samples = lines[1:11]
 # remove first line

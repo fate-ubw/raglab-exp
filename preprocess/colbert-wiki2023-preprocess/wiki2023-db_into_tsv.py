@@ -12,7 +12,7 @@ for table_name in tables:
     cursor.execute(f"SELECT * FROM {table_name}")
     rows = cursor.fetchall()
     # columns = [desc[0] for desc in cursor.description] # ['title', 'text']
-    pdb.set_trace()
+    
     for id,row in tqdm(enumerate(rows), total=len(rows), desc=f"Processing {table_name}"): 
         title = row[0]
         text = row[1]
