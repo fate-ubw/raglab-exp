@@ -52,16 +52,15 @@
   gdown --id 1mekls6OGOKLmt7gYtHs0WGf5oTamTNat
   ~~~
 ## 10-samples test
-- use 10-samples test environment
-- 
+- 10-samples test is aimed at validating the environment
 - run colbert embedding process enwiki-20230401-10samples.tsv
   1. Change root path for variables: `checkpoint`, `index_dbPath`, `collection` in
 [wiki2023-10samples_tsv-2-colbert_embedding.py](https://github.com/fate-ubw/raglab-exp/blob/main/preprocess/colbert-wiki2023-preprocess/wiki2023-db_into_tsv-10samples.py). In file paths, colbert encounters many issues when using relative paths to generate embeddings. Therefore, the current version of raglab uses absolute paths. 
   ~~~bash
     # change root path
-      checkpoint = '/your_root_path/raglab-exp/model/colbertv2.0'
-      index_dbPath = '/your_root_path/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples'
-      collection = '/your_root_path/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv'
+  checkpoint = '/your_root_path/raglab-exp/model/colbertv2.0'
+  index_dbPath = '/your_root_path/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples'
+  collection = '/your_root_path/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv'
   ~~~
   2. run
   ~~~bash
@@ -69,9 +68,9 @@
   sh run/wiki2023_preprocess/2-wiki2023-10samples_tsv-2-colbert_embedding.sh
   ~~~
 - Embedding precess will take around 15mins in first time.
-- 10-samples test is aimed at validating the environment. The first time colbert processes embeddings, it takes a relatively long time because it needs to recompile the `torch_extensions`. However, calling the processed embeddings does not require a long time. If there are no errors and the retrieved text can be printed, it indicates that the environment is correct.
+- The first time colbert processes embeddings, it takes a relatively long time because it needs to recompile the `torch_extensions`. However, calling the processed embeddings does not require a long time. If there are no errors and the retrieved text can be printed, it indicates that the environment is correct.
 ## Test Raglab with 10-samples embedding
-- here we test naive rag base on 10-samples embedding
+- test selfrag  base on 10-samples embedding
 - After processing with colbert embeddings, you can start running the algorithms in raglab. All algorithms integrated in raglab include two modes: `interact` and `evaluation`. The test stage demonstrates in `interact` mode, just for fun 🤗.
 - Modify the `index_dbPath` and `text_dbPath` in config file:[selfrag_reproduction-interact-short_form-adaptive_retrieval.yaml](https://github.com/fate-ubw/raglab-exp/blob/main/config/selfrag_reproduction/selfrag_reproduction-interact-short_form-adaptive_retrieval.yaml)
   ~~~bash
@@ -86,7 +85,7 @@
 - Congratulations！！！Now you have already know how to run raglab 🌈
 - In raglab, each algorithm has 10 queries built-in in interact mode which are sampled from benchmark
 ## embedding whole wiki2023
-If the 10-samples test is passed successfully, you can proceed with processing wiki2023.
+- If the 10-samples test is passed successfully, you can proceed with processing wiki2023.
 1. preprocess `.db -> .tsv` (Colbert can only read files in .tsv format.)
     ~~~bash
     cd raglab-exp
