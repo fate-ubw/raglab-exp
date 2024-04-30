@@ -1,0 +1,11 @@
+sh run/rag_inference/1-naive_rag-interact.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-long_form-adaptive_retrieval.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-long_form-always_retrieval.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-long_form-no_retrieval.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-short_form-adaptive_retrieval.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-short_form-always_retrieval.sh
+sh run/rag_inference/3-selfrag_reproduction-interact-short_form-no_retrieval.sh
+sh run/rag_inference/5-query_rewrite_rag-interact.sh
+sh run/rag_inference/6-iterative_rag-interact.sh
+sh run/rag_inference/7-active_rag-interact-Llama2.sh
+sh run/rag_inference/8-self_ask-interact.sh
