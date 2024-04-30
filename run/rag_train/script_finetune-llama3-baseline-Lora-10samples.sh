@@ -28,8 +28,9 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --warmup_ratio 0.03 \
     --weight_decay 0. \
     --num_train_epochs 3 \
-    --output_dir ./model/output_models/Llama-3-${MODEL_SIZE}-Instruction-baseline/ \
+    --output_dir ./model/output_models/Llama-3-${MODEL_SIZE}-Instruction-baseline-adapter/ \
     --with_tracking \
     --report_to tensorboard \
     --logging_steps 1 \
-    --use_special_tokens 
+    --use_special_tokens \
+    --use_lora \
