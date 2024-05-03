@@ -623,7 +623,12 @@ class SelfRag_Reproduction(NaiveRag):
         '''
         calculate the ratio of retrieval base on first token logits
         '''
-        sampling_params = SamplingParams(temperature=0.0, top_p=1.0, max_tokens=1, logprobs=32000, skip_special_tokens = False)
+        vocab_size = self.llm.tokenizer.vocab_size
+        special_token_size = len(self.llm.tokenizer.added_tokens_decoder)
+        # remove redundancy special tokens
+        real_special_tokens = [{idx:token} for idx,token in self.llm.tokenizer.added_tokens_decoder.items() if idx >= vocab_size]
+        special_token_size = len(real_special_tokens)
+        sampling_params = SamplingParams(temperature=0.0, top_p=1.0, max_tokens=1, repetition_penalty= 1, logprobs = vocab_size + special_token_size, skip_special_tokens = False)
         '''
         Diff: According to self rag's paper, when calculating the ratio, language model only to predict the next token logits.
               Source code max_tokens is often set to 50, 100 or even 300, which greatly wastes computing resources. 
@@ -633,6 +638,7 @@ class SelfRag_Reproduction(NaiveRag):
         Outputs = outputs_list[0]
         pred_log_probs = Outputs.logprobs
         score_dict = {}
+        pdb.set_trace()
         for tok, id in retrieval_tokens.items():
             if id not in pred_log_probs[0]:
                 score_dict[tok] = -100
