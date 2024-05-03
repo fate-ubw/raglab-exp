@@ -18,7 +18,7 @@ class SelfAsk(NaiveRag):
         Output = output_list[0]
         follow_up = Output.text
 
-        print(f'follow up question o:{follow_up}')
+        print(f'follow up question:{follow_up}')
         generation_track = {}
         turn_idx = 1
         if 'Follow up:' in follow_up:
