@@ -2,8 +2,25 @@ import json
 import re
 from tqdm import tqdm
 import pdb
+import re
 
-def process(pred) -> str:
+def remvoe_passages(text):
+    """
+    Removes <paragraph>text</paragraph> tags from the given text string.
+    
+    Args:
+        text (str): The input text string.
+        
+    Returns:
+        str: The text string with <paragraph>passage</paragraph> tags removed.
+    """
+    # Define the regular expression pattern
+    pattern = r"<paragraph>([\s\S]*?)<\/paragraph>"
+    # Use re.sub() to replace the matched patterns with the captured group
+    cleaned_text = re.sub(pattern, "", text)
+    return cleaned_text
+
+def remove_special_tokens(pred) -> str:
     # remove all special tokens
     special_tokens = ["[Fully supported]", "[Partially supported]", "[No support / Contradictory]", 
                       "[No Retrieval]", "[Retrieval]", "[Continue to Use Evidence]",
@@ -23,7 +40,11 @@ for line in tqdm(data):
     json_data = json.loads(line.strip())
     output = json_data['output']
     # Call the process function to remove special tokens from output
-    output_cleaned = process(output)
+    print(f'source -> {output}')
+    output_cleaned = remove_special_tokens(output)
+    output_cleaned = remvoe_passages(output_cleaned)
+    print(f'preprocessed -> {output_cleaned}')
+    pdb.set_trace()
     json_data['output'] = output_cleaned.strip()
     processed_data.append(json_data)
 
