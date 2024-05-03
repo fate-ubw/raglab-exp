@@ -254,7 +254,6 @@ def encode_with_prompt_completion_format(example, tokenizer, max_seq_length, con
     and it doesn't make sense to follow directly with the completion.
     '''
     # if prompt doesn't end with space and completion doesn't start with space, add space
-
     prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
     source_text = prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example)
     target_text = example['output'] + tokenizer.eos_token
@@ -265,7 +264,6 @@ def encode_with_prompt_completion_format(example, tokenizer, max_seq_length, con
     source_len = sources_tokenized["input_ids_lens"]
     labels = copy.deepcopy(input_ids)
     labels[ :source_len-1] = -100
-
     if context_markups is not None:
         context_start = False
         for j, orig_token in enumerate(labels[source_len:]):

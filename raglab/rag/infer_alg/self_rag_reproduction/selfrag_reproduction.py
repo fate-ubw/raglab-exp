@@ -638,7 +638,6 @@ class SelfRag_Reproduction(NaiveRag):
         Outputs = outputs_list[0]
         pred_log_probs = Outputs.logprobs
         score_dict = {}
-        pdb.set_trace()
         for tok, id in retrieval_tokens.items():
             if id not in pred_log_probs[0]:
                 score_dict[tok] = -100
