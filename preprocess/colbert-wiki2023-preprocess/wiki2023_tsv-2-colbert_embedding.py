@@ -17,7 +17,7 @@ if __name__=='__main__':
     nbits = 2   # encode each dimension with 2 bits
     doc_maxlen = 300  
     index_name = dataset
-    with Run().context(RunConfig(nranks=8, experiment=index_dbPath)):  # nranks specifies the number of GPUs to use.
+    with Run().context(RunConfig(nranks=1, experiment=index_dbPath)):  # nranks specifies the number of GPUs to use.
         config = ColBERTConfig(doc_maxlen=doc_maxlen, nbits=nbits, kmeans_niters=4)        
         indexer = Indexer(checkpoint=checkpoint, config=config)
         indexer.index(name=index_name, collection=collection, overwrite=True) #assert overwrite in [True, False, 'reuse', 'resume', "force_silent_overwrite"]
