@@ -40,11 +40,8 @@ for line in tqdm(data):
     json_data = json.loads(line.strip())
     output = json_data['output']
     # Call the process function to remove special tokens from output
-    print(f'source -> {output}')
     output_cleaned = remove_special_tokens(output)
     output_cleaned = remvoe_passages(output_cleaned)
-    print(f'preprocessed -> {output_cleaned}')
-    pdb.set_trace()
     json_data['output'] = output_cleaned.strip()
     processed_data.append(json_data)
 
