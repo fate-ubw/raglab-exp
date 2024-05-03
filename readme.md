@@ -40,17 +40,6 @@
 
 # 💽process wiki2023 as vector database
 
-## download wiki2023 raw data
-- current version of raglab use wiki2023 as database
-- we get source wiki2023 get from [factscore](https://github.com/shmsw25/FActScore)
-  - method1: url for download wiki2023:[google_drive](https://drive.google.com/file/d/1mekls6OGOKLmt7gYtHs0WGf5oTamTNat/view) 
-  - method2: install throuth gdown 
-  ~~~bash
-  cd raglab-exp/data/retrieval/colbertv2.0_passages
-  mkdir wiki2023
-  pip install gdown
-  gdown --id 1mekls6OGOKLmt7gYtHs0WGf5oTamTNat
-  ~~~
 ## 10-samples test
 - 10-samples test is aimed at validating the environment
 - run colbert embedding process enwiki-20230401-10samples.tsv
@@ -69,7 +58,7 @@
   ~~~
 - Embedding precess will take around 15mins in first time.
 - The first time colbert processes embeddings, it takes a relatively long time because it needs to recompile the `torch_extensions`. However, calling the processed embeddings does not require a long time. If there are no errors and the retrieved text can be printed, it indicates that the environment is correct.
-## Test Raglab with 10-samples embedding
+## Run Raglab with 10-samples embedding
 - test selfrag  base on 10-samples embedding
 - After processing with colbert embeddings, you can start running the algorithms in raglab. All algorithms integrated in raglab include two modes: `interact` and `evaluation`. The test stage demonstrates in `interact` mode, just for fun 🤗.
 - Modify the `index_dbPath` and `text_dbPath` in config file:[selfrag_reproduction-interact-short_form-adaptive_retrieval.yaml](https://github.com/fate-ubw/raglab-exp/blob/main/config/selfrag_reproduction/selfrag_reproduction-interact-short_form-adaptive_retrieval.yaml)
@@ -84,7 +73,32 @@
   ~~~
 - Congratulations！！！Now you have already know how to run raglab 🌈
 - In raglab, each algorithm has 10 queries built-in in interact mode which are sampled from benchmark
+
+
 ## embedding whole wiki2023
+- you can download the [colbert embdding wiki2023]() as raglab database(40Gb)
+~~~bash
+cd /raglab-exp/data/retrieval/colbertv2.0_embedding
+gdown --id xxxxxx
+# unzip commend for 
+~~~
+- modify the path in meta.json file
+- embedding whole wiki2023 to vector need 22 hours, so we recommend download prepared embedding
+- 
+
+### download wiki2023 raw data
+- current version of raglab use wiki2023 as database
+- we get source wiki2023 get from [factscore](https://github.com/shmsw25/FActScore)
+  - method1: url for download wiki2023:[google_drive](https://drive.google.com/file/d/1mekls6OGOKLmt7gYtHs0WGf5oTamTNat/view) 
+  - method2: install throuth gdown 
+  ~~~bash
+  cd raglab-exp/data/retrieval/colbertv2.0_passages
+  mkdir wiki2023
+  pip install gdown
+  gdown --id 1mekls6OGOKLmt7gYtHs0WGf5oTamTNat
+  ~~~
+
+### preprocess wiki2023
 - If the 10-samples test is passed successfully, you can proceed with processing wiki2023.
 1. preprocess `.db -> .tsv` (Colbert can only read files in .tsv format.)
     ~~~bash
@@ -104,7 +118,6 @@
     cd raglab-exp
     sh run/wiki2023_preprocess/4-wiki2023_tsv-2-colbert_embedding.sh
     ~~~
-  - Attention: nranks is the parameter for setting the number of GPUs, currently nranks=8.
 
 # Fine tune llama3 & self rag 
 - The base models for raglab baseline and selfrag use llama3-instruction-8b. Since selfrag was further fine-tuned on additional data during the fine-tuning stage, in order to make a fair comparison, the baseline model also needs to be fine-tuned.
