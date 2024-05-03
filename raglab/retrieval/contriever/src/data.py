@@ -15,7 +15,6 @@ import torch.distributed as dist
 from raglab.retrieval.contriever.src import dist_utils
 from tqdm import tqdm
 logger = logging.getLogger(__name__)
-import 
 
 def load_data(opt, tokenizer):
     datasets = {}
