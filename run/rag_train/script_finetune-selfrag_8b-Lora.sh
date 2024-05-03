@@ -1,10 +1,10 @@
-# export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0
 export NCCL_P2P_LEVEL=NVL
 
 MODEL_SIZE=8B
 NUM_GPUS=1
 BATCH_SIZE_PER_GPU=1
-TOTAL_BATCH_SIZE=128
+TOTAL_BATCH_SIZE=64
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 echo "Training llama model ${MODEL_SIZE} using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
 CUDA_VISIBLE_DEVICES=0 accelerate launch \
@@ -19,7 +19,7 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --tokenizer_name ./model/Meta-Llama-3-8B-Instruct \
     --use_slow_tokenizer \
     --train_file ./data/train_data/full_output_1005.jsonl \
-    --max_seq_length 8192 \
+    --max_seq_length 4096 \
     --preprocessing_num_workers 32 \
     --per_device_train_batch_size $BATCH_SIZE_PER_GPU \
     --gradient_accumulation_steps $GRADIENT_ACC_STEPS \

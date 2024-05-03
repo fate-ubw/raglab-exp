@@ -1,4 +1,4 @@
-# export CUDA_VISIBLE_DEVICES=0
-# export COLBERT_LOAD_TORCH_EXTENSION_VERBOSE=True
+export CUDA_VISIBLE_DEVICES=0
+
 python ./main-iterative_rag.py\
     --config ./config/iterative_rag/iterative_rag-PopQA-Llama2-maxiter_5.yaml
