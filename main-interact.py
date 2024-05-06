@@ -69,7 +69,7 @@ def get_config():
     parser.add_argument('--api_top_logprobs', type=int, default=1, help='An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability. logprobs must be set to true if this parameter is used.')
     # retrieval config
     parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages(only)')
-    parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever'],help = 'the name of retrieval model')
+    parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever', 'colbert_api'],help = 'name of retrieval model')
     parser.add_argument("--index_dbPath", type = str, help = 'path to index database. Index is index and embedding pairs')
     parser.add_argument('--text_dbPath', type = str, help='path to text database')
     parser.add_argument("--retriever_modelPath", type = str, help = 'path to colbert model or retrieval model')
@@ -133,4 +133,5 @@ if __name__=='__main__':
         inference_result, generation_track = rag.inference(query, mode = 'interact')# sampled from ChatGPT
         print(f'query:{query}')
         print(f'rag response:{inference_result}')
-        pprint(generation_track)
+        # pprint(generation_track)
+        # pdb.set_trace()
