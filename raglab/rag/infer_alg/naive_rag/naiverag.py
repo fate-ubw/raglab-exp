@@ -3,9 +3,12 @@ from tqdm import tqdm
 from datetime import datetime
 from typing import Optional, Any
 import logging
-from raglab.dataset.utils import get_dataset # load dataset class
-from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
-from raglab.retrieval.contriever.contriever_retrieve import ContrieverRrtieve
+
+from raglab.dataset.utils import get_dataset # load datasets
+from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
+# from raglab.retrieval.contriever import ContrieverRrtieve
+# from raglab.retrieval.colbert import ColbertRetrieve
+# from raglab.retrieval.colbert_api import ColbertApi
 from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM
 from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
@@ -125,6 +128,11 @@ class NaiveRag:
         elif 'contriever' == self.retrieval_name:
             retrieval_model = ContrieverRrtieve(args)
             retrieval_model.setup_retrieve()
+        elif  'colbert_api' == self.retrieval_name:
+            retrieval_model = ColbertApi(args)
+            retrieval_model.setup_retrieve()
+        else:
+            raise RetrievalModelError("invalid retrieval model")
         return retrieval_model 
     
     def collate_passages(self, passages:dict[int, Optional[dict]])-> str:
@@ -214,4 +222,7 @@ class InstructionNotFoundError(Exception):
     pass
 
 class LanguageModelError(Exception):
+    pass
+
+class RetrievalModelError(Exception):
     pass
