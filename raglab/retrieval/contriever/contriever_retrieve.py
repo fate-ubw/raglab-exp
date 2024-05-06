@@ -51,7 +51,7 @@ class ContrieverRrtieve(Retrieve):
         questions_embedding = self.embed_queries(self.args, [query])
         start_time_retrieval = time.time()
         top_ids_and_scores = self.index.search_knn(questions_embedding, self.n_docs)  
-        print(f"Search time: {time.time()-start_time_retrieval:.1f} s.") 
+        print(f"Search time: {time.time()-start_time_retrieval:.3f} s.") 
         passages = self.add_passages(self.passage_id_map, top_ids_and_scores)
         return passages
 
