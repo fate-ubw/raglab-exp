@@ -24,7 +24,7 @@ if __name__=='__main__':
     indexer.get_index() # You can get the absolute path of the index, if needed.
     with Run().context(RunConfig(experiment=index_dbPath)):
         searcher = Searcher(index=index_name)
-        
+    
     query = 'who is Aaron?'   
     print(f"#> {query}")
     results = searcher.search(query, k=3)
