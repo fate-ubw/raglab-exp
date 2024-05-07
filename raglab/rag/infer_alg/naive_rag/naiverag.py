@@ -6,9 +6,6 @@ import logging
 
 from raglab.dataset.utils import get_dataset # load datasets
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
-# from raglab.retrieval.contriever import ContrieverRrtieve
-# from raglab.retrieval.colbert import ColbertRetrieve
-# from raglab.retrieval.colbert_api import ColbertApi
 from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM
 from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
@@ -131,6 +128,8 @@ class NaiveRag:
         elif  'colbert_api' == self.retrieval_name:
             retrieval_model = ColbertApi(args)
             retrieval_model.setup_retrieve()
+        elif 'pregiven_passages' == self.retrieval_name:
+            retrieval_model = None # no need setup retrieval model when pre-given passages prepared
         else:
             raise RetrievalModelError("invalid retrieval model")
         return retrieval_model 

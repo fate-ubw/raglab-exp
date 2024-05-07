@@ -75,11 +75,7 @@ class SelfRag_Reproduction(NaiveRag):
                     final_prediction, generation_track = self.short_form_infer(input, source_question, pregiven_passages,
                                                                             use_seqscore = self.use_seqscore, threshold = self.threshold,
                                                                             w_rel = self.w_rel, w_sup = self.w_sup, w_use = self.w_use, mode = mode)
-                    # In some situation LLM will generate SUPPORTS or REFUTES instead of true or flase
-                    if "SUPPORTS" in final_prediction: 
-                        final_prediction = "true" 
-                    elif "REFUTES" in final_prediction:
-                        final_prediction = "false"
+                                                                            
                     inference_results = self.EvalData.record_result(eval_data, final_prediction, inference_results)
                     # calculate metric
                     acc = self.EvalData.eval_acc(inference_results)
@@ -97,7 +93,6 @@ class SelfRag_Reproduction(NaiveRag):
                                                                     catation_docs, response_id, generation_track )
                 # 是否要给 ASQA 和 factscore 也计算 acc 什么的
                 self.print_fn(f'{self.task} in {idx+1} turn:\n Question:{source_question} \n Rag Output:{final_prediction} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
-
             # --> end of dataset loop
             self.EvalData.save_result(inference_results) 
             if 'short_form' == self.inference_form:
