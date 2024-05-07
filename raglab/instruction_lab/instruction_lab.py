@@ -45,12 +45,12 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "Naive_rag",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. You are only allowed to answer True or False, and generating other types of responses is prohibited. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "Naive_rag-without_retrieval",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n You are only allowed to answer True or False, and generating other types of responses is prohibited. ### Response:\n"
     },
     {
         "rag_name": "Naive_rag",
@@ -125,12 +125,12 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "Naive_rag",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "Naive_rag-without_retrieval",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "-------------------Query Rewrite Rag-------------------------",
@@ -174,7 +174,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "query_rewrite_rag-read",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. You are only allowed to answer True or False, and generating other types of responses is prohibited.### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "query_rewrite_rag-rewrite",
@@ -254,7 +254,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "query_rewrite_rag-read",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "-------------------Iter-Retgen-------------------------",
@@ -278,7 +278,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "Iterative_rag-read",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. You are only allowed to answer True or False, and generating other types of responses is prohibited. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "Iterative_rag-read",
@@ -318,7 +318,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "Iterative_rag-read",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "-------------------Active Rag-------------------------",
@@ -342,7 +342,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "active_rag-read",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. You are only allowed to answer True or False, and generating other types of responses is prohibited. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "active_rag-read",
@@ -382,7 +382,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "active_rag-read",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "-------------------Self Ask-------------------------",
@@ -421,7 +421,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-read",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. You are only allowed to answer True or False, and generating other types of responses is prohibited. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "self_ask-followup_question",
@@ -501,7 +501,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-read",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n## Input:\n\n{query}\n\n Determine the claim based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "rag_name": "self_ask-followup_question",
@@ -532,7 +532,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "selfrag_reproduction-read",
         "dataset_name": "StrategyQA",
-        "instruction": "### Instruction:\n{query}\n\n### Response:\n"
+        "instruction": "### Instruction:\nYou are only allowed to answer True or False, and generating other types of responses is prohibited.\n\n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "selfrag_reproduction-read",
@@ -572,6 +572,6 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "selfrag_reproduction-read",
         "dataset_name": "Feverous",
-        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. \n\n## Input:\n\n{query}\n\n### Response:\n"
+        "instruction": "### Instruction:\n Determine if there is Observation that SUPPORTS or REFUTES a Claim, or if there is NOT ENOUGH INFORMATION. You can only answer SUPPORTS, REFUTES, or NOT ENOUGH INFORMATION, and you are prohibited from generating other responses, and the answers generated must be all in capital letters. \n\n## Input:\n\n{query}\n\n### Response:\n"
     }
 ]
