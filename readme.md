@@ -190,7 +190,7 @@ gdown --id xxxxxx
 - ColBERT server started successfully!!! 🌈
 ## Automatic GPU Scheduler
 - inference experiments require running hundreds of scripts in parallel, the [automatic gpu scheduler](https://github.com/ExpectationMax/simple_gpu_scheduler) needs to be used to automatically allocate GPUs for different bash scripts in Parallel.
-- install simple_gpu_scheduler
+- install `simple_gpu_scheduler`
   ~~~bash
   pip install simple_gpu_scheduler
   ~~~
