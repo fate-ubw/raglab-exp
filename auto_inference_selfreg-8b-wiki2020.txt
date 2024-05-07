@@ -1,0 +1,2 @@
+sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PopQA-adaptive_retrieval-pregiven_passages.sh
+sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PopQA-always_retrieval-pregiven_passages.sh
