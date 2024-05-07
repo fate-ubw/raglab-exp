@@ -10,6 +10,7 @@ class ArcChallenge(PubHealth):
         question:str = 'question'
         answer:str = 'answerKey'
         choices:str = 'choices'
+        pregiven_passages = 'ctxs'
 
     @dataclass
     class OutputStruction:

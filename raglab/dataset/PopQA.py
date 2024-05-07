@@ -98,6 +98,8 @@ class PopQA(QA):
                 answer = [data[self.OutputStruction.answer]]
             elif type(data[self.OutputStruction.answer]) is list:
                 answer = data[self.OutputStruction.answer]
+            elif type(data[self.OutputStruction.answer]) is bool: # The answer of StrategyQA is bool
+                answer = [str(data[self.OutputStruction.answer])]
             elif data[self.OutputStruction.answer] is None:
                 return 'No answer in dataset'
             else:
@@ -113,6 +115,8 @@ class PopQA(QA):
                 answer = [data[self.OutputStruction.answer]]
             elif type(data[self.OutputStruction.answer]) is list:
                 answer = data[self.OutputStruction.answer]
+            elif type(data[self.OutputStruction.answer]) is bool: # The answer of StrategyQA is bool
+                answer = [str(data[self.OutputStruction.answer])]
             elif data[self.OutputStruction.answer] is None:
                 return 'No answer in dataset'
             else:

@@ -1,7 +1,8 @@
 from raglab.dataset.PopQA import  PopQA
+from raglab.dataset.PubHealth import PubHealth
 from dataclasses import dataclass
 
-class StrategyQA(PopQA):
+class StrategyQA(PubHealth):
     def __init__(self, args):
         super().__init__(args)
 
