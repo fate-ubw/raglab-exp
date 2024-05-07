@@ -1,14 +1,19 @@
 import os
 from tqdm import tqdm
 from datetime import datetime
+import time
 from typing import Optional, Any
 import logging
+import random
 
 from raglab.dataset.utils import get_dataset # load datasets
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
 from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM
 from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
+RED = '\033[91m'
+END = '\033[0m'
+
 class NaiveRag:
     def __init__(self, args):
         self.args = args
@@ -172,16 +177,28 @@ class NaiveRag:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG) # Set the log level to DEBUG
         # build file_name based on args
-        self.time = datetime.now().strftime('%m%d_%H%M')
+        self.time = datetime.now().strftime('%m%d_%H%M_%S')
         if args.llm_mode == 'HF_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
         else:
             dir_name = args.algorithm_name + '-' + args.task + '-' + args.llm_name + '-' + args.retrieval_name + '-' + f'{self.time}'
-
         self.output_dir = os.path.join(args.output_dir, args.task, dir_name)
-        if not os.path.exists(self.output_dir):
-            os.makedirs(self.output_dir)
+        while os.path.exists(self.output_dir):
+            # When multiple parallel processes attempt to create folders simultaneously, 
+            # it triggers a random waiting mechanism for renaming to prevent file conflicts.
+            print(f'{RED}file confliction, Re-generate the file{END}')
+            random_wait = random.uniform(0.1, 0.5)
+            time.sleep(random_wait)
+            self.time = datetime.now().strftime('%m%d_%H%M_%S_%f')
+            if args.llm_mode == 'HF_Model':
+                model_name = os.path.basename(self.llm_path.rstrip('/'))
+                dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
+            else:
+                dir_name = args.algorithm_name + '-' + args.task + '-' + args.llm_name + '-' + args.retrieval_name + '-' + f'{self.time}'
+            self.output_dir = os.path.join(args.output_dir, args.task, dir_name)
+        # -> end of dir exists
+        os.makedirs(self.output_dir)
         if args.llm_mode == 'HF_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             self.file_name = args.algorithm_name + '|' + args.task + '|' + model_name + '|' + args.retrieval_name + '|'
