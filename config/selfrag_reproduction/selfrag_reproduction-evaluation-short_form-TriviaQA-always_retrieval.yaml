@@ -3,11 +3,12 @@ seed: 633
 # GPU config
 num_gpu: 2
 # eval config
-eval_datapath: ./data/eval_datasets/triviaqa_test_w_gs.jsonl
+algorithm_name: selfrag_reproduction
+eval_datapath: ./data/eval_datasets/TriviaQA/triviaqa_test_w_gs.jsonl
 task: TriviaQA
 output_dir: ./data/eval_results/
 # llm config
-llm_path: ./model/selfrag_llama2_7b
+llm_path: ./model/selfrag_llama3_8b
 dtype: "half"
 use_vllm: True
 generate_maxlength: 100
@@ -17,8 +18,7 @@ generation_stop: ''
 # retrieval common config
 realtime_retrieval: True
 retrieval_name: colbert_api
-index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
-text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
+
 retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
 passages_max_length: 100
@@ -37,8 +37,8 @@ w_use: 0.5
   # inference mode
 inference_form: 'short_form'
 retrieval_mode: "always_retrieval"
-show_specialtokens: True
+show_specialtokens: False
 ignore_cont: False
-use_citation: True
+use_citation: False
 
 
