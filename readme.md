@@ -143,23 +143,45 @@ gdown --id xxxxxx
   ~~~
 - Congratulations！！！You can now start fine-tuning the baseline and selfrag-8b🤖
 ## finetune self rag 8b
-- finetune directly
+- full weight finetune
   ~~~bash
   cd raglab-exp
   sh run/rag_train/script_finetune-selfrag_8b-full_weight.sh
   ~~~
-## finetune llama3-7b-instruction as baseline
+- lora finetune 
+  ~~~bash
+  cd raglab-exp
+  sh run/rag_train/script_finetune-selfrag_8b-Lora.sh
+  ~~~
+## finetune llama3-8b as baseline
 - preprocess train data. Train data for baseline model need remove special tokens.
   ~~~bash
   cd raglab-exp
-  sh run/traindataset_preprocess/selfrag_traindata- remove_special_tokens.sh
+  sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
   ~~~
 - then you will get baseline train_data without special token (Q: what is specal token? Anawer: special tokens is a concept proposed by SelfRAG)
-- finetune baseline ues processed data
+- full weight finetune llama3-baseline ues processed data
   ~~~bash
   sh run/rag_train/script_finetune-llama3-baseline-full_weight.sh
   ~~~
-## Merge adapter into base model(only Lora need)
+- lora finetune llama3-baseline
+  ~~~bash
+  cd raglab-exp
+  sh run/rag_train/script_finetune-llama3-baseline-Lora.sh
+  ~~~
+
+## finetune selfrag-7b
+- full weight finetune selfrag7b
+  ~~~bash
+    cd raglab-exp
+    sh run/rag_train/script_finetune-llama3-baseline-full_weight.sh
+  ~~~
+- lora finetune selfrag7b
+  ~~~bash
+    cd raglab-exp
+    sh run/rag_train/script_finetune-selfrag-7b-Lora.sh
+  ~~~
+## Merge adapter into complete model(only Lora need)
 - If you run the the lora finetune scripts, finetune.py only outpits tokenizer and adapter_model. Git clone [llama-factory](https://github.com/hiyouga/LLaMA-Factory) to get final model
 - modify path in [merge.sh](https://github.com/hiyouga/LLaMA-Factory/blob/main/examples/merge_lora/merge.sh)
   ~~~bash 
