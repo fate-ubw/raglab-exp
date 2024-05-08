@@ -22,18 +22,18 @@
   ~~~
 
 # 🤗 Model
-- raglab need llama2-7b, llama3-instruction, colbertv2.0, selfrag
+- raglab need llama2-7b, llama3-8b, colbertv2.0, selfrag_llama2_7b
   ~~~bash
   cd raglab-exp
   mkdir model
   cd model
   mkdir output_models
-  mkdir Llama-2-7b-chat-hf
-  mkdir Meta-Llama-3-8B-Instruct
+  mkdir Llama-2-7b-hf
+  mkdir Meta-Llama-3-8B
   mkdir selfrag_llama2_7b
   mkdir colbertv2.0
-  huggingface-cli download meta-llama/Meta-Llama-3-8B-Instruct --local-dir Meta-Llama-3-8B-Instruct/
-  huggingface-cli download meta-llama/Llama-2-7b-chat-hf --local-dir Llama-2-7b-chat-hf/
+  huggingface-cli download meta-llama/Meta-Llama-3-8B --local-dir Meta-Llama-3-8B/
+  huggingface-cli download meta-llama/Llama-2-7b-hf --local-dir Llama-2-7b-hf/
   huggingface-cli download selfrag/selfrag_llama2_7b --local-dir selfrag_llama2_7b
   huggingface-cli download colbert-ir/colbertv2.0 --local-dir colbertv2.0/
   ~~~
@@ -197,5 +197,12 @@ gdown --id xxxxxx
 - run hundreds of experiments in one line 😎
   ~~~bash
   cd raglab-exp
-  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < run_all_inference_experiemnts.txt
+  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < auto_gpu_scheduling_scripts/your_script.txt
+  ~~~
+- how to write your_script.txt?
+  - here is an example
+  ~~~bash
+  # auto_inference_selfreg-7b.txt
+  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-adaptive_retrieval-pregiven_passages.sh
+  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-always_retrieval-pregiven_passages.sh
   ~~~
