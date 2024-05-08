@@ -24,8 +24,8 @@ from transformers import (
 
 from utils import normalize_answer, get_max_memory, remove_citations
 
-QA_MODEL="/home/wyd/model/roberta-large-squad"
-AUTOAIS_MODEL="/home/wyd/model/t5_xxl_true_nli_mixture"
+QA_MODEL="./model/roberta-large-squad"
+AUTOAIS_MODEL="./model/t5_xxl_true_nli_mixture"
 
 global autoais_model, autoais_tokenizer
 autoais_model, autoais_tokenizer = None, None
@@ -256,7 +256,7 @@ def compute_mauve(data):
         max_text_length=512,
         verbose=True,
         batch_size=8,
-        featurize_model_name="/home/wyd/model/gpt2-large"
+        featurize_model_name="./model/gpt2-large"
     )
     return out.mauve * 100
 
