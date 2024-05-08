@@ -9,7 +9,7 @@ task: PubHealth
 output_dir: ./data/eval_results/
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/selfrag_llama2_7b
+llm_path: ./model/selfrag_llama3_8b
 dtype: "half"
 generate_maxlength: 50
 use_vllm: True

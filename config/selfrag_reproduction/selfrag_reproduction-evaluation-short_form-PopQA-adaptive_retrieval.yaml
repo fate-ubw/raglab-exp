@@ -9,7 +9,7 @@ task: PopQA
 output_dir: ./data/eval_results/
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/selfrag_llama2_7b
+llm_path: ./model/selfrag_llama3_8b
 dtype: "half"
 generate_maxlength: 100
 use_vllm: True
@@ -23,7 +23,7 @@ retrieval_name: colbert_api
 
 retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
-passages_max_length: 100
+passages_max_length: 200
 # self rag configs
   # decoding args
 threshold: 0.2
