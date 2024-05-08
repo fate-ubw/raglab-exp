@@ -14,9 +14,9 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --use_deepspeed \
     --deepspeed_config_file ./raglab/rag/train_alg/stage3_no_offloading_accelerate.conf \
     ./raglab/rag/train_alg/finetune.py \
-    --model_name_or_path ./model/Meta-Llama-3-8B-Instruct\
+    --model_name_or_path ./model/Meta-Llama-3-8B\
     --use_flash_attn \
-    --tokenizer_name ./model/Meta-Llama-3-8B-Instruct \
+    --tokenizer_name ./model/Meta-Llama-3-8B \
     --use_slow_tokenizer \
     --train_file ./data/train_data/full_output_1005.jsonl \
     --max_seq_length 4096 \
