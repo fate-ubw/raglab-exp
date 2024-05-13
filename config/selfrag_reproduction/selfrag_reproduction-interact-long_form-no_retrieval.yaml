@@ -16,7 +16,7 @@ top_p: 1.0
 generation_stop: ''
 # retrieval common config
 realtime_retrieval: True
-retrieval_name: colbert_api
+retrieval_name: colbert
 index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
 text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
 retriever_modelPath: ./model/colbertv2.0
@@ -38,4 +38,4 @@ inference_form: 'long_form'
 retrieval_mode: "no_retrieval"
 show_specialtokens: True
 ignore_cont: False
-use_citation: True
+use_citation: False
