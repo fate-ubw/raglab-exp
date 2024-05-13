@@ -1,0 +1,2 @@
+ sh run/rag_inference/naive_rag/naive_rag-ArcChallenge-Llama3-instruct-without_retrieval.sh
+ sh run/rag_inference/naive_rag/naive_rag-ArcChallenge-Llama2-chat-without_retrieval.sh
