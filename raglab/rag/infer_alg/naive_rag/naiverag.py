@@ -177,7 +177,7 @@ class NaiveRag:
         logger = logging.getLogger(__name__)
         logger.setLevel(logging.DEBUG) # Set the log level to DEBUG
         # build file_name based on args
-        self.time = datetime.now().strftime('%m%d_%H%M_%S_%f')
+        self.time = datetime.now().strftime('%m%d_%H%M_%S')
         if args.llm_mode == 'HF_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
@@ -188,9 +188,9 @@ class NaiveRag:
             # When multiple parallel processes attempt to create folders simultaneously, 
             # it triggers a random waiting mechanism for renaming to prevent file conflicts.
             print(f'{RED}file confliction, Re-generate the file{END}')
-            random_wait = random.uniform(0.1, 0.5)
+            random_wait = random.uniform(1,2)
             time.sleep(random_wait)
-            self.time = datetime.now().strftime('%m%d_%H%M_%S_%f')
+            self.time = datetime.now().strftime('%m%d_%H%M_%S')
             if args.llm_mode == 'HF_Model':
                 model_name = os.path.basename(self.llm_path.rstrip('/'))
                 dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
