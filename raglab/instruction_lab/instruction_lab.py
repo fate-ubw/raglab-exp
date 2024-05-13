@@ -90,7 +90,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "Naive_rag-without_retrieval",
         "dataset_name": "ArcChallenge",
-        "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}}\n\n### Response:\n"
+        "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
         "rag_name": "Naive_rag",
