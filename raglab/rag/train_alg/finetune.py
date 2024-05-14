@@ -35,9 +35,12 @@ from transformers import (
     PreTrainedTokenizerFast
 )
 from peft import LoraConfig, TaskType, get_peft_model
+from accelerate import InitProcessGroupKwargs
+from datetime import timedelta
 
 logger = get_logger(__name__)
-
+RED = '\033[91m'
+END = '\033[0m'
 
 PROMPT_DICT = {
     "prompt_input": (
@@ -253,6 +256,8 @@ def encode_with_prompt_completion_format(example, tokenizer, max_seq_length, con
     We concatenate prompt and completion and tokenize them together because otherwise prompt will be padded/trancated
     and it doesn't make sense to follow directly with the completion.
     '''
+    # print(f'{RED}encode_with_prompt_completion_format！！！！！！！ {END}')
+
     # if prompt doesn't end with space and completion doesn't start with space, add space
     prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
     source_text = prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example)
@@ -351,7 +356,6 @@ def encode_with_messages_format(example, tokenizer, max_seq_length):
 
 def main():
     args = parse_args()
-
     # A hacky way to make llama work with flash attention
     if args.use_flash_attn:
         from llama_flash_attn_monkey_patch import replace_llama_attn_with_flash_attn
@@ -365,9 +369,9 @@ def main():
     if args.with_tracking:
         accelerator_log_kwargs["log_with"] = args.report_to
         accelerator_log_kwargs["project_dir"] = args.output_dir
+    process_group_kwargs = InitProcessGroupKwargs(timeout=timedelta(seconds=5400))  # 1.5 hours
 
-    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps, **accelerator_log_kwargs)
-
+    accelerator = Accelerator(gradient_accumulation_steps=args.gradient_accumulation_steps,kwargs_handlers=[process_group_kwargs], **accelerator_log_kwargs)
     # Make one log on every process with the configuration for debugging.
     logging.basicConfig(
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
@@ -389,7 +393,6 @@ def main():
     if accelerator.is_main_process:
         if args.output_dir is not None:
             os.makedirs(args.output_dir, exist_ok=True)
-    
     accelerator.wait_for_everyone()
 
     if args.dataset_name is not None:
@@ -439,7 +442,6 @@ def main():
     else:
         logger.info("Training new model from scratch")
         model = AutoModelForCausalLM.from_config(config)
-
 
     # no default pad token for llama!
     # here we add all special tokens again, because the default ones are not in the special_tokens_map
@@ -517,6 +519,7 @@ def main():
     #         tokenizer=tokenizer,
     #         max_seq_length=args.max_seq_length,
     #     )
+
     with accelerator.main_process_first():
         lm_datasets = raw_datasets.map(
             encode_function,
@@ -530,18 +533,17 @@ def main():
         lm_datasets = lm_datasets.filter(lambda example: (example['labels'] != -100).any())
 
     train_dataset = lm_datasets["train"]
-    print(train_dataset[0])
-    with open("processed.json", "w") as outfile:
-        new_data = []
-        for item in train_dataset:
-            labels = [int(i) for i in item["labels"]]
-            input_ids = [int(i) for i in item["input_ids"]]
-            new_data.append({"labels": labels, "input_ids": input_ids})
-        json.dump(new_data, outfile)
+    # print(train_dataset[0])
+    # with open("processed.json", "w") as outfile:
+    #     new_data = []
+    #     for item in train_dataset:
+    #         labels = [int(i) for i in item["labels"]]
+    #         input_ids = [int(i) for i in item["input_ids"]]
+    #         new_data.append({"labels": labels, "input_ids": input_ids})
+    #     json.dump(new_data, outfile)
     # Log a few random samples from the training set:
-    for index in random.sample(range(len(train_dataset)), 3):
-        logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
-
+    # for index in random.sample(range(len(train_dataset)), 3):
+    #     logger.info(f"Sample {index} of the training set: {train_dataset[index]}.")
     # DataLoaders creation:
     train_dataloader = DataLoader(
         train_dataset, 
@@ -591,7 +593,7 @@ def main():
     model, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(
         model, optimizer, train_dataloader, lr_scheduler
     )
-
+    print(f'{RED}accelerator prepared{END}')
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     if overrode_max_train_steps:
