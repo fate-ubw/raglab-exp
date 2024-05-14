@@ -33,4 +33,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --report_to tensorboard \
     --logging_steps 1 \
     --use_special_tokens   \
-    --use_lora  
+    --use_lora 
