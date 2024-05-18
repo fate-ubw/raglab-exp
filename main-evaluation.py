@@ -53,13 +53,13 @@ def get_config():
     parser.add_argument('--api_logprobs', action="store_true",help='Whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the content of message.')
     parser.add_argument('--api_top_logprobs', type=int, default=1, help='An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability. logprobs must be set to true if this parameter is used.')
     # retrieval config
-    parser.add_argument('--realtime_retrieval', action='store_true', help='self rag can use local passages(only)')
+    parser.add_argument('--realtime_retrieval', type = int, default=True, help='self rag can use local passages(only)')
     parser.add_argument('--retrieval_name', type = str, default = 'colbert', choices = ['colbert','contriever', 'colbert_api','pregiven_passages'],help = 'name of retrieval model')
     parser.add_argument("--index_dbPath", type = str, help = 'path to index database. Index is index and embedding pairs')
     parser.add_argument('--text_dbPath', type = str, help='path to text database')
     parser.add_argument("--retriever_modelPath", type = str, help = 'path to colbert model')
     parser.add_argument("--n_docs", type= int, default=10, help="Number of documents to retrieve per questions")
-    parser.add_argument('--passages_max_length',type=int, default=100, help = "wiki2023 passaegs contain around 700 words in average, and 10 passages will exceed max length of LLM, so we truncate passages")
+    parser.add_argument('--passages_max_length',type=int, default=-1, help = "-1 close truncation feature. When use some databas,each passaegs has 700 words in average, and 10 passages will exceed max length of LLM. As a result, we truncate each passages")
     # colbert config
     parser.add_argument('--doc_maxlen', type = int, default = 300, help = '[colbert configs] the doc max len decided by the wikidata format, here we set 300')
     parser.add_argument('--nbits', type = int, default = 2, help = 'encode each dimension with n bits')
