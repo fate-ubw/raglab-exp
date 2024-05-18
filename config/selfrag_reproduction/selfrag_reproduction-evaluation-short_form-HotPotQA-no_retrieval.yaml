@@ -19,9 +19,9 @@ generation_stop: ''
 realtime_retrieval: True
 retrieval_name: colbert_api
 
-retriever_modelPath: ./model/colbertv2.0
+
 n_docs: 10
-passages_max_length: 100
+passages_max_length: -1
 # self rag configs
   # decoding args
 threshold: 0.2

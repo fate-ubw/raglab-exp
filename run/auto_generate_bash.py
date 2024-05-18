@@ -34,5 +34,4 @@ for filename in os.listdir(config_dir):
         # Write the Shell script file
         with open(script_filename, "w") as script_file:
             script_file.write(script_content)
-
         print(f"Generated {script_filename}")

@@ -3,8 +3,8 @@ seed: 633
 num_gpu: 1
 # eval config
 algorithm_name: query_rewrite_rag
-eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs.jsonl
 task: PopQA
+eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs.jsonl
 output_dir: ./data/eval_results/
 # llm config
 llm_mode: HF_Model
@@ -14,14 +14,10 @@ use_vllm: True
 temperature: 0.0
 top_p: 1.0
 generation_stop: '**'
-generate_maxlength: 300
+generate_maxlength: 100
 # retrieval config
 realtime_retrieval: True
 retrieval_name: colbert_api
-index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
-text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
-
-retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
-passages_max_length: 100
+passages_max_length: -1
 # max length should bigger than the length of input_ids

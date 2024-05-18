@@ -6,7 +6,7 @@ algorithm_name: active_rag
 task: ''
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/Meta-Llama-3-8B-Instruct
+llm_path: ./model/Llama3-8B-baseline
 dtype: "half"
 use_vllm: False
 temperature: 0.6
@@ -15,12 +15,12 @@ generation_stop: ''
 generate_maxlength: 100
 # retrieval config
 realtime_retrieval: True
-retrieval_name: colbert_api
+retrieval_name: colbert
 index_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023-10samples
 text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-10samples/enwiki-20230401-10samples.tsv
 retriever_modelPath: ./model/colbertv2.0
 n_docs: 5
-passages_max_length: 100
+passages_max_length: -1
 # acrive rag config
 max_fianl_answer_length: 300
 filter_prob: 0.8

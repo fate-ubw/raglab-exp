@@ -21,6 +21,6 @@ text_dbPath: /workspace/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023-
 
 retriever_modelPath: ./model/colbertv2.0
 n_docs: 10
-passages_max_length: 100
+passages_max_length: -1
 # iterative rag config
 max_iteration: 3

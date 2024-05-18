@@ -4,7 +4,6 @@ seed: 633
 num_gpu: 2
 # eval config
 algorithm_name: selfrag_reproduction
-
 eval_datapath: ./data/eval_datasets/HotPotQA/hotpot_dev_fullwiki_v1.json
 task: HotPotQA
 output_dir: ./data/eval_results/
@@ -20,9 +19,9 @@ generation_stop: ''
 realtime_retrieval: True
 retrieval_name: colbert_api
 
-retriever_modelPath: ./model/colbertv2.0
+
 n_docs: 10
-passages_max_length: 100
+passages_max_length: -1
 # self rag configs
   # decoding args
 threshold: 0.2
