@@ -13,6 +13,7 @@ from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
 RED = '\033[91m'
 END = '\033[0m'
+GREEN = '\033[92m'
 
 class NaiveRag:
     def __init__(self, args):
@@ -168,7 +169,10 @@ class NaiveRag:
 
     def truncate_text(self, passages:str, max_words:int)->str:
         words = passages.split() # "Split the passages into a list of words by space"
-        truncated_words = words[:max_words] # "Take the first max_words words"
+        if max_words == -1:
+            truncated_words = words
+        else:
+            truncated_words = words[:max_words] # "Take the first max_words words"
         truncated_passages = ' '.join(truncated_words) # "Join the list of words back into a string"
         return truncated_passages
 
@@ -199,6 +203,7 @@ class NaiveRag:
             self.output_dir = os.path.join(args.output_dir, args.task, dir_name)
         # -> end of dir exists
         os.makedirs(self.output_dir)
+        print(f'{GREEN}create log file success:{self.output_dir}{END}')
         if args.llm_mode == 'HF_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             self.file_name = args.algorithm_name + '|' + args.task + '|' + model_name + '|' + args.retrieval_name + '|'
