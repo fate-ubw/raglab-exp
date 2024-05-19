@@ -396,7 +396,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -406,7 +406,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "PopQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -416,7 +416,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "TriviaQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -426,7 +426,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "StrategyQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -436,7 +436,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "HotPotQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -446,7 +446,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "2WikiMultiHopQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -486,7 +486,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "ASQA",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
@@ -496,7 +496,7 @@ INSTRUCTION_LAB = [
     {
         "rag_name": "self_ask-followup_question",
         "dataset_name": "Factscore",
-        "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
+        "instruction": "Question: When does monsoon season end in the state the area code 575 is located? Are follow up questions needed here: Yes. Follow up: Which state is the area code 575 located in? Intermediate answer: The area code 575 is located in New Mexico. Follow up: When does monsoon season end in New Mexico? Intermediate answer: Monsoon season in New Mexico typically ends in mid-September. So the final answer is: mid-September. \n{query} Are follow up questions needed here:"
     },
     {
         "rag_name": "self_ask-read",
