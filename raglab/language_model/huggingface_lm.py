@@ -62,10 +62,10 @@ class HF_Model(BaseLM):
             Outputs.tokens_num = len(Outputs.tokens_ids)
             text = self.tokenizer.decode(Outputs.tokens_ids, skip_special_tokens = False)
             # replace special tokens
-            if "<|eot_id|>" in text:
-                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").replace("<|eot_id|>", "").strip()
+            if "<|eot_id|>" in text or "<|end_of_text|>":
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").replace("<|eot_id|>", "").replace("<|end_of_text|>", "").strip()
             else:
-                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").strip()
+                text =  text.replace("<|start_header_id|>assistant<|end_header_id|>\n\n", "").eplace("<|end_of_text|>", "").strip()
             if '</s>' in text:
                 text =  text.replace("<s> ", "").replace("</s>", "").strip()
             else:
