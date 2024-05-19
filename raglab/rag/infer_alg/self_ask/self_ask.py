@@ -4,6 +4,9 @@ from raglab.rag.infer_alg.naive_rag.naiverag import NaiveRag
 class SelfAsk(NaiveRag):
     def __init__(self, args):
         super().__init__(args)
+    
+    def init(self, args):
+        self.selfask_max_iter = args.selfask_max_iter
 
     def infer(self, query:str) -> tuple[str, dict]:
         '''
@@ -21,8 +24,9 @@ class SelfAsk(NaiveRag):
         print(f'follow up question:{follow_up}')
         generation_track = {}
         turn_idx = 1
-        if 'Follow up:' in follow_up:
-            while 'Follow up:' in follow_up: 
+        if 'Follow up:' in follow_up :
+            while 'Follow up:' in follow_up and turn_idx < self.selfask_max_iter: 
+                turn_idx += 1
                 followup_question = self._extract_followup(follow_up)
                 if followup_question == '':
                     print(f'Bad case!!!')
@@ -30,7 +34,7 @@ class SelfAsk(NaiveRag):
                 passages = self.retrieval.search(followup_question)
                 passages = self._truncate_passages(passages)
                 collated_passages = self.collate_passages(passages)
-                target_instruction = self.find_instruction('self_ask-read', self.task) 
+                target_instruction = self.find_instruction('self_ask-read', self.task) # 但是这个回答的是中间的问题，
                 input_with_passages = target_instruction.format_map({'passages': collated_passages, 'query': followup_question})
                 output_list = self.llm.generate(input_with_passages)
                 Output = output_list[0]
@@ -40,7 +44,6 @@ class SelfAsk(NaiveRag):
                                                 'intermediate answer': intermediate_answer,
                                                 'cite passages': passages
                                               }
-                turn_idx += 1
                 input_with_followup = input_with_followup + follow_up + ' \n Intermediate Answer: ' + intermediate_answer + ' \n '
                 output_list = self.llm.generate(input_with_followup)
                 Output = output_list[0]
@@ -56,7 +59,10 @@ class SelfAsk(NaiveRag):
                 Output = output_list[0]
                 follow_up = Output.text
             else:
-                print(f'Wrong final answer pattern!!!')
+                print(f'reach max iteration!!!')
+                output_list = self.llm.generate(input_with_followup + 'So the final answer is:')
+                Output = output_list[0]
+                follow_up = Output.text
         else:
             passages = self.retrieval.search(query)
             passages = self._truncate_passages(passages)
@@ -70,7 +76,47 @@ class SelfAsk(NaiveRag):
             generation_track['cite passages'] = passages
         generation_track['final answer'] = follow_up # 
         final_answer = follow_up
+        if self.task == 'PubHealth':
+            final_answer = self._postprocess_pubhealth(follow_up)
+        elif self.task == 'Feverous':
+            final_answer = self._postprocess_feverous(follow_up)
         return final_answer, generation_track
+
+    def _postprocess_pubhealth(self, answer:str)->str:
+        wrong_pattern_1 = "Are follow up questions needed here"
+        if wrong_pattern_1 in answer:
+            real_answer, _, _ = answer.partition(wrong_pattern_1)
+            if  'No' in real_answer:
+                processed_answer = 'false'
+            elif 'Yes' in real_answer:
+                processed_answer = 'true'
+            else:
+                processed_answer = real_answer
+        elif 'Yes' in answer:
+            processed_answer = 'true'                
+        elif 'No' in answer:
+            processed_answer = 'false'
+        else:
+            processed_answer = answer
+        return processed_answer
+
+    def _postprocess_feverous(self, answer:str)->str:
+        wrong_pattern_1 = "Are follow up questions needed here"
+        if wrong_pattern_1 in answer:
+            real_answer, _, _ = answer.partition(wrong_pattern_1)
+            if  'No' in real_answer:
+                processed_answer = 'REFUTES'
+            elif 'Yes' in real_answer:
+                processed_answer = 'SUPPORTS'
+            else:
+                processed_answer = real_answer
+        elif 'Yes' in answer:
+            processed_answer = 'SUPPORTS'
+        elif 'No' in answer:
+            processed_answer = 'REFUTES'
+        else:
+            processed_answer = answer
+        return processed_answer
 
     def _extract_followup(self, followup):
         followup_pattern = r'Follow up: (.+)'
