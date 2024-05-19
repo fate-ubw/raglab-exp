@@ -110,13 +110,8 @@ def get_config():
     parser.add_argument('--max_fianl_answer_length', type=int, default=300, help='max length of final answer')
     parser.add_argument('--filter_prob', type=float, default=0.8, help='filter prob is lower probability threshold in paper(https://arxiv.org/abs/2305.06983)')
     parser.add_argument('--masked_prob', type=float, default=0.4, help='masked prob is low-confidence threshold in paper(https://arxiv.org/abs/2305.06983)')
-    # dsp config
-    # TODO model_mode will add each rag algorithm in next version
-    parser.add_argument('--model_mode', type=str, default='HFModel', choices=['HFModel', 'OpenAI'], help='raglab support OpenAI api and huggingface model' )
-    parser.add_argument('--inference_CoT', type=bool, help='Whether to use Chain of Thought for inference')
-    parser.add_argument('--signature_retrieval', type=bool, help='Whether to use signature retrieval')
-    parser.add_argument('--max_hops', type=int, help='Maximum number of hops')
-    parser.add_argument('--eval_threads', type=int, help='Number of evaluation threads')
+    # self ask config
+    parser.add_argument('--selfask_max_iter', type=int, default=5, help='max iter of follow qeustion generation. In some situation, self ask will get stuck in a loop')
     # evaluate parameters
     parser.add_argument('--metrics', type=str, help='Evaluation metrics')
     # config file
