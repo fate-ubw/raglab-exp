@@ -1,2 +1,0 @@
-sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PopQA-adaptive_retrieval.sh
-sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PopQA-no_retrieval.sh

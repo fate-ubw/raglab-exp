@@ -1,0 +1,1 @@
+python ./run/bash_generator/bash_generator.py

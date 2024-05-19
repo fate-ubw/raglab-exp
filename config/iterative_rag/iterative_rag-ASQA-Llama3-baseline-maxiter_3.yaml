@@ -18,7 +18,7 @@ generate_maxlength: 300
 # retrieval config
 realtime_retrieval: True
 retrieval_name: colbert_api
-n_docs: 10
+n_docs: 5
 passages_max_length: -1
 # iterative rag config
 max_iteration: 3
