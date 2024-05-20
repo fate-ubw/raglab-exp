@@ -46,7 +46,7 @@ class HF_Model(BaseLM):
                     return_dict_in_generate=True,
                     pad_token_id = self.tokenizer.eos_token_id
                 )
-            else :
+            else:
                 # greedy 
                 hf_outputs = self.llm.generate(
                     input_ids=input_ids,

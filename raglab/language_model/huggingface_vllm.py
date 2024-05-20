@@ -10,6 +10,7 @@ class HF_VLLM(BaseLM):
         self.llm_path = args.llm_path
         self.dtype = args.dtype
         self.generation_stop = args.generation_stop
+        self.include_stop_token = args.include_stop_token
         self.use_chat_template = args.use_chat_template
 
     def load_model(self):
@@ -24,11 +25,11 @@ class HF_VLLM(BaseLM):
 
         if self.generation_stop != '':
             self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, 
-                                                stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")], stop = [self.generation_stop], 
+                                                stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")], stop = [self.generation_stop], include_stop_str_in_output = self.include_stop_token,
                                                 repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=vocab_size + special_token_size, skip_special_tokens = False)
         else:
             self.sampling_params = SamplingParams(temperature=self.temperature, top_p=self.top_p, 
-                                                stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] , 
+                                                stop_token_ids=[self.tokenizer.eos_token_id, self.tokenizer.convert_tokens_to_ids("<|eot_id|>")] , include_stop_str_in_output = self.include_stop_token,
                                                 repetition_penalty= 1, max_tokens = self.generate_maxlength, logprobs=vocab_size + special_token_size, skip_special_tokens = False)
 
     def generate(self, inputs: Union[str,list[str]], sampling_params = None)->list[BaseLM.Outputs]:

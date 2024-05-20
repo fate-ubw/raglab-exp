@@ -41,6 +41,7 @@ def get_config():
     parser.add_argument('--temperature', type=float, default=0.0, help='temperature of decoding algorithm')
     parser.add_argument('--top_p', type=float, default=1.0, help='top-p of decoding algorithm')
     parser.add_argument('--generation_stop', type=str, default='', help='early_stop is one of the setting of generate() function, early_stop to control the outputs of llm')
+    parser.add_argument('--include_stop_token', type=int, default=False, help='"include_stop_token" controls whether the generated text output should include the provided stop string.')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     parser.add_argument('--use_chat_template', type = int, default=False, help = 'llama2-chat and llama3-instruction ues official chat template will get a better performance, but finetune model will mess up by this template')
 
