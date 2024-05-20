@@ -6,13 +6,14 @@ num_gpu: 2
 algorithm_name: selfrag_reproduction
 task: ''
 # llm config
-llm_path: ./model/selfrag_llama3_8b/
+llm_path: ./model/selfrag_llama3_8b-epoch_0_1/
 dtype: "half"
 generate_maxlength: 500
 use_vllm: True
 temperature: 0.0
 top_p: 1.0
-generation_stop: ''
+generation_stop: '[Utility:5]'
+include_stop_token: True
 # retrieval common config
 realtime_retrieval: True
 retrieval_name: colbert_api

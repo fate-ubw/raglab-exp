@@ -19,7 +19,12 @@ script_paths = []
 # Iterate over the algorithm list
 for algorithm_name in ALGORITHM_LIST:
     config_dir = os.path.join(config_dir_base, algorithm_name)
-
+    
+    # Create the algorithm directory inside run_dir (if it doesn't exist)
+    algorithm_run_dir = os.path.join(run_dir, algorithm_name)
+    if not os.path.exists(algorithm_run_dir):
+        os.makedirs(algorithm_run_dir)
+    
     # Iterate over the configuration files directory
     for filename in os.listdir(config_dir):
         if filename.endswith(".yaml"):
@@ -27,7 +32,7 @@ for algorithm_name in ALGORITHM_LIST:
             basename = os.path.splitext(filename)[0]
 
             # Generate the Shell script filename
-            script_filename = os.path.join(run_dir, f"{algorithm_name}_{basename}.sh")
+            script_filename = os.path.join(algorithm_run_dir, f"{basename}.sh")
 
             # Determine the Python file to execute
             if "interact" in filename:
@@ -55,3 +60,5 @@ with open("./auto_gpu_scheduling_scripts/auto_run_scripts.txt", "w") as txt_file
     txt_file.write("\n".join(script_paths))
 
 print("Generated auto_run_scripts.txt")
+
+

@@ -1,3 +1,3 @@
 # export CUDA_VISIBLE_DEVICES=0
 python ./main-evaluation.py\
-    --config ./config/active_rag/active_rag-PopQA-Llama3-8b-baseline.yaml
+ --config ./config/active_rag/active_rag-PopQA-Llama3-8b-baseline.yaml
