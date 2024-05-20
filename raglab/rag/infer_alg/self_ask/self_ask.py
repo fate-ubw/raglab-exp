@@ -75,12 +75,33 @@ class SelfAsk(NaiveRag):
 
             generation_track['cite passages'] = passages
         generation_track['final answer'] = follow_up # 
-        final_answer = follow_up
         if self.task == 'PubHealth':
             final_answer = self._postprocess_pubhealth(follow_up)
         elif self.task == 'Feverous':
             final_answer = self._postprocess_feverous(follow_up)
+        elif self.task == 'StrategyQA':
+            final_answer = self._postprocess_strategyQA(follow_up)
+        else:
+            final_answer = follow_up
         return final_answer, generation_track
+
+    def _postprocess_strategyQA(self, answer:str)->str:
+        wrong_pattern_1 = "Are follow up questions needed here"
+        if wrong_pattern_1 in answer:
+            real_answer, _, _ = answer.partition(wrong_pattern_1)
+            if  'No' in real_answer:
+                processed_answer = 'False'
+            elif 'Yes' in real_answer:
+                processed_answer = 'True'
+            else:
+                processed_answer = real_answer
+        elif 'Yes' in answer:
+            processed_answer = 'True'                
+        elif 'No' in answer:
+            processed_answer = 'False'
+        else:
+            processed_answer = answer
+        return processed_answer
 
     def _postprocess_pubhealth(self, answer:str)->str:
         wrong_pattern_1 = "Are follow up questions needed here"
