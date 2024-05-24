@@ -52,11 +52,11 @@ for algorithm_name in ALGORITHM_LIST:
             print(f"Generated {script_filename}")
 
             # Append the script path to the list
-            if "interact" not in filename:
+            if "interact" not in filename and 'Llama3' not in filename:
                 script_paths.append(f"sh {script_filename}")
 
 # Write the script paths to a text file
-with open("./auto_gpu_scheduling_scripts/auto_run_scripts.txt", "w") as txt_file:
+with open("./auto_gpu_scheduling_scripts/auto_run_chatgpt_scripts.txt", "w") as txt_file:
     txt_file.write("\n".join(script_paths))
 
 print("Generated auto_run_scripts.txt")

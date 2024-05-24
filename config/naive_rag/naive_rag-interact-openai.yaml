@@ -9,15 +9,12 @@ llm_mode: Openai_api
 llm_name: gpt-3.5-turbo
 api_key_path: ./api_keys.txt
 api_base: https://api.aigcbest.top/v1
-temperature: 0.7
+temperature: 0.0
 top_p: 1.0
 generate_maxlength: 300
 # retrieval config
 realtime_retrieval: True
 retrieval_name: colbert_api
-index_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2023
-text_dbPath: /home/wyd/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2023/enwiki-20230401.tsv
-retriever_modelPath: ./model/colbertv2.0
 # max length should bigger than the length of input_ids
 n_docs: 1
 passages_max_length: -1

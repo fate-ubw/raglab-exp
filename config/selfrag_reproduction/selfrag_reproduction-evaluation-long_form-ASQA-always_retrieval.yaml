@@ -35,7 +35,7 @@ w_use: 0.5
   # inference mode
 inference_form: 'long_form'
 retrieval_mode: "always_retrieval"
-show_specialtokens: True
+show_specialtokens: False
 ignore_cont: False
 use_citation: True
 
