@@ -65,7 +65,6 @@ class NaiveRag:
             for idx, eval_data in enumerate(tqdm(self.eval_dataset)):
                 eval_data = self.EvalData.preprocess(eval_data) # some dataset need preprocess such as: arc_challenge
                 question = eval_data[self.EvalData.InputStruction.question] 
-                # infer
                 outputs, generation_track = self.infer(question)
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
                 self.print_fn(f'{self.task} in {idx+1} turn:\n Question:{question} \n Rag Output:{outputs} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
@@ -227,12 +226,13 @@ class NaiveRag:
         return logger.info
 
     def find_instruction(self, rag_name:str, dataset_name:str) -> str:
+        target_instruction = ''
         for instruction in INSTRUCTION_LAB:
             if instruction['rag_name'] == rag_name and instruction['dataset_name'] == dataset_name:
                 target_instruction = instruction['instruction']
                 break
         if target_instruction == '':
-            raise InstructionNotFoundError('Instruction name not recognized. Please provide a valid instruction name.')
+            raise InstructionNotFoundError('Instruction name not recognized. Please provide a valid instruction key.')
         return target_instruction
 
 # custom Exceptions
