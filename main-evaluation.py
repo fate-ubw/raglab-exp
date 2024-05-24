@@ -51,7 +51,7 @@ def get_config():
     parser.add_argument('--api_key', type=str, help='API key for accessing the model')
     parser.add_argument('--api_base', type=str, help='Base URL for the API')
     parser.add_argument('--api_key_path', type=str, help='path of .txt which save api_key for openai api')
-    parser.add_argument('--api_logprobs', action="store_true",help='Whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the content of message.')
+    parser.add_argument('--api_logprobs', type=int, default = True, help='Whether to return log probabilities of the output tokens or not. If true, returns the log probabilities of each output token returned in the content of message.')
     parser.add_argument('--api_top_logprobs', type=int, default=1, help='An integer between 0 and 20 specifying the number of most likely tokens to return at each token position, each with an associated log probability. logprobs must be set to true if this parameter is used.')
     # retrieval config
     parser.add_argument('--realtime_retrieval', type = int, default=True, help='self rag can use local passages(only)')
