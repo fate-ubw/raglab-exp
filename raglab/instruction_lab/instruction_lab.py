@@ -28,6 +28,11 @@ INSTRUCTION_LAB = [
         "instruction": "### Instruction:\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
+        "rag_name": "Naive_rag",
+        "dataset_name": "PopQA-posterior_instruction",
+        "instruction": "### Instruction:\n Now, based on the passages and your internal knowledge, please answer the question more succinctly and professionally. ### Retrieved Knowledge:\n {passages}\n \n## Input:\n\n{query}\n\n ### Response:\n"
+    }, 
+    {
         "rag_name": "Naive_rag-without_retrieval",
         "dataset_name": "PopQA",
         "instruction": "### Instruction:\n## Input:\n\n{query}\n\n### Response:\n"
@@ -88,6 +93,11 @@ INSTRUCTION_LAB = [
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
+        "rag_name": "Naive_rag",
+        "dataset_name": "ArcChallenge-posterior_instruction",
+        "instruction": "### Instruction:\nNow, based on the passages and your internal knowledge, please answer the question more succinctly and professionally. ### Retrieved Knowledge:\n {passages}\n  Given four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n  ### Response:\n"
+    }, 
+    {
         "rag_name": "Naive_rag-without_retrieval",
         "dataset_name": "ArcChallenge",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n### Response:\n"
@@ -96,6 +106,11 @@ INSTRUCTION_LAB = [
         "rag_name": "Naive_rag",
         "dataset_name": "PubHealth",
         "instruction": "### Instruction:\nIs the following statement correct or not? Say true if it's correct; otherwise say false\n\n## Input:\n\n{query}\n\n Determine the statement based on the following passages and your knowledge ### Background Knowledge:\n {passages} \n\n### Response:\n"
+    },
+    {
+        "rag_name": "Naive_rag",
+        "dataset_name": "PubHealth-posterior_instruction",
+        "instruction": "### Instruction\nDetermine the statement based on the passages and your internal knowledge. ### Retrieved Knowledge:\n {passages}\n  Is the following statement correct or not? Say true if it's correct; otherwise say false\n\n## Input:\n\n{query}\n\n  n### Response:\n"
     },
     {
         "rag_name": "Naive_rag-without_retrieval",
