@@ -118,6 +118,34 @@ gdown --id xxxxxx
     sh run/wiki2023_preprocess/4-wiki2023_tsv-2-colbert_embedding.sh
     ~~~
 
+# 💽 process wiki2018 as vector database
+- 这部分是使用 wiki2018 的教程
+## 下载文本文件
+  - pip install gdown 
+~~~bash
+cd raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018
+wget https://dl.fbaipublicfiles.com/dpr/wikipedia_split/psgs_w100.tsv.gz
+~~~
+## 处理 raw wiki2018 into colbert format
+
+~~~bash
+cd raglab-exp
+sh run/wiki2018_preprocess/1-wiki2018_tsv_2_tsv.sh
+~~~
+## 修改wiki2018 embedding config 文件
+1. 修改路径
+~~~
+cd /raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2018/indexes/wiki2018
+vim metadata.json 
+~~~
+- 只需要修改修metadata.json 文件中的两个路径，这里直接删除原来的路径，复制以下路径即可其他的参数均不需要修改
+~~~sh
+"collection": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018/wiki2018.tsv",
+"experiment": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2018",
+~~~
+- 修改好之后直接启动 colbert server 即可
+
+
 # Fine tune llama3 & self rag 
 - The base models for raglab baseline and selfrag use llama3-instruction-8b. Since selfrag was further fine-tuned on additional data during the fine-tuning stage, in order to make a fair comparison, the baseline model also needs to be fine-tuned.
 ## download self rag train data
@@ -223,6 +251,12 @@ gdown --id xxxxxx
   cd raglab-exp
   sh run/colbert_server/colbert_server.sh
   ~~~
+- open another terminal test your ColBERT server
+~~~bash
+cd raglab-exp
+sh run/colbert_server/ask_api.sh
+~~~
+- 这里应该会返回 top-10 passages，第一检索时间较慢，再次检索时间可缩短到0.01s
 - ColBERT server started successfully!!! 🌈
 ## Automatic GPU Scheduler
 - inference experiments require running hundreds of scripts in parallel, the [automatic gpu scheduler](https://github.com/ExpectationMax/simple_gpu_scheduler) needs to be used to automatically allocate GPUs for different bash scripts in Parallel.
@@ -233,7 +267,7 @@ gdown --id xxxxxx
 - run hundreds of experiments in one line 😎
   ~~~bash
   cd raglab-exp
-  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < auto_gpu_scheduling_scripts/your_script.txt
+  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < auto_gpu_scheduling_scripts/auto_run_scripts-jeff.py
   ~~~
 - how to write your_script.txt?
   - here is an example
