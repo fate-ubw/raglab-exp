@@ -9,7 +9,7 @@ task: ASQA
 output_dir: ./data/eval_results/
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/selfrag_llama3_8b-epoch_0_1
+llm_path: ./model/selfrag_llama3-instruct_8b
 dtype: "half"
 generate_maxlength: 300
 use_vllm: True

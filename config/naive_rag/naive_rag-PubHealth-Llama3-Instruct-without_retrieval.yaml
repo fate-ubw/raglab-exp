@@ -1,0 +1,18 @@
+use_seed: True
+seed: 633
+num_gpu: 1
+# eval config
+algorithm_name: naive_rag
+task: PubHealth
+eval_datapath: ./data/eval_datasets/PubHealth/health_claims_processed.jsonl
+output_dir: ./data/eval_results/
+# llm config
+llm_mode: HF_Model
+llm_path: ./model/Meta-Llama-3-8B-Instruct
+use_vllm: True
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: False

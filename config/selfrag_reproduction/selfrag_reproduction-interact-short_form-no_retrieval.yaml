@@ -7,9 +7,9 @@ algorithm_name: selfrag_reproduction
 task: ''
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/selfrag_llama3_8b-epoch_0_1/
+llm_path: ./model/selfrag_llama3_8b-Lora
 dtype: 'half'
-use_vllm: True
+use_vllm: False
 generate_maxlength: 500
 temperature: 0.0
 top_p: 1.0

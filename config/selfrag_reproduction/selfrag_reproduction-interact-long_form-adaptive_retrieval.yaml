@@ -5,7 +5,7 @@ num_gpu: 2
 algorithm_name: selfrag_reproduction
 task: ''
 # llm config
-llm_path: ./model/selfrag_llama3_8b-epoch_0_1/
+llm_path: ./model/selfrag_llama3-instruct_8b/
 dtype: "half"
 generate_maxlength: 500
 use_vllm: True
