@@ -23,7 +23,7 @@
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-StrategyQA-Chatgpt.sh
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-PubHealth-Chatgpt.sh
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-PopQA-Chatgpt.sh
-# sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-HotPotQA-Chatgpt.sh
+sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-HotPotQA-Chatgpt.sh
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-Feverous-Chatgpt.sh
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-Factscore-Chatgpt.sh
 # sh ./run/rag_inference/query_rewrite_rag/query_rewrite_rag-ASQA-Chatgpt.sh
@@ -50,14 +50,14 @@
 # sh ./run/rag_inference/self_ask/self_ask-ArcChallenge-Chatgpt.sh
 sh ./run/rag_inference/active_rag/active_rag-WikiMultiHopQA-Chatgpt.sh
 sh ./run/rag_inference/active_rag/active_rag-TriviaQA-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-StrategyQA-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-PubHealth-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-PopQA-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-HotPotQA-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-Feverous-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-Factscore-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-ASQA-Chatgpt.sh
-sh ./run/rag_inference/active_rag/active_rag-ArcChallenge-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-StrategyQA-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-PubHealth-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-PopQA-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-HotPotQA-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-Feverous-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-Factscore-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-ASQA-Chatgpt.sh
+# sh ./run/rag_inference/active_rag/active_rag-ArcChallenge-Chatgpt.sh
 # sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-ArcChallenge-no_retrieval-pregiven_passages.sh
 # sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-ArcChallenge-always_retrieval-pregiven_passages.sh
 # sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-ArcChallenge-adaptive_retrieval-pregiven_passages.sh
