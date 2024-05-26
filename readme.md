@@ -121,7 +121,7 @@ gdown --id xxxxxx
 # 💽 process wiki2018 as vector database
 - 这部分是使用 wiki2018 的教程
 ## 下载文本文件
-  - pip install gdown 
+  - 直接 wget 下载 wiki2018 raw database
 ~~~bash
 cd raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018
 wget https://dl.fbaipublicfiles.com/dpr/wikipedia_split/psgs_w100.tsv.gz
@@ -143,8 +143,7 @@ vim metadata.json
 "collection": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018/wiki2018.tsv",
 "experiment": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2018",
 ~~~
-- 修改好之后直接启动 colbert server 即可
-
+- 修改好之后直接启动 colbert server 即可，实验启动方式参照 readme 最后一节 Inference experiments
 
 # Fine tune llama3 & self rag 
 - The base models for raglab baseline and selfrag use llama3-instruction-8b. Since selfrag was further fine-tuned on additional data during the fine-tuning stage, in order to make a fair comparison, the baseline model also needs to be fine-tuned.
