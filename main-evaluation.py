@@ -32,7 +32,7 @@ def get_config():
     parser.add_argument('--output_dir', type = str, help = 'the output dir of evaluation')
 
     # llm config
-    parser.add_argument('--llm_mode', type = str, default='HF_Model', choices=['HF_Model','Openai_api'], help='flag of language or api')
+    parser.add_argument('--llm_mode', type = str, default='HF_Model', choices=['HF_Model','Openai_api', 'Lora_Model'], help='flag of language or api')
     parser.add_argument("--llm_path", type = str, help = 'path to llm')
     parser.add_argument('--download_dir', type=str, default=".cache",help="specify vllm model download dir")
     parser.add_argument("--world_size",  type=int, default=1,help="world size to use multiple GPUs. world_size will be used in LLM() function")
@@ -44,7 +44,9 @@ def get_config():
     parser.add_argument('--include_stop_token', type=int, default=False, help='"include_stop_token" controls whether the generated text output should include the provided stop string.')
     parser.add_argument('--use_vllm', action = "store_true", help = 'llm generate max length')
     parser.add_argument('--use_chat_template', type = int, default=False, help = 'llama2-chat and llama3-instruction ues official chat template will get a better performance, but finetune model will mess up by this template')
-
+    # lora config
+    parser.add_argument('--basemodel_path', type = str, help = 'path of lora base model')
+    
     # api config
     parser.add_argument('--llm_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
     parser.add_argument('--llm_api', type=str, help='API language model name')

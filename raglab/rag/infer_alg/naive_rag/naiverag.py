@@ -8,7 +8,7 @@ import random
 
 from raglab.dataset.utils import get_dataset # load datasets
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
-from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM
+from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM, Lora_Model
 from raglab.instruction_lab import INSTRUCTION_LAB
 import pdb
 RED = '\033[91m'
@@ -116,6 +116,9 @@ class NaiveRag:
             else:
                 llm = HF_Model(args)
                 llm.load_model() # load_model() will load local model and tokenizer
+        elif self.llm_mode == "Lora_Model":
+            llm = Lora_Model(args)
+            llm.load_model() #  load_model() will load base model and lora adapter then merged by peft to get complete model
         elif self.llm_mode == 'Openai_api':
             llm = OpenaiModel(args)
             llm.load_model() # load_model() will load api configs and tiktoken

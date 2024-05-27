@@ -54,39 +54,42 @@ class OpenaiModel(BaseLM):
                     print(f'The {i}-th API call')
                     response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop, logprobs=self.api_logprobs, top_logprobs=self.api_top_logprobs)
                     # collate Apioutputs
-                    if response["choices"][0]['logprobs'] is not None:
-                        apioutput = self.Outputs()
-                        apioutput.text = response["choices"][0]["message"]["content"]
-                        apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
-                        apioutput.tokens_num = len(apioutput.tokens_ids)
-                        apioutput.tokens = [content['token'] for content in response["choices"][0]['logprobs']['content']]
-                        apioutput.tokens_logprob = [content['logprob'] for content in response["choices"][0]['logprobs']['content']]
-                        apioutput.tokens_prob = np.exp(apioutput.tokens_logprob).tolist()
-                        apioutput.cumulative_logprob = float(np.prod(apioutput.tokens_prob) / max(len(apioutput.tokens_prob), 1))
-                        apioutput.logprobs = []
-                        apioutput.text_logprobs = []
-                        for content in response["choices"][0]['logprobs']['content']: # content:dict[token/logprobs/top_logprobs] 每个content都包含一个 token 的信息
-                            top_logprobs = content['top_logprobs']
-                            one_token_vocab = {}
-                            text_token_vocab = {}
-                            for log_prob in top_logprobs: # top_logprobs:list[dict[token/logprobs/bytes]]
-                                token_str = log_prob['token']
-                                try:
-                                    token_id = self.tokenizer.encode_single_token(token_str)
-                                except KeyError:
-                                    print(f"Token '{token_str}' not found in vocabulary")
-                                    continue
-                                token_logprob = log_prob['logprob']
-                                one_token_vocab[token_id] = float(token_logprob)
-                                text_token_vocab[token_str] = float(token_logprob)
-                            apioutput.logprobs.append(one_token_vocab)
-                            apioutput.text_logprobs.append(text_token_vocab)
-                        # end of for loop
-                        apioutputs_list.append(apioutput)
-                        print(f'API call success')
-                        break
+                    if 'logprobs' in response["choices"][0]:
+                        if response["choices"][0]['logprobs'] is not None:
+                            apioutput = self.Outputs()
+                            apioutput.text = response["choices"][0]["message"]["content"]
+                            apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
+                            apioutput.tokens_num = len(apioutput.tokens_ids)
+                            apioutput.tokens = [content['token'] for content in response["choices"][0]['logprobs']['content']]
+                            apioutput.tokens_logprob = [content['logprob'] for content in response["choices"][0]['logprobs']['content']]
+                            apioutput.tokens_prob = np.exp(apioutput.tokens_logprob).tolist()
+                            apioutput.cumulative_logprob = float(np.prod(apioutput.tokens_prob) / max(len(apioutput.tokens_prob), 1))
+                            apioutput.logprobs = []
+                            apioutput.text_logprobs = []
+                            for content in response["choices"][0]['logprobs']['content']: # content:dict[token/logprobs/top_logprobs] 每个content都包含一个 token 的信息
+                                top_logprobs = content['top_logprobs']
+                                one_token_vocab = {}
+                                text_token_vocab = {}
+                                for log_prob in top_logprobs: # top_logprobs:list[dict[token/logprobs/bytes]]
+                                    token_str = log_prob['token']
+                                    try:
+                                        token_id = self.tokenizer.encode_single_token(token_str)
+                                    except KeyError:
+                                        print(f"Token '{token_str}' not found in vocabulary")
+                                        continue
+                                    token_logprob = log_prob['logprob']
+                                    one_token_vocab[token_id] = float(token_logprob)
+                                    text_token_vocab[token_str] = float(token_logprob)
+                                apioutput.logprobs.append(one_token_vocab)
+                                apioutput.text_logprobs.append(text_token_vocab)
+                            # end of for loop
+                            apioutputs_list.append(apioutput)
+                            print(f'API call success')
+                            break
+                        else:
+                            pass # logprob is None so recall chatgpt in next turn
                     else:
-                        pass # logprob is None so recall chatgpt in next turn
+                        pass
                 # --> end of recall loop
             # --> end of else
         # --> end of main loop
