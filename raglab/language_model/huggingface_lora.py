@@ -18,14 +18,14 @@ class Lora_Model(BaseLM):
         self.use_chat_template = args.use_chat_template
 
     def load_model(self):
-        self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path)
+        if self.dtype == 'half' or self.dtype == 'float16':
+            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto", torch_dtype=torch.float16)
+        else:
+            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto")
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False, padding_side="left")
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         self.base_model.resize_token_embeddings(len(self.tokenizer))
         self.llm = PeftModel.from_pretrained(self.base_model, self.llm_path) 
-        if self.dtype == 'half' or self.dtype == 'float16':
-            self.llm = self.llm.half()
-        self.llm.to('cuda')    
         self.llm.eval()
 
     def generate(self, inputs: Union[str,list[str]])->list[BaseLM.Outputs]:

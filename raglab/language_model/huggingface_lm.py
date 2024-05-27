@@ -21,6 +21,7 @@ class HF_Model(BaseLM):
             self.llm = AutoModelForCausalLM.from_pretrained(self.llm_path, device_map="auto")
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False, padding_side="left")
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
+        self.llm.eval()
 
     def generate(self, inputs: Union[str,list[str]])->list[BaseLM.Outputs]:
         if isinstance(inputs,str):
