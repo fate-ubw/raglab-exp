@@ -499,9 +499,9 @@ def main():
             task_type=TaskType.CAUSAL_LM, 
             inference_mode=False, 
             r=args.lora_rank, 
-            #modules_to_save=modules_to_save,
             lora_alpha=args.lora_alpha, 
-            lora_dropout=args.lora_dropout
+            lora_dropout=args.lora_dropout,
+            target_modules=["embed_tokens", "lm_head", "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
         )
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
@@ -710,10 +710,9 @@ def main():
             if args.output_dir is not None:
                 output_dir = os.path.join(args.output_dir, output_dir)
             accelerator.save_state(output_dir)
-
+    # -> end of train loop
     if args.with_tracking:
         accelerator.end_training()
-
     if args.output_dir is not None:
         accelerator.wait_for_everyone()
         if accelerator.is_main_process:
@@ -728,7 +727,7 @@ def main():
             # and has its own save_pretrained function for only saving lora modules.
             # We have to mannually specify the is_main_process outside the save_pretrained function.
             if accelerator.is_main_process:
-                unwrapped_model.save_pretrained(args.output_dir, state_dict=state_dict)
+                unwrapped_model.save_pretrained(args.output_dir, state_dict=state_dict, save_embedding_layers=True)
         else:
             unwrapped_model.save_pretrained(
                 args.output_dir, is_main_process=accelerator.is_main_process, save_function=accelerator.save, state_dict=state_dict
