@@ -52,7 +52,7 @@ for algorithm_name in ALGORITHM_LIST:
             print(f"Generated {script_filename}")
 
             # Append the script path to the list
-            if "interact" not in filename and 'baseline' not in filename and 'Chat' not in filename:
+            if "interact" not in filename and 'Instruct' not in filename and 'Chat' not in filename and 'pregiven_passages':
                 script_paths.append(f"sh {script_filename}")
 
 # Write the script paths to a text file

@@ -4,7 +4,7 @@ num_gpu: 1
 # eval config
 algorithm_name: naive_rag
 task: TriviaQA
-eval_datapath: ./data/eval_datasets/TriviaQA/triviaqa_test_w_gs.jsonl
+eval_datapath: ./data/eval_datasets/TriviaQA/triviaqa_test_w_gs_first_500_samples.jsonl
 output_dir: ./data/eval_results/
 # llm config
 

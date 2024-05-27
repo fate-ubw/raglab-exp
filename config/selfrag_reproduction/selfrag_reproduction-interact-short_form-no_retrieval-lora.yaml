@@ -8,7 +8,7 @@ task: ''
 # llm config
 llm_mode: Lora_Model
 llm_path: ./model/output_models/self_rag_8B-adapter
-basemodel_path: ./model/Meta-Llama-3-8B
+basemodel_path: ./model/Meta-Llama-3-8B-Instruct
 dtype: 'half'
 generate_maxlength: 500
 temperature: 0.0

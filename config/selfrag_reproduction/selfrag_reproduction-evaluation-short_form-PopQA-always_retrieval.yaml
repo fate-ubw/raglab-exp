@@ -4,7 +4,7 @@ seed: 633
 num_gpu: 2
 # eval config
 algorithm_name: selfrag_reproduction
-eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs.jsonl
+eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs_first_500_samples.jsonl
 task: PopQA
 output_dir: ./data/eval_results/
 # llm config

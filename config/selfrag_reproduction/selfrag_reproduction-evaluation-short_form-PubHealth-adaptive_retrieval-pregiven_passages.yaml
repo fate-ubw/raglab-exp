@@ -4,7 +4,7 @@ seed: 633
 num_gpu: 2
 # eval config
 algorithm_name: selfrag_reproduction
-eval_datapath: ./data/eval_datasets/PubHealth/health_claims_processed.jsonl
+eval_datapath: ./data/eval_datasets/PubHealth/health_claims_processed_first_500_samples.jsonl
 task: PubHealth
 output_dir: ./data/eval_results/
 # llm config
