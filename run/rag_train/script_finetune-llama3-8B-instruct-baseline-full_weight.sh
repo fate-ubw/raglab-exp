@@ -4,7 +4,7 @@ export NCCL_P2P_LEVEL=NVL
 MODEL_SIZE=8B
 NUM_GPUS=8
 BATCH_SIZE_PER_GPU=1
-TOTAL_BATCH_SIZE=64
+TOTAL_BATCH_SIZE=32
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 echo "Training llama model ${MODEL_SIZE} using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --warmup_ratio 0.03 \
     --weight_decay 0. \
     --num_train_epochs 3 \
-    --output_dir ./model/output_models/Llama3-${MODEL_SIZE}-Instruct-adapter/ \
+    --output_dir ./model/output_models/Llama3-${MODEL_SIZE}-Instruct/ \
     --with_tracking \
     --report_to tensorboard \
     --logging_steps 1 \

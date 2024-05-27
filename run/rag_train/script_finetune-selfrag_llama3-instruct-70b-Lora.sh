@@ -1,7 +1,7 @@
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export NCCL_P2P_LEVEL=NVL
 
-MODEL_SIZE=8B
+MODEL_SIZE=70B
 NUM_GPUS=8
 BATCH_SIZE_PER_GPU=1
 TOTAL_BATCH_SIZE=64
@@ -14,9 +14,9 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --use_deepspeed \
     --deepspeed_config_file ./raglab/rag/train_alg/stage3_no_offloading_accelerate.conf \
     ./raglab/rag/train_alg/finetune.py \
-    --model_name_or_path ./model/Meta-Llama-3-8B-Instruct\
+    --model_name_or_path ./model/Meta-Llama-3-70B-Instruct\
     --use_flash_attn \
-    --tokenizer_name ./model/Meta-Llama-3-8B-Instruct \
+    --tokenizer_name ./model/Meta-Llama-3-70B-Instruct \
     --use_slow_tokenizer \
     --train_file ./data/train_data/full_output_1005.jsonl \
     --max_seq_length 4096 \
@@ -28,7 +28,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --warmup_ratio 0.03 \
     --weight_decay 0. \
     --num_train_epochs 3 \
-    --output_dir ./model/output_models/self_rag_${MODEL_SIZE}-adapter/ \
+    --output_dir ./model/output_models/selfrag_llama3-${MODEL_SIZE}-Instruct-adapter/ \
     --with_tracking \
     --report_to tensorboard \
     --logging_steps 1 \
