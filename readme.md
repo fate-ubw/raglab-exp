@@ -206,28 +206,9 @@ vim metadata.json
   ~~~
 - lora finetune llama3-70b-baseline ues processed data
   ~~~bash
-  sh run/rag_train/script_finetune-llama3-70B-baseline-Lora.s
+  sh run/rag_train/script_finetune-llama3-70B-baseline-Lora.sh
   ~~~
 
-## Merge adapter into complete model(only Lora need)
-- If you run the the lora finetune scripts, finetune.py only outpits tokenizer and adapter_model. Git clone [llama-factory](https://github.com/hiyouga/LLaMA-Factory) to get final model
-- modify path in [merge.sh](https://github.com/hiyouga/LLaMA-Factory/blob/main/examples/merge_lora/merge.sh)
-  ~~~bash 
-  CUDA_VISIBLE_DEVICES=0 python ../../src/export_model.py \
-    --model_name_or_path meta-llama/Llama-2-7b-hf \
-    --adapter_name_or_path ../../saves/LLaMA2-7B/lora/sft \
-    --template default \
-    --finetuning_type lora \
-    --export_dir ../../models/llama2-7b-sft \
-    --export_size 2 \
-    --export_device cpu \
-    --export_legacy_format False
-  ~~~
-- run merge.sh 
-  ~~~bash
-  cd /workspace/LLaMA-Factory/examples/merge_lora
-  sh merge.sh
-  ~~~
 
 # Inference experiments
 ## Retrieval server & api
