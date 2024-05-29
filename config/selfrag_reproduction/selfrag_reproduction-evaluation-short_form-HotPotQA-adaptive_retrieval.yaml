@@ -8,7 +8,7 @@ eval_datapath: ./data/eval_datasets/HotPotQA/hotpot_dev_fullwiki_v1_first_500_sa
 task: HotPotQA
 output_dir: ./data/eval_results/
 # llm config
-llm_path: ./model/selfrag_llama3-instruct_8b
+llm_path: ./model/selfrag_llama3_8b-epoch_0_1
 dtype: "half"
 use_vllm: True
 generate_maxlength: 100

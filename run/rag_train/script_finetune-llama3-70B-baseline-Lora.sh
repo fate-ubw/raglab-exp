@@ -27,7 +27,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --lr_scheduler_type linear \
     --warmup_ratio 0.03 \
     --weight_decay 0. \
-    --num_train_epochs 3 \
+    --num_train_epochs 1 \
     --output_dir ./model/output_models/Llama3-${MODEL_SIZE}-baseline-adapter/ \
     --with_tracking \
     --report_to tensorboard \

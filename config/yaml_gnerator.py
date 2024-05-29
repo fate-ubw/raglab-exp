@@ -19,7 +19,7 @@ def copy_and_modify_files(folder_path):
                 with open(new_file_path, 'r') as file:
                     file_content = file.read()
                 
-                modified_content = re.sub(r'llm_path: \./model/Llama3-8B-baseline', r'llm_path: ./model/Meta-Llama-3-8B-Instruct', file_content)
+                modified_content = re.sub(r'llm_path: \./model/Llama3-8B-baseline', r'llm_path: ./model/Llama3-8B-Instruct-baseline', file_content)
 
                 with open(new_file_path, 'w') as file:
                     file.write(modified_content)
