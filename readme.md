@@ -189,17 +189,25 @@ vim metadata.json
   sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
   ~~~
 - then you will get baseline train_data without special token and passages (Q: what is specal token? Anawer: special tokens is a concept proposed by SelfRAG)
-- full weight finetune llama3-baseline ues processed data
+- full weight finetune llama3-8b-baseline ues processed data
   ~~~bash
   sh run/rag_train/script_finetune-llama3-baseline-full_weight.sh
   ~~~
-- lora finetune llama3-baseline
+- lora finetune llama3-8b-baseline
   ~~~bash
   cd raglab-exp
   sh run/rag_train/script_finetune-llama3-baseline-Lora.sh
   ~~~
-
-
+## finetune llama3-70b as baseline
+- preprocess train data. Train data for baseline model need remove special tokens.
+  ~~~bash
+  cd raglab-exp
+  sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
+  ~~~
+- lora finetune llama3-70b-baseline ues processed data
+  ~~~bash
+  sh run/rag_train/script_finetune-llama3-70B-baseline-Lora.s
+  ~~~
 
 ## Merge adapter into complete model(only Lora need)
 - If you run the the lora finetune scripts, finetune.py only outpits tokenizer and adapter_model. Git clone [llama-factory](https://github.com/hiyouga/LLaMA-Factory) to get final model
