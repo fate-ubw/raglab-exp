@@ -2,8 +2,6 @@ import pdb
 from dataclasses import dataclass
 from raglab.dataset.PubHealth import PubHealth
 
-
-
 class MMLU(PubHealth):
     def __init__(self, args):
         super().__init__(args)
@@ -25,5 +23,5 @@ class MMLU(PubHealth):
         postprocess_text = ''
         for answer_text, label in zip(choices['text'], choices['label']):
             postprocess_text += '\n'+ label + ': ' + answer_text
-        eval_data[self.inputStruction.question] += postprocess_text
+        eval_data[self.InputStruction.question] += postprocess_text
         return eval_data
