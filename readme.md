@@ -29,12 +29,14 @@
   cd model
   mkdir output_models
   mkdir Llama-2-7b-hf
-  mkdir Meta-Llama-3-8B
-  mkdir selfrag_llama2_7b
-  mkdir colbertv2.0
-  huggingface-cli download meta-llama/Meta-Llama-3-8B --local-dir Meta-Llama-3-8B/
   huggingface-cli download meta-llama/Llama-2-7b-hf --local-dir Llama-2-7b-hf/
-  huggingface-cli download selfrag/selfrag_llama2_7b --local-dir selfrag_llama2_7b
+  mkdir Meta-Llama-3-8B
+  huggingface-cli download meta-llama/Meta-Llama-3-8B --local-dir Meta-Llama-3-8B/
+  mkdir Meta-Llama-3-70B
+  huggingface-cli download meta-llama/Meta-Llama-3-70B --local-dir Meta-Llama-3-70B/
+  mkdir selfrag_llama2_7b
+  huggingface-cli download selfrag/selfrag_llama2_7b --local-dir selfrag_llama2_7b/
+  mkdir colbertv2.0
   huggingface-cli download colbert-ir/colbertv2.0 --local-dir colbertv2.0/
   ~~~
 
@@ -197,30 +199,7 @@ vim metadata.json
   sh run/rag_train/script_finetune-llama3-baseline-Lora.sh
   ~~~
 
-## finetune llama2-baseline 
-- preprocess train data. Train data for baseline model need remove special tokens.
-  ~~~bash
-  cd raglab-exp
-  sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
-  ~~~
-- then you will get baseline train_data without special token and passages (Q: what is specal token? Anawer: special tokens is a concept proposed by SelfRAG)
-- full weight finetune llama2-baseline ues processed data
-  ~~~bash
-  cd raglab-exp
-  sh run/rag_train/script_finetune-llama2-7b-baseline-full_weight.sh
-  ~~~
-- lora finetune llama2-baseline
-  ~~~bash
-  cd raglab-exp
-  sh run/rag_train/script_finetune-llama2-7b-baseline-Lora.sh
-  ~~~
 
-## finetune selfrag-7b
-- full weight finetune selfrag7b
-  ~~~bash
-    cd raglab-exp
-    sh run/rag_train/script_finetune-llama3-baseline-full_weight.sh
-  ~~~
 
 ## Merge adapter into complete model(only Lora need)
 - If you run the the lora finetune scripts, finetune.py only outpits tokenizer and adapter_model. Git clone [llama-factory](https://github.com/hiyouga/LLaMA-Factory) to get final model
