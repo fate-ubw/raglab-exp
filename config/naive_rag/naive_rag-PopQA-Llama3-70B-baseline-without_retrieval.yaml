@@ -3,12 +3,13 @@ seed: 633
 num_gpu: 1
 # eval config
 algorithm_name: naive_rag
-task: PubHealth
-eval_datapath: ./data/eval_datasets/PubHealth/health_claims_processed_first_500_samples.jsonl
+task: PopQA
+eval_datapath: ./data/eval_datasets/PopQA/popqa_longtail_w_gs_first_500_samples.jsonl
 output_dir: ./data/eval_results/
 # llm config
-llm_mode: HF_Model
-llm_path: ./model/Llama3-8B-Instruct-baseline
+llm_mode: Lora_Model
+llm_path: ./model/Llama3-70B-baseline-adapter
+basemodel_path: ./model/Meta-Llama-3-70B
 use_vllm: True
 temperature: 0.0
 top_p: 1.0
