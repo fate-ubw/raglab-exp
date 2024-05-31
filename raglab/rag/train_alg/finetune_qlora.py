@@ -37,6 +37,8 @@ from transformers import (
 from peft import LoraConfig, TaskType, get_peft_model
 from accelerate import InitProcessGroupKwargs
 from datetime import timedelta
+from transformers import BitsAndBytesConfig
+
 
 logger = get_logger(__name__)
 RED = '\033[91m'
@@ -431,13 +433,21 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-
+    pdb.set_trace()
+    quantization_config = BitsAndBytesConfig(
+                            load_in_8bit=True,
+                            llm_int8_threshold=6.0,
+                            llm_int8_skip_modules=["embed_tokens", "lm_head"],
+                            llm_int8_enable_fp32_cpu_offload=True,
+                            llm_int8_has_fp16_weight=True)
+    
     if args.model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
             low_cpu_mem_usage=args.low_cpu_mem_usage,
+            quantization_config=quantization_config
         )
     else:
         logger.info("Training new model from scratch")
