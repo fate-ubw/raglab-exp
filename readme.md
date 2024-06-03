@@ -198,7 +198,7 @@ vim metadata.json
   cd raglab-exp
   sh run/rag_train/script_finetune-llama3-baseline-Lora.sh
   ~~~
-## finetune llama3-70b as baseline
+## Lora finetune llama3-70b as baseline
 - preprocess train data. Train data for baseline model need remove special tokens.
   ~~~bash
   cd raglab-exp
@@ -209,6 +209,22 @@ vim metadata.json
   sh run/rag_train/script_finetune-llama3-70B-baseline-Lora.sh
   ~~~
 
+# 8bit QLora finetune llama3-70B as baseline
+- preprocess train data. Train data for baseline model need remove special tokens.
+  ~~~bash
+  cd raglab-exp
+  sh run/traindataset_preprocess/selfrag_traindata-remove_special_tokens.sh
+  ~~~
+- 8bit QLora finetune llama3-70B 
+  ~~~bash
+  sh run/rag_train/script_finetune-llama3-70B-baseline-QLora.sh
+  ~~~
+
+# 8bit QLora finetune selfrag-70B as baseline
+- 8bit Qlora finetune slefrag 70B
+  ~~~bash
+  sh run/rag_train/script_finetune-selfrag_llama3-70b-QLora.sh
+  ~~~
 
 # Inference experiments
 ## Retrieval server & api
