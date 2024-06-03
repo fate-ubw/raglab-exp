@@ -1,17 +1,18 @@
-export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export NCCL_P2P_LEVEL=NVL
 
 MODEL_SIZE=8B
-NUM_GPUS=1
+NUM_GPUS=8
 BATCH_SIZE_PER_GPU=1
-TOTAL_BATCH_SIZE=128
+TOTAL_BATCH_SIZE=32
 GRADIENT_ACC_STEPS=$(($TOTAL_BATCH_SIZE/$NUM_GPUS/$BATCH_SIZE_PER_GPU))
 echo "Training llama model ${MODEL_SIZE} using $NUM_GPUS GPUs, $BATCH_SIZE_PER_GPU batch size per GPU, $GRADIENT_ACC_STEPS gradient accumulation steps"
-CUDA_VISIBLE_DEVICES=0 accelerate launch \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --mixed_precision bf16 \
     --num_machines 1 \
     --num_processes $NUM_GPUS \
     --use_deepspeed \
+    --deepspeed_config_file ./raglab/rag/train_alg/stage3_no_offloading_accelerate.conf \
     ./raglab/rag/train_alg/finetune_qlora.py \
     --model_name_or_path ./model/Meta-Llama-3-8B\
     --use_flash_attn \
@@ -33,4 +34,3 @@ CUDA_VISIBLE_DEVICES=0 accelerate launch \
     --logging_steps 1 \
     --use_special_tokens \
     --use_lora
-    
