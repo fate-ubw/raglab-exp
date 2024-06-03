@@ -34,11 +34,10 @@ from transformers import (
     OPTForCausalLM,
     PreTrainedTokenizerFast
 )
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig, TaskType, get_peft_model, prepare_model_for_kbit_training
 from accelerate import InitProcessGroupKwargs
 from datetime import timedelta
 from transformers import BitsAndBytesConfig
-
 
 logger = get_logger(__name__)
 RED = '\033[91m'
@@ -97,7 +96,7 @@ def parse_args():
         "--lora_alpha",
         type=float,
         default=16,
-        help="The alpha parameter of lora.",
+        help="The alpha parameter of lora. ",
     )
     parser.add_argument(
         "--lora_dropout",
@@ -433,21 +432,18 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-    pdb.set_trace()
     quantization_config = BitsAndBytesConfig(
                             load_in_8bit=True,
                             llm_int8_threshold=6.0,
-                            llm_int8_skip_modules=["embed_tokens", "lm_head"],
-                            llm_int8_enable_fp32_cpu_offload=True,
-                            llm_int8_has_fp16_weight=True)
-    
+                            llm_int8_skip_modules=["embed_tokens", "lm_head"])
+
     if args.model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
             args.model_name_or_path,
             from_tf=bool(".ckpt" in args.model_name_or_path),
             config=config,
-            low_cpu_mem_usage=args.low_cpu_mem_usage,
-            quantization_config=quantization_config
+            quantization_config=quantization_config,
+            torch_dtype=torch.float16
         )
     else:
         logger.info("Training new model from scratch")
@@ -502,9 +498,10 @@ def main():
     if len(tokenizer) > embedding_size:
         model.resize_token_embeddings(len(tokenizer))
 
+    model.gradient_checkpointing_enable()
+    model = prepare_model_for_kbit_training(model)
+
     if args.use_lora:
-
-
         logger.info("Initializing LORA model...")
         modules_to_save = ["embed_tokens"]
         peft_config = LoraConfig(
@@ -513,13 +510,12 @@ def main():
             r=args.lora_rank, 
             lora_alpha=args.lora_alpha, 
             lora_dropout=args.lora_dropout,
-            target_modules=["embed_tokens", "lm_head", "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] 
+            target_modules=["embed_tokens", "lm_head", "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"],
+            fan_in_fan_out = True
         )
-        # target_modules=["embed_tokens", "lm_head", "q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"] 
         model = get_peft_model(model, peft_config)
         model.print_trainable_parameters()
-
-
+    
     encode_function = partial(
         encode_with_prompt_completion_format,
         tokenizer=tokenizer,
