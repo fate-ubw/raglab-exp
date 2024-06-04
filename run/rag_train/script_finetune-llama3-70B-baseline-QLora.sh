@@ -12,7 +12,6 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 accelerate launch \
     --num_machines 1 \
     --num_processes $NUM_GPUS \
     --use_deepspeed \
-    --deepspeed_config_file ./raglab/rag/train_alg/stage3_no_offloading_accelerate.conf \
     ./raglab/rag/train_alg/finetune_qlora.py \
     --model_name_or_path ./model/Meta-Llama-3-70B\
     --use_flash_attn \
