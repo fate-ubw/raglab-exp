@@ -221,9 +221,9 @@ def parse_args():
             "Use special tokens."
         ),
     )
+    parser.add_argument("--quantization", type=str, default="8bit",choices=["8bit", "4bit"] ,help="quantization techniques")
 
     args = parser.parse_args()
-
     # Sanity checks
     if args.dataset_name is None and args.train_file is None:
         raise ValueError("Need either a dataset name or a training file.")
@@ -432,10 +432,19 @@ def main():
             "You are instantiating a new tokenizer from scratch. This is not supported by this script."
             "You can do it from another script, save it, and load it from here, using --tokenizer_name."
         )
-    quantization_config = BitsAndBytesConfig(
-                            load_in_8bit=True,
-                            llm_int8_threshold=6.0,
-                            llm_int8_skip_modules=["embed_tokens", "lm_head"])
+    if args.quantization == "8bit":
+        quantization_config = BitsAndBytesConfig(
+                                load_in_8bit=True,
+                                llm_int8_threshold=6.0,
+                                llm_int8_skip_modules=["embed_tokens", "lm_head"])
+    
+    elif args.quantization == "4bit":
+        quantization_config = BitsAndBytesConfig(
+                    load_in_4bit=True,
+                    bnb_4bit_quant_type="fp4",
+                    bnb_4bit_compute_dtype="bfloat16",
+                    bnb_4bit_use_double_quant=True,
+                )
 
     if args.model_name_or_path:
         model = AutoModelForCausalLM.from_pretrained(
