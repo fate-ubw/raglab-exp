@@ -499,7 +499,6 @@ def main():
         model.resize_token_embeddings(len(tokenizer))
 
     model.gradient_checkpointing_enable()
-    model = prepare_model_for_kbit_training(model)
 
     if args.use_lora:
         logger.info("Initializing LORA model...")
