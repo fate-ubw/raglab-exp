@@ -94,7 +94,7 @@ dependencies:
       - fastapi==0.109.0
       - fastjsonschema==2.19.1
       - filelock==3.13.1
-      # - flash-attn==2.2.0
+      - flash-attn==2.2.0
       - flask==3.0.2
       - fqdn==1.5.1
       - frozenlist==1.4.1
@@ -111,7 +111,7 @@ dependencies:
       - httpcore==1.0.2
       - httptools==0.6.1
       - httpx==0.26.0
-      - huggingface-hub==0.20.3
+      - huggingface-hub==0.23.2
       - idna==3.6
       - importlib-metadata==7.0.1
       - ipykernel==6.29.2
@@ -266,13 +266,13 @@ dependencies:
       - threadpoolctl==3.2.0
       - tiktoken==0.5.2
       - tinycss2==1.2.1
-      - tokenizers==0.15.0
+      - tokenizers==0.19.1
       - tomli==2.0.1
       - torch==2.1.2
       - tornado==6.4
       - tqdm==4.66.1
       - traitlets==5.14.1
-      - transformers==4.36.2
+      - transformers==4.41.2
       - tree==0.2.4
       - triton==2.1.0
       - typer==0.9.0
@@ -306,4 +306,4 @@ dependencies:
       - yarg==0.1.9
       - yarl==1.9.4
       - zipp==3.17.0
-prefix: /workspace/miniconda3/envs/raglab
+prefix: /workspace/miniconda3/envs/raglab-test_0603
