@@ -102,6 +102,7 @@ class NaiveRag:
         else:
             target_instruction = self.find_instruction('Naive_rag-without_retrieval', self.task)
             input = target_instruction.format_map({'query': query})
+        pdb.set_trace()
         outputs_list = self.llm.generate(input) # llm.generate() -> list[BaseOutputs] so you have to get the text from BaseOutputs.text
         Outputs = outputs_list[0]
         outputs_text = Outputs.text
@@ -184,7 +185,7 @@ class NaiveRag:
         logger.setLevel(logging.DEBUG) # Set the log level to DEBUG
         # build file_name based on args
         self.time = datetime.now().strftime('%m%d_%H%M_%S')
-        if args.llm_mode == 'HF_Model':
+        if args.llm_mode == 'HF_Model' or args.llm_mode == 'Lora_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
         else:
@@ -197,7 +198,7 @@ class NaiveRag:
             random_wait = random.uniform(1,2)
             time.sleep(random_wait)
             self.time = datetime.now().strftime('%m%d_%H%M_%S')
-            if args.llm_mode == 'HF_Model':
+            if args.llm_mode == 'HF_Model' or args.llm_mode == 'Lora_Model':
                 model_name = os.path.basename(self.llm_path.rstrip('/'))
                 dir_name = args.algorithm_name + '-' + args.task + '-' + model_name + '-' + args.retrieval_name + '-' + f'{self.time}'
             else:
@@ -206,7 +207,7 @@ class NaiveRag:
         # -> end of dir exists
         os.makedirs(self.output_dir)
         print(f'{GREEN}create log file success:{self.output_dir}{END}')
-        if args.llm_mode == 'HF_Model':
+        if args.llm_mode == 'HF_Model' or args.llm_mode == 'Lora_Model':
             model_name = os.path.basename(self.llm_path.rstrip('/'))
             self.file_name = args.algorithm_name + '|' + args.task + '|' + model_name + '|' + args.retrieval_name + '|'
         else:
