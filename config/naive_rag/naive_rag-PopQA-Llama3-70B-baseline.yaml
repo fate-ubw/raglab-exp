@@ -17,4 +17,7 @@ top_p: 1.0
 generation_stop: ''
 generate_maxlength: 300
 # retrieval config
-realtime_retrieval: False
+realtime_retrieval: True
+retrieval_name: colbert_api
+n_docs: 10
+passages_max_length: -1
