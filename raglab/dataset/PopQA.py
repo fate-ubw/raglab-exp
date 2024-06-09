@@ -13,11 +13,11 @@ from raglab.dataset.utils import get_args_form_config
 class PopQA(QA):
     def __init__(self, args):
         self.args = args
-        self.print_fn = args.print_fn
-        self.file_name = args.file_name
-        self.time = args.time
+        self.print_fn = getattr(args, 'print_fn', print)
+        self.file_name = getattr(args, 'file_name', '')
+        self.time = getattr(args, 'time', None)
         self.output_file = args.output_dir
-        self.config = args.config
+        self.config = getattr(args, 'config', None)
         super().__init__(args)
     
     @dataclass
