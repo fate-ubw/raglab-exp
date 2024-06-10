@@ -7,7 +7,7 @@ task: ''
 # llm config
 llm_mode: HF_Model
 llm_path: ./model/Meta-Llama-3-70B-Instruct
-dtype: 'half'
+
 use_vllm: False
 temperature: 0.0
 top_p: 1.0
