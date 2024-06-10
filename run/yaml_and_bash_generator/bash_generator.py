@@ -27,7 +27,7 @@ for algorithm_name in ALGORITHM_LIST:
 
     # Iterate over the configuration files directory
     for filename in os.listdir(config_dir):
-        if filename.endswith(".yaml"):
+        if filename.endswith(".yaml") and '70B' in filename :
             # Get the filename (without extension)
             basename = os.path.splitext(filename)[0]
 
@@ -41,7 +41,7 @@ for algorithm_name in ALGORITHM_LIST:
                 python_file = "main-evaluation.py"
 
             # Generate the Shell script content
-            script_content = f"# export CUDA_VISIBLE_DEVICES=0\n"
+            script_content = f"export CUDA_VISIBLE_DEVICES=3,4\n"
             script_content += f"python ./{python_file}\\\n"
             script_content += f" --config ./config/{algorithm_name}/{filename}"
 
@@ -53,7 +53,8 @@ for algorithm_name in ALGORITHM_LIST:
 
             # Append the script path to the list
             # "interact" not in filename
-            if  '70B' in filename:
+            # if  '70B' in filename and 'pregiven_passages' not in filename and 'interact' not in filename:
+            if '70B' in filename and all(substring not in filename for substring in ['pregiven_passages', 'interact']):
                 script_paths.append(f"sh {script_filename}")
 
 # Write the script paths to a text file
