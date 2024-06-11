@@ -62,7 +62,8 @@ def get_config():
     parser.add_argument('--use_chat_template', type = int, default=False, help = 'llama2-chat and llama3-instruction ues official chat template will get a better performance, but finetune model will mess up by this template')
     # lora config
     parser.add_argument('--basemodel_path', type = str, help = 'path of lora base model')
-    
+    parser.add_argument("--quantization", type=str, default="None",choices=["8bit", "4bit", 'None'] ,help="quantization techniques when load model")
+
     # api config
     parser.add_argument('--llm_name', type=str, default='gpt-3.5-turbo', help='language model name of openai api')
     parser.add_argument('--llm_api', type=str, help='API language model name')

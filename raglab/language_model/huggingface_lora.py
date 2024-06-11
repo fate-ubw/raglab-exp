@@ -2,7 +2,7 @@ from typing import  Union
 from tqdm import tqdm
 import numpy as np
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import AutoPeftModelForCausalLM, PeftModel, PeftConfig
 from raglab.language_model.base_lm import BaseLM
 import pdb
@@ -16,12 +16,29 @@ class Lora_Model(BaseLM):
         self.dtype = args.dtype
         self.generation_stop = args.generation_stop
         self.use_chat_template = args.use_chat_template
+        self.quantization = args.quantization
 
     def load_model(self):
-        if self.dtype == 'half' or self.dtype == 'float16':
-            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto", torch_dtype=torch.float16)
+        if self.quantization == "8bit":
+            quantization_config = BitsAndBytesConfig(
+                                    load_in_8bit=True,
+                                    llm_int8_threshold=6.0,
+                                    llm_int8_skip_modules=["embed_tokens", "lm_head"])
+        
+        elif self.quantization == "4bit":
+            quantization_config = BitsAndBytesConfig(
+                        load_in_4bit=True,
+                        bnb_4bit_quant_type="fp4",
+                        bnb_4bit_compute_dtype="bfloat16",
+                        bnb_4bit_use_double_quant=True,
+                    )
         else:
-            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto")
+            quantization_config = None
+
+        if self.dtype == 'half' or self.dtype == 'float16':
+            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto", quantization_config = quantization_config, torch_dtype=torch.float16)
+        else:
+            self.base_model = AutoModelForCausalLM.from_pretrained(self.basemodel_path, device_map="auto", quantization_config = quantization_config)
         self.tokenizer = AutoTokenizer.from_pretrained(self.llm_path, skip_special_tokens=False, padding_side="left")
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
         self.base_model.resize_token_embeddings(len(self.tokenizer))
