@@ -7,12 +7,11 @@ import torch
 import pdb
 import sys
 import os
-print(sys.path)
-BASE_DIR = os.path.dirname(os.path.abspath('/workspace/raglab-exp/motivation_experiments')) # 这个路径是必须的，因为这样才能定位到根目录raglab-exp
+BASE_DIR = os.path.dirname(os.path.abspath('/home/wyd/zxw/raglab-exp/motivation_experiments')) # 这个路径是必须的，因为这样才能定位到根目录raglab-exp
 sys.path.append(BASE_DIR)
 print(sys.path)
 from raglab.dataset import get_dataset, TASK_LIST
-from raglab.language_model import HF_VLLM
+from raglab.language_model import HF_VLLM, Lora_Model
 from raglab.instruction_lab import INSTRUCTION_LAB
 from raglab.rag.infer_alg.self_rag_reproduction.utils import load_special_tokens
 
@@ -26,16 +25,13 @@ def set_randomSeed(args):
         torch.backends.cudnn.deterministic = True
 
 def first_token_prob(args):
-    llm = HF_VLLM(args) # 这里面还得想办法修改一下
-    llm.load_model()
+    llm = steup_llm(args)
     EvalData =  get_dataset(args)
     eval_dataset = EvalData.load_dataset()
     retrieval_tokens, _, _, _ = load_special_tokens(llm.tokenizer, use_grounding=True, use_utility=True)
     json_data = []
-    temp_json_data = []
-    for idx, eval_data in enumerate(tqdm(eval_dataset)):
+    for _, eval_data in enumerate(tqdm(eval_dataset)):
         eval_data = EvalData.preprocess(eval_data) # some dataset need preprocess such as: arc_challenge
-        question = eval_data[EvalData.InputStruction.question]
         target_instruction = find_instruction('selfrag_reproduction-read', args.task)
         input = target_instruction.format_map({'query': eval_data[EvalData.InputStruction.question]})
         outputs_list = llm.generate([input])
@@ -67,7 +63,7 @@ def firts_token_statistic(input_data):
     statistic_Magnitude = {'1e-5':0,'1e-4':0,'1e-3':0,'1e-2':0,'1e-1':0,'1':0}
     for item in input_data: 
         generated_text = item['generated_text'] 
-        no_retrieval_token = generated_text[0:14] #这块的代码还是有点问题，因为 value 是一个 str是有引号存在的所以应该从 idx = 1 开始取
+        no_retrieval_token = generated_text[0:14]
         retrieval_token = generated_text[0:11] 
 
         if retrieval_token == '[Retrieval]':
@@ -76,9 +72,7 @@ def firts_token_statistic(input_data):
             statistic_first_token['[No Retrieval]'] += 1
         else:
             statistic_first_token['others'] += 1
-        retrieval_tokens_probs = item['first_tokens_logits'] # 目前唯一不确定的就是读进来的结果，是否是 dict
-        # retrieval_tokens_probs = retrieval_tokens_probs.replace("'", "\"") # json 规定的数据格式必须使用双引号
-        # retrieval_tokens_probs = json.loads(retrieval_tokens_probs)
+        retrieval_tokens_probs = item['first_tokens_logits'] 
         if retrieval_tokens_probs['[No Retrieval]'] <= 1e-5 and retrieval_tokens_probs['[Retrieval]'] <= 1e-5:
             statistic_Magnitude['1e-5'] +=1
         elif retrieval_tokens_probs['[No Retrieval]'] <= 1e-4 and retrieval_tokens_probs['[Retrieval]'] <= 1e-4:
@@ -92,6 +86,17 @@ def firts_token_statistic(input_data):
         else:
             statistic_Magnitude['1'] += 1  
     return statistic_first_token, statistic_Magnitude
+
+def steup_llm(args):
+    if args.llm_mode == 'HF_Model':
+        llm = HF_VLLM(args)
+        llm.load_model() # load_model() will load local model and tokenizer  
+    elif args.llm_mode == "Lora_Model":
+        llm = Lora_Model(args)
+        llm.load_model() #  load_model() will load base model and lora adapter then merged by peft to get complete model
+    else:
+        raise LanguageModelError("Language model must be huggingface or openai api.")
+    return llm
 
 def store_json(json_data, json_path):
     with open(json_path, 'w', encoding='utf-8') as json_file:
@@ -112,6 +117,9 @@ def find_instruction( rag_name:str, dataset_name:str) -> str:
 class InstructionNotFoundError(Exception):
     pass
 
+class LanguageModelError(Exception):
+    pass
+
 if __name__=='__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--seed', type=int, default = 633, help='random  seed')
@@ -120,6 +128,8 @@ if __name__=='__main__':
     parser.add_argument("--eval_datapath", type = str, help = 'path to eval dataset')
     parser.add_argument('--output_dir', type = str, default='./',help = 'the output dir of evaluation')
     parser.add_argument("--llm_path", type = str, help = 'path to llm or lora adapter')
+    parser.add_argument('--llm_mode', type = str, default='HF_Model', choices=['HF_Model', 'Openai_api', 'Lora_Model'], help='flag of language or api')
+    parser.add_argument('--basemodel_path', type = str, help = 'path of lora base model, only Lora need base model')
     parser.add_argument('--temperature', type=float, default=0.0, help='temperature of decoding algorithm')
     parser.add_argument('--top_p', type=float, default=1.0, help='top-p of decoding algorithm')
     parser.add_argument('--generate_maxlength', type = int, default = 50, help = 'llm generate max length')
@@ -130,3 +140,4 @@ if __name__=='__main__':
     args = parser.parse_args()
     set_randomSeed(args)
     statistic_results =  first_token_prob(args)
+    print(statistic_results)
