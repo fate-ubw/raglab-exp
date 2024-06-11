@@ -21,7 +21,7 @@ def load_json_data(file_path, max_items=None):
     return data
 
 def main():
-    file_path = '/workspace/raglab-exp/data/eval_datasets/StrategyQA/strategyqa_train.json'
+    file_path = '/home/wyd/zxw/raglab-exp/data/eval_datasets/StrategyQA/strategyqa_train.json'
     max_items = 500
     data = load_json_data(file_path, max_items)
     if data:

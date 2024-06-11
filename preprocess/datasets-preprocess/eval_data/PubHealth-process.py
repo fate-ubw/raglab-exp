@@ -33,7 +33,7 @@ def process_answers(data):
     return data
 
 def main():
-    file_path = '/workspace/raglab-exp/data/eval_datasets/PubHealth/health_claims_processed.jsonl'
+    file_path = '/home/wyd/zxw/raglab-exp/data/eval_datasets/PubHealth/health_claims_processed.jsonl'
     max_items = 500
     data = load_json_data(file_path, max_items)
     if data:
