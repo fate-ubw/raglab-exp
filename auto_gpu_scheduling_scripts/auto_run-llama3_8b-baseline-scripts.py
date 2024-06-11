@@ -58,10 +58,8 @@
 # sh ./run/rag_inference/active_rag/active_rag-ASQA-Llama3-8b-baseline.sh
 # sh ./run/rag_inference/active_rag/active_rag-ArcChallenge-Llama3-8b-baseline.sh
 # sh ./run/rag_inference/active_rag/active_rag-PopQA-Llama3-8b-baseline.sh
-
 # sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-long_form-Factscore-always_retrieval.sh
 # sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-long_form-ASQA-always_retrieval.sh
-
 sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-long_form-ASQA-adaptive_retrieval.sh
 sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-long_form-Factscore-no_retrieval.sh
 sh ./run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-long_form-Factscore-adaptive_retrieval.sh
