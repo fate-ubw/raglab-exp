@@ -67,7 +67,7 @@ class NaiveRag:
                 question = eval_data[self.EvalData.InputStruction.question] 
                 outputs, generation_track = self.infer(question)
                 inference_results = self.EvalData.record_result(eval_data, outputs, inference_results)
-                self.print_fn(f'{self.task} in {idx+1} turn:\n Question:{question} \n Rag Output:{outputs} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
+                self.print_fn(f'{self.algorithm_name} {self.task} in {idx+1} turn:\n Question:{question} \n Rag Output:{outputs} \n Answers: {eval_data[self.EvalData.InputStruction.answer]}')
                 # calculate metric
                 if self.task in ['ASQA','Factscore']:
                     # This two dataset need ALCE and Factscore to calculate the metrics
@@ -75,7 +75,7 @@ class NaiveRag:
                 acc = self.EvalData.eval_acc(inference_results)
                 EM = self.EvalData.eval_exact_match(inference_results)
                 f1_score = self.EvalData.eval_f1_score(inference_results)
-                self.print_fn(f'{self.task} in {idx+1} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
+                self.print_fn(f'{self.algorithm_name} {self.task} in {idx+1} turn: \n Accuracy: {acc} \n Exact match:{EM} \n F1 score: {f1_score}')
             # --> end of for loop
             self.EvalData.save_result(inference_results)
             if self.task in ['ASQA','Factscore']:
@@ -102,7 +102,6 @@ class NaiveRag:
         else:
             target_instruction = self.find_instruction('Naive_rag-without_retrieval', self.task)
             input = target_instruction.format_map({'query': query})
-        pdb.set_trace()
         outputs_list = self.llm.generate(input) # llm.generate() -> list[BaseOutputs] so you have to get the text from BaseOutputs.text
         Outputs = outputs_list[0]
         outputs_text = Outputs.text
