@@ -8,7 +8,9 @@ task: TriviaQA
 eval_datapath: ./data/eval_datasets/TriviaQA/triviaqa_test_w_gs_first_500_samples.jsonl
 output_dir: ./data/eval_results/
 # llm config
-llm_path: ./model/selfrag_llama3_8b-epoch_0_1
+llm_mode: Lora_Model
+llm_path: ./model/selfrag_llama3_70B-adapter
+basemodel_path: ./model/Meta-Llama-3-70B
 dtype: "half"
 use_vllm: True
 generate_maxlength: 100

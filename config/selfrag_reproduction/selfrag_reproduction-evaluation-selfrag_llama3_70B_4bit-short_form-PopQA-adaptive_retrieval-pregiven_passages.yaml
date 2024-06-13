@@ -22,8 +22,6 @@ include_stop_token: True
 # retrieval common config
 realtime_retrieval: False
 retrieval_name: pregiven_passages
-
-
 n_docs: 10
 passages_max_length: -1
 # self rag configs
