@@ -222,7 +222,7 @@ class SelfRag_Reproduction(NaiveRag):
 
         if 'no_retrieval' == self.retrieval_mode:
             prompt += "[No Retrieval]"
-            outputs_list = self.llm.generate([prompt], self.llm.sampling_params)
+            outputs_list = self.llm.generate([prompt])
             preds_text = [Outputs.text.split("\n\n")[0] for Outputs in outputs_list]
             final_prediction = {0:preds_text[0]} 
             generation_track = {"original_splitted_sentences": {0:preds_text}}
@@ -399,8 +399,9 @@ class SelfRag_Reproduction(NaiveRag):
         '''
         # without retrieval and retruen one response
         '''
-        prompt += "[No Retrieval]" 
-        outputs_list = self.llm.generate([prompt], self.llm.sampling_params)
+        prompt += "[No Retrieval]"
+        pdb.set_trace()
+        outputs_list = self.llm.generate([prompt])
         curr_prediction = [Outputs.text.split("\n\n")[0] for Outputs in outputs_list]
         scores = [1] # The score of [No retrieval] output is 1. And the [No retrieval] outputs will not be sorted by score in rank process
         overall_scores = {0:None}
@@ -629,7 +630,10 @@ class SelfRag_Reproduction(NaiveRag):
               Source code max_tokens is often set to 50, 100 or even 300, which greatly wastes computing resources. 
               Raglab optimizes the process of self-rag inference in selfrag_reproduction.py , improves the speed of reasoning and saves a lot of computing resources
         '''
-        outputs_list = self.llm.generate([prompt], sampling_params)
+        if self.llm_mode == 'HF_Model' and self.use_vllm == True:
+            outputs_list = self.llm.generate([prompt], sampling_params)
+        else:
+            outputs_list = self.llm.generate([prompt])
         Outputs = outputs_list[0]
         pred_log_probs = Outputs.logprobs
         score_dict = {}
