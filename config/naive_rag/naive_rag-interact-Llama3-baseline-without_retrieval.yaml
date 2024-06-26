@@ -6,16 +6,11 @@ algorithm_name: naive_rag
 task: ''
 # llm config
 llm_mode: HF_Model
-llm_path: ./model/Llama3-8B-Instruct-baseline
-
-use_vllm: True
+llm_path: ./model/Meta-Llama-3-8B
+use_vllm: False
 temperature: 0.0
 top_p: 1.0
 generation_stop: ''
 generate_maxlength: 300
 # retrieval config
-realtime_retrieval: True
-retrieval_name: colbert_api
-# max length should bigger than the length of input_ids
-n_docs: 10
-passages_max_length: -1
+realtime_retrieval: False
