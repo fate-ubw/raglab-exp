@@ -1,1 +1,2 @@
 from raglab.instruction_lab.instruction_lab import INSTRUCTION_LAB
+from raglab.instruction_lab.dataset_instructions import DATA_INSTRUCTIONS

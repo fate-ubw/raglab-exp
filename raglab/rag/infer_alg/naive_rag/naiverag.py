@@ -228,10 +228,10 @@ class NaiveRag:
         logger.addHandler(console_handler)
         return logger.info
 
-    def find_instruction(self, rag_name:str, dataset_name:str) -> str:
+    def find_instruction(self, algorithm_name:str, dataset_name:str) -> str:
         target_instruction = ''
         for instruction in INSTRUCTION_LAB:
-            if instruction['rag_name'] == rag_name and instruction['dataset_name'] == dataset_name:
+            if instruction['algorithm_name'] == algorithm_name and instruction['dataset_name'] == dataset_name:
                 target_instruction = instruction['instruction']
                 break
         if target_instruction == '':
