@@ -7,7 +7,7 @@ import torch
 import pdb
 import sys
 import os
-BASE_DIR = os.path.dirname(os.path.abspath('/home/wyd/zxw/raglab-exp/motivation_experiments')) # 这个路径是必须的，因为这样才能定位到根目录raglab-exp
+BASE_DIR = os.path.dirname(os.path.abspath('/home/wyd/zxw/raglab-exp/motivation_experiments'))
 sys.path.append(BASE_DIR)
 print(sys.path)
 from raglab.dataset import get_dataset, TASK_LIST
