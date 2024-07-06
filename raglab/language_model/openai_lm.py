@@ -109,7 +109,8 @@ class OpenaiModel(BaseLM):
                                                         top_p = top_p,
                                                         stop = stop,
                                                         logprobs = logprobs,
-                                                        top_logprobs = top_logprobs)
+                                                        top_logprobs = top_logprobs,
+                                                        seed = 2024)
                 received = True
             except:
                 num_rate_errors += 1
@@ -121,4 +122,3 @@ class OpenaiModel(BaseLM):
                 logging.error("API error: %s (%d). Waiting %dsec" % (error, num_rate_errors, np.power(2, num_rate_errors)))
                 time.sleep(np.power(2, num_rate_errors))
         return response
-
