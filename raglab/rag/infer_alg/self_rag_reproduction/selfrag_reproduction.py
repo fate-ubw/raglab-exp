@@ -10,7 +10,7 @@ from raglab.dataset.utils import get_dataset
 from raglab.dataset.base_dataset import MultiChoiceQA
 from raglab.language_model import BaseLM
 import pdb
-
+from pprint import pprint
 class SelfRag_Reproduction(NaiveRag):
     def __init__(self, args):
         super().__init__(args)
@@ -400,7 +400,6 @@ class SelfRag_Reproduction(NaiveRag):
         # without retrieval and retruen one response
         '''
         prompt += "[No Retrieval]"
-        pdb.set_trace()
         outputs_list = self.llm.generate([prompt])
         curr_prediction = [Outputs.text.split("\n\n")[0] for Outputs in outputs_list]
         scores = [1] # The score of [No retrieval] output is 1. And the [No retrieval] outputs will not be sorted by score in rank process
@@ -562,7 +561,7 @@ class SelfRag_Reproduction(NaiveRag):
             evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(passage["title"], passage["text"]) for rank, passage in passages.items()] 
         else:
             evidence_augmented_inputs = [prompt + "[Retrieval]<paragraph>{0}\n{1}</paragraph>".format(para["title"], para["text"]) for para in pregiven_passages] 
-        outputs_list = self.llm.generate(evidence_augmented_inputs, self.llm.sampling_params)
+        outputs_list = self.llm.generate(evidence_augmented_inputs)
         relevance_score_dict = {}
         grd_score_dict = {}
         ut_score_dict = {}

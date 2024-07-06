@@ -256,7 +256,6 @@ def encode_with_prompt_completion_format(example, tokenizer, max_seq_length, con
     We concatenate prompt and completion and tokenize them together because otherwise prompt will be padded/trancated
     and it doesn't make sense to follow directly with the completion.
     '''
-    # print(f'{RED}encode_with_prompt_completion_format！！！！！！！ {END}')
 
     # if prompt doesn't end with space and completion doesn't start with space, add space
     prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
@@ -268,7 +267,7 @@ def encode_with_prompt_completion_format(example, tokenizer, max_seq_length, con
     input_ids = examples_tokenized["input_ids"].flatten()
     source_len = sources_tokenized["input_ids_lens"]
     labels = copy.deepcopy(input_ids)
-    labels[ :source_len-1] = -100
+    labels[ :source_len-1] = -100 
     if context_markups is not None:
         context_start = False
         for j, orig_token in enumerate(labels[source_len:]):
