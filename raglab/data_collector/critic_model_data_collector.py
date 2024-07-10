@@ -2,7 +2,7 @@ import re
 from typing import List, Dict, Any
 from itertools import combinations
 from raglab.data_collector import DatasetCollector
-from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM, Lora_Model
+from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM, Lora_Model, UnifiedApiRequest
 from raglab.instruction_lab import INSTRUCTION_LAB, DATA_INSTRUCTIONS
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
 import pdb
@@ -206,6 +206,9 @@ class CriticModelDatasetCollector(DatasetCollector):
         elif  args.llm_mode == 'Openai_api':
             llm = OpenaiModel(args)
             llm.load_model() # load_model() will load api configs and tiktoken
+        elif args.llm_mode == 'Unified_api':
+            llm = UnifiedApiRequest(args)
+            llm.load_model()
         else:
             raise LanguageModelError("Language model must be huggingface or openai api.")
         return llm
