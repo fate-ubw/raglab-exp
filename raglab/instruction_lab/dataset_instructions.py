@@ -12,7 +12,7 @@ DATA_INSTRUCTIONS = [
     },
     {
         "dataset_name": "nq",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
@@ -27,57 +27,57 @@ DATA_INSTRUCTIONS = [
     },
     {
         "dataset_name": "squad",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
         "dataset_name": "ms_marco",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
         "dataset_name": "narrative_qa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "wiki_qa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "web_questions",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "ambig_qa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "siqa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "commense_qa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     }, 
     {
         "dataset_name": "boolq",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
         "dataset_name": "piqa",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
         "dataset_name": "fermi",
-        "type":'',
+        "type":'QA',
         "instruction": ""
     },
     {
@@ -123,12 +123,12 @@ DATA_INSTRUCTIONS = [
     {
         "dataset_name": "truthful_qa",
         "type":'MultiChoice',
-        "instruction": ""
+        "instruction": "Given four answer candidates, A, B, C and D, choose the best answer choice."
     },
     {
         "dataset_name": "hellaswag",
         "type":'MultiChoice',
-        "instruction": ""
+        "instruction": "Given four answer candidates, A, B, C and D, choose the best answer choice."
     },
     {
         "dataset_name": "arc",
