@@ -1,0 +1,14 @@
+python -i ./main_data_collector.py\
+    --colletor_method selfrag-critic\
+    --base_path /home/wyd/FlashRAG/dataset \
+    --output ./data/collected_data/\
+    --llm_mode Unified_api\
+    --llm_name  gpt-3.5-turbo \
+    --api_key_path  ./api_keys_squirrel.txt\
+    --api_base  https://llmaiadmin-test.classba.cn/api/chat/call \
+    --temperature  0.0 \
+    --top_p  1.0 \
+    --generate_maxlength  200 \
+    --retrieval_name  colbert_api \
+    --n_docs  5\
+    --local_proxy_url http://localhost:4998/api/proxy
