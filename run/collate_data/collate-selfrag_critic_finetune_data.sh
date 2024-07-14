@@ -1,5 +1,5 @@
 python -i ./main_data_collector.py\
-    --colletor_method selfrag-critic\
+    --collector_method selfrag-critic\
     --base_path /home/wyd/FlashRAG/dataset \
     --output ./data/collected_data/\
     --llm_mode Openai_api\
@@ -10,4 +10,4 @@ python -i ./main_data_collector.py\
     --top_p  1.0 \
     --generate_maxlength  200 \
     --retrieval_name  colbert_api \
-    --n_docs  3\
+    --n_docs  5\

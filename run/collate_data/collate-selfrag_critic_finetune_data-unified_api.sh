@@ -1,5 +1,5 @@
 python -i ./main_data_collector.py\
-    --colletor_method selfrag-critic\
+    --collector_method selfrag-critic\
     --base_path /home/wyd/FlashRAG/dataset \
     --output ./data/collected_data/\
     --llm_mode Unified_api\
