@@ -173,7 +173,7 @@ class CriticModelDatasetCollector(DatasetCollectorParallel):
         collected_data.append({
             "instruction": self.find_algorithm_instruction('critic-Infer_improvement_answer', None).format_map({'instruction':question_with_instruction ,'evidences':target_passages}),
             "input": '',
-            "output": answer,
+            "output": str(answer),
             "task":'improvement_answer',
             "raw_dataset": self.dataset_name,
             "raw_dataset_idx": item.get("id", idx)

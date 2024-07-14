@@ -6,14 +6,14 @@ import logging
 import math
 import os
 import random
-import datasets
 import torch
 import copy
 from functools import partial
 from accelerate import Accelerator
 from accelerate.logging import get_logger
 from accelerate.utils import set_seed
-from datasets import load_dataset
+import datasets
+from datasets import load_dataset, Dataset, DatasetDict
 from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 from typing import Optional, Dict, Sequence
@@ -351,7 +351,17 @@ def encode_with_messages_format(example, tokenizer, max_seq_length):
         'labels': labels.flatten(),
         'attention_mask': attention_mask.flatten(),
     }
-        
+
+def read_jsonl(file_path):
+    data = []
+    with open(file_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            try:
+                item = json.loads(line.strip())
+                data.append(item)
+            except json.JSONDecodeError:
+                print(f"Skipping invalid JSON: {line}")
+    return data
 
 def main():
     args = parse_args()
@@ -393,7 +403,6 @@ def main():
         if args.output_dir is not None:
             os.makedirs(args.output_dir, exist_ok=True)
     accelerator.wait_for_everyone()
-
     if args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
         raw_datasets = load_dataset(
@@ -405,11 +414,29 @@ def main():
         dataset_args = {}
         if args.train_file is not None:
             data_files["train"] = args.train_file
-        raw_datasets = load_dataset(
-            "json",
-            data_files=data_files,
-            **dataset_args,
-        )
+            try:
+                raw_datasets = load_dataset(
+                    "json",
+                    data_files=data_files,
+                    **dataset_args,
+                )
+                print("Successfully loaded dataset using load_dataset function.")
+            except Exception as e:
+                print(f"Error occurred while using load_dataset: {str(e)}")
+                print("Falling back to manual JSON parsing...")
+                # use JSON 
+                try:
+                    data = read_jsonl(args.train_file)
+                    dataset = Dataset.from_list(data)
+                    raw_datasets = DatasetDict({'train': dataset})
+                    print("Successfully loaded dataset using fallback method.")
+                except Exception as e:
+                    print(f"Error occurred during fallback method: {str(e)}")
+                    raise  
+
+
+        else:
+            raise ValueError("Training file is not specified.")
 
     # Load pretrained model and tokenizer
     if args.config_name:
