@@ -2,13 +2,17 @@ import json
 import random
 import os
 import gzip
-import argparse
 from tqdm import tqdm
-from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Tuple
+from abc import ABC, abstractmethod
 from raglab.instruction_lab import INSTRUCTION_LAB, DATA_INSTRUCTIONS
+import multiprocessing
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import partial
+import numpy as np
 import pdb
-class DatasetCollector(ABC):
+
+class DatasetCollectorParallel(ABC):
 
     def __init__(self, args):
         self.args = args
@@ -54,7 +58,7 @@ class DatasetCollector(ABC):
                             "output": item.get("golden_answers", [""])[0],
                             "raw_dataset": self.dataset_name,
                             "raw_dataset_idx": item.get("id", idx)
-                        }]
+                    }]
         elif format == 'stanford_alpaca':
             item["raw_dataset"] = self.dataset_name
             item["raw_dataset_idx"] = item.get("id", idx)
@@ -62,7 +66,7 @@ class DatasetCollector(ABC):
         else:
             raise FormatNotFoundError("invalid format, Please check dataset_config in main_data_collector")
 
-    def collect_data(self, split: str, n: int, format: str, test_ratio: float = 0.1) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def collect_data(self, split: str, n: int, format: str, test_ratio: float = 0.1, num_chunks: int = 16) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         file_path = os.path.join(self.base_path, self.dataset_name, f"{split}.json")
         if not os.path.exists(file_path):
             file_path = os.path.join(self.base_path, self.dataset_name, f"{split}.jsonl")
@@ -88,14 +92,35 @@ class DatasetCollector(ABC):
             train_size = total_samples - test_size
             train_data = sampled_data[:train_size]
             test_data = sampled_data[train_size:]
-
-        processed_train_data = self._process_data(train_data, format)
-        if total_samples  == 1:
-            # no need for re precess
-            processed_test_data  = processed_train_data
+        # Process train and test data
+        processed_train_data = self._process_data_parallel(train_data, format, num_chunks)
+        if total_samples == 1:
+            processed_test_data = processed_train_data
         else:
-            processed_test_data = self._process_data(test_data, format)
+            processed_test_data = self._process_data_parallel(test_data, format, num_chunks)
+
         return processed_train_data, processed_test_data
+
+    def _process_data_parallel(self, data: List[Dict[str, Any]], format: str, num_chunks: int) -> List[Dict[str, Any]]:
+        # Split data into num_chunks
+        chunks = np.array_split(data, num_chunks)
+        with ThreadPoolExecutor(max_workers=num_chunks) as executor:
+            futures = [executor.submit(self._process_chunk, (chunk_idx, chunk.tolist()), format) for chunk_idx, chunk in enumerate(chunks)]
+            results = [future.result() for future in as_completed(futures)]
+
+        # Flatten the results
+        processed_data = [item for chunk_result in results for item in chunk_result]
+        return processed_data
+
+    def _process_chunk(self, chunk_info: Tuple[int, List[Dict[str, Any]]], format: str) -> List[Dict[str, Any]]:
+        chunk_idx, chunk = chunk_info
+        processed_chunk = []
+        chunk_size = len(chunk)
+        for idx, item in enumerate(chunk):
+            processed_item = self.process_item(item, idx + chunk_idx * chunk_size, format)
+            if processed_item is not None:
+                processed_chunk.extend(processed_item)
+        return processed_chunk
 
     def _process_data(self, data:List[Dict[str, Any]], format: str) -> List[Dict[str, Any]]:
         processed_data = []
@@ -103,6 +128,7 @@ class DatasetCollector(ABC):
             processed_item = self.process_item(item, idx, format)
             if processed_item is not None:
                 processed_data.extend(processed_item)
+            # save train or test
         return processed_data
 
     def find_dataset_instruction(self, dataset_name:str) -> str:

@@ -4,11 +4,15 @@ import sys
 import time
 import logging
 from tqdm import tqdm
-from typing import Union
+from typing import Union, Tuple
+import re
 import numpy as np
 from raglab.language_model.base_lm import BaseLM
 import tiktoken
 import pdb
+
+sensitive_words = ["淫"]
+
 class OpenaiModel(BaseLM):
     def __init__(self,args):
         super().__init__(args)
@@ -41,25 +45,38 @@ class OpenaiModel(BaseLM):
             inputs = [inputs]
         apioutputs_list = []
         for input_text in tqdm(inputs, desc="Generating outputs"):
-            message = [{"role": "user", "content": input_text}] #TODO batch inference
+            # original_text = input_text
+            # input_text, is_modified = self.remove_sensitive_words(input_text)
+            
+            # if is_modified:
+            #     logging.info(f"Remove sensitive text! origanl text: {original_text[:50]}... revised text: {input_text[:50]}...")
+            
+            message = [{"role": "user", "content": input_text}]
             if self.api_logprobs is False:
                 response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop)
                 # collate Apioutputs
+                if response is None:
+                    continue
                 apioutput = self.Outputs()
                 apioutput.text = response["choices"][0]["message"]["content"]
                 apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
+                apioutput.prompt_tokens_num = response["usage"]["prompt_tokens"]
+                apioutput.tokens_num = len(apioutput.tokens_ids)
                 apioutputs_list.append(apioutput)
             else:
-                for i in range(1,11): # max time of recall is 10 times
+                for i in range(1,50): # max time of recall is 10 times
                     print(f'The {i}-th API call')
                     response = self.call_ChatGPT(message, model_name=self.llm_name, max_len=self.generate_maxlength, temp=self.temperature, top_p=self.top_p, stop = self.generation_stop, logprobs=self.api_logprobs, top_logprobs=self.api_top_logprobs)
                     # collate Apioutputs
+                    if response is None:
+                        continue
                     if 'logprobs' in response["choices"][0]:
                         if response["choices"][0]['logprobs'] is not None:
                             apioutput = self.Outputs()
                             apioutput.text = response["choices"][0]["message"]["content"]
                             apioutput.tokens_ids = self.tokenizer.encode(apioutput.text)
                             apioutput.tokens_num = len(apioutput.tokens_ids)
+                            apioutput.prompt_tokens_num = response["usage"]["prompt_tokens"]
                             apioutput.tokens = [content['token'] for content in response["choices"][0]['logprobs']['content']]
                             apioutput.tokens_logprob = [content['logprob'] for content in response["choices"][0]['logprobs']['content']]
                             apioutput.tokens_prob = np.exp(apioutput.tokens_logprob).tolist()
@@ -118,7 +135,14 @@ class OpenaiModel(BaseLM):
                 if error == openai.error.InvalidRequestError:
                     # something is wrong: e.g. prompt too long
                     logging.critical(f"InvalidRequestError\nPrompt passed in:\n\n{message}\n\n")
-                    assert False
+                    return None
                 logging.error("API error: %s (%d). Waiting %dsec" % (error, num_rate_errors, np.power(2, num_rate_errors)))
                 time.sleep(np.power(2, num_rate_errors))
         return response
+
+
+    def remove_sensitive_words(self, text: str) -> Tuple[str, bool]:
+        original_text = text
+        for word in sensitive_words:
+            text = re.sub(word, '', text)
+        return text, text != original_text

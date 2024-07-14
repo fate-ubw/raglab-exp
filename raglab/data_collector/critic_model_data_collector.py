@@ -1,23 +1,27 @@
 import re
 from typing import List, Dict, Any
 from itertools import combinations
-from raglab.data_collector import DatasetCollector
+from raglab.data_collector.parallel_base_data_collector import DatasetCollectorParallel
+from raglab.data_collector.base_data_collector import DatasetCollector
 from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM, Lora_Model, UnifiedApiRequest
 from raglab.instruction_lab import INSTRUCTION_LAB, DATA_INSTRUCTIONS
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
 import pdb
 
-class CriticModelDatasetCollector(DatasetCollector):
+class CriticModelDatasetCollector(DatasetCollectorParallel):
 
     def __init__(self,args):
         super().__init__(args)
         self.llm = self.steup_llm(args)
         self.retrieval = self.setup_retrieval(args)
+        self.log_file = f"api_statistics.txt"
 
     def process_item(self, item: Dict[str, Any], idx: int, format:str) -> list[Dict[str, Any]]:
         collected_data = []
         dataset_type = self.find_dataset_type(self.dataset_name)
         item = self.preprocessed_data(item, dataset_type)
+        input_tokens_sum = 0 
+        output_tokens_sum = 0
         if format == 'flashrag':
             task_instruction = self.find_dataset_instruction(self.dataset_name)
             source_question = item.get("question","")
@@ -26,11 +30,17 @@ class CriticModelDatasetCollector(DatasetCollector):
             task_instruction = item.get("instruction","")
             source_question = item.get("input","")
             answer = item.get("output","")
-        question_with_instruction = f"{task_instruction} {source_question}"  # task instruction from dataset  
+        question_with_instruction = f"{task_instruction} {source_question}"  # task instruction from dataset
         # Collect [Retrieve]
         target_instruction =  self.find_algorithm_instruction('collector-selfrag-[Retrieve]', None)
         input = target_instruction.format_map({'instruction':question_with_instruction})
-        outputlist = self.llm.generate(input) 
+        outputlist = self.llm.generate(input)
+        # calculate algorithm
+        if outputlist == []:
+            return collected_data
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
         output = outputlist[0].text
         preprocessed_output =   self._preprocess_retrieval(output)
         collected_data.append({
@@ -50,6 +60,12 @@ class CriticModelDatasetCollector(DatasetCollector):
             target_instruction = self.find_algorithm_instruction('collector-selfrag-[IsRel]', None)
             input = target_instruction.format_map({'instruction':question_with_instruction, 'evidence': passage['title'] + '\n' + passage['text']})
             outputlist = self.llm.generate(input)
+            if outputlist == []:
+                return collected_data
+            # calculate algorithm
+            input_tokens_sum += outputlist[0].prompt_tokens_num
+            output_tokens_sum += outputlist[0].tokens_num
+
             output = outputlist[0].text
             collected_data.append({
                 "instruction": self.find_algorithm_instruction('critic-relevance_instruction', None),
@@ -63,6 +79,13 @@ class CriticModelDatasetCollector(DatasetCollector):
             target_instruction = self.find_algorithm_instruction('collector-selfrag-[IsSup]', None)
             input = target_instruction.format_map({'instruction':question_with_instruction, 'target_output':answer, 'evidence':passage['title'] +'\n'+ passage['text']})
             outputlist = self.llm.generate(input)
+            if outputlist == []:
+                return collected_data
+            # calculate algorithm
+            input_tokens_sum += outputlist[0].prompt_tokens_num
+            output_tokens_sum += outputlist[0].tokens_num
+
+
             output = outputlist[0].text
             collected_data.append({
                 "instruction": self.find_algorithm_instruction('critic-ground_instruction', None),
@@ -77,6 +100,12 @@ class CriticModelDatasetCollector(DatasetCollector):
         target_instruction = self.find_algorithm_instruction('collector-selfrag-[Utility]-imporve', None)
         input = target_instruction.format_map({'instruction':question_with_instruction, 'output':answer})
         outputlist = self.llm.generate(input)
+        if outputlist == []:
+            return collected_data
+        # calculate algorithm
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
         output = outputlist[0].text
         preprocessed_output = self._preprocess_utility(output) # golden answer give [utility:5]
         preprocessed_output = self._enforce_utility_any_to_2(preprocessed_output)
@@ -92,10 +121,23 @@ class CriticModelDatasetCollector(DatasetCollector):
         target_instruction = self.find_algorithm_instruction("collector-incorrect_sample", None)
         input = target_instruction.format_map({"question":question_with_instruction, "answer": answer})
         outputlist = self.llm.generate(input)
+        if outputlist == []:
+            return collected_data
+        # calculate algorithm
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
+
         incorrect_answer = outputlist[0].text # create incorrect answer based on question & golden answer
         target_instruction = self.find_algorithm_instruction('collector-selfrag-[Utility]-imporve', None)
         input = target_instruction.format_map({'instruction':question_with_instruction, 'output':incorrect_answer})
         outputlist = self.llm.generate(input)
+        if outputlist == []:
+            return collected_data
+        # calculate algorithm
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
         output = outputlist[0].text
         preprocessed_output = self._preprocess_utility(output) # golden answer give [utility:5]
         preprocessed_output = self._enforce_utility_any_to_1(preprocessed_output)
@@ -112,8 +154,21 @@ class CriticModelDatasetCollector(DatasetCollector):
         target_instruction = self.find_algorithm_instruction('collector-Most_relevantest_passages', None)
         input = target_instruction.format_map({'instruction':source_question,'evidences':concated_passages})
         outputlist = self.llm.generate(input)
+        if outputlist == []:
+            return collected_data
+        # calculate algorithm
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
         output = outputlist[0].text
         passage_idx = self.extract_number(output)
+        if passage_idx is None:
+            # find no relevant passages
+            return collected_data
+        elif passage_idx > len(passages): # Prevent hallucinations in the output of the LLM
+            return collected_data
+        else:
+            pass
         target_passages = f"Title:{passages[passage_idx]['title']} content:{passages[passage_idx]['text']}"
         collected_data.append({
             "instruction": self.find_algorithm_instruction('critic-Infer_improvement_answer', None).format_map({'instruction':question_with_instruction ,'evidences':target_passages}),
@@ -127,6 +182,13 @@ class CriticModelDatasetCollector(DatasetCollector):
         target_instruction = self.find_algorithm_instruction("collector-candidate_answers",None)
         input = target_instruction.format_map({"instruction":question_with_instruction, "evidences":target_passages, "answer": answer})
         outputlist = self.llm.generate(input)
+        if outputlist == []:
+            return collected_data
+        # calculate algorithm
+        input_tokens_sum += outputlist[0].prompt_tokens_num
+        output_tokens_sum += outputlist[0].tokens_num
+
+
         output = outputlist[0].text
         candidate_answers = self.extract_answers(output)
         candidate_answers.append(answer)
@@ -136,11 +198,24 @@ class CriticModelDatasetCollector(DatasetCollector):
             target_instruction = self.find_algorithm_instruction("collector-pair_wise", None)
             input = target_instruction.format_map({"instruction":question_with_instruction, "response_1":pair[0], "response_2":pair[1]})
             outputlist = self.llm.generate(input)
+            if outputlist == []:
+                return collected_data
+            # calculate algorithm
+            input_tokens_sum += outputlist[0].prompt_tokens_num
+            output_tokens_sum += outputlist[0].tokens_num
+
             output_1 = outputlist[0].text
             eval_result_first_turn = self.extract_evaluation_info(output_1)
             # change position and re-evaluate
             input = target_instruction.format_map({"instruction":question_with_instruction, "response_1":pair[1], "response_2":pair[0]})
             outputlist = self.llm.generate(input)
+            if outputlist == []:
+                return collected_data
+            # calculate algorithm
+            input_tokens_sum += outputlist[0].prompt_tokens_num
+            output_tokens_sum += outputlist[0].tokens_num
+
+
             output_2 = outputlist[0].text
             eval_result_second_turn = self.extract_evaluation_info(output_2)
             if eval_result_first_turn['Eval_result'] == -1 or eval_result_second_turn["Eval_result"] == -1:
@@ -189,7 +264,8 @@ class CriticModelDatasetCollector(DatasetCollector):
             else:
                 # inconsistency response
                 continue
-        # --> end of pair-wise loop
+        # # --> end of pair-wise loop
+        self.log_statistics(input_tokens_sum, output_tokens_sum, collected_data)
         return collected_data
 
     def steup_llm(self, args):
@@ -343,6 +419,19 @@ class CriticModelDatasetCollector(DatasetCollector):
             'Reference': reference
         }
         return result
+
+    def log_statistics(self, input_tokens_sum, output_tokens_sum, collected_data):
+        stats = f"""
+        Dataset Name: {self.dataset_name}
+        Input tokens number one raw data: {input_tokens_sum}
+        Output tokens number one raw data: {output_tokens_sum}
+        Average input token number: {input_tokens_sum/len(collected_data)}
+        Average output token number: {output_tokens_sum/len(collected_data)}
+        -------------------------------------------
+        """
+        with open(self.log_file, 'a') as f:
+            f.write(stats)
+
 
 class LanguageModelError(Exception):
     pass
