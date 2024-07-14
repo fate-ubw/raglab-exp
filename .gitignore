@@ -1,18 +1,13 @@
 # api key
 
 # data
+data/
 config-debug/
 run-debug/
 wiki2023/
-test/
-1-eval_output/
-raglab/rag/infer_alg/dsp/scripts/cache/
-raglab/rag/infer_alg/dsp/openai-0.28.1/
-raglab/rag/infer_alg/dsp/
-raglab/rag/infer_alg/dsp_backup_2024_3_31/
-raglab/rag/infer_alg/dsp_backup_2024_4_1/
 run/cache/
 model/
+cache-utilts/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
