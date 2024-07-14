@@ -4,7 +4,7 @@ from itertools import combinations
 from raglab.data_collector.parallel_base_data_collector import DatasetCollectorParallel
 from raglab.data_collector.base_data_collector import DatasetCollector
 from raglab.language_model import OpenaiModel, HF_Model, HF_VLLM, Lora_Model, UnifiedApiRequest
-from raglab.instruction_lab import INSTRUCTION_LAB, DATA_INSTRUCTIONS
+from raglab.instruction_lab import INSTRUCTION_LAB
 from raglab.retrieval import ContrieverRrtieve, ColbertRetrieve, ColbertApi
 import pdb
 
