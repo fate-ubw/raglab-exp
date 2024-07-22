@@ -33,7 +33,7 @@ class ColbertServer:
     def setup_retrieve(self):
         index_name = os.path.basename(self.index_dbPath)
         with Run().context(RunConfig(experiment = self.index_dbPath)):
-            self.searcher = Searcher(index = index_name, checkpoint = self.retriever_modelPath) # 目前使用的方法和第一版本保持一致
+            self.searcher = Searcher(index = index_name, checkpoint = self.retriever_modelPath)
 
     def api_search(self):
         if request.method == "GET":
@@ -43,7 +43,7 @@ class ColbertServer:
         else:
             return ('', 405)
 
-    @lru_cache(maxsize=1000000) 
+    @lru_cache(maxsize=1000000)
     def api_search_query(self, query, k):
         if k == None: k = 10
         k = min(int(k), 100) 
