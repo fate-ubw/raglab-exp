@@ -1,7 +1,8 @@
 import os
 
 # Algorithm list
-ALGORITHM_LIST = ['naive_rag', 'query_rewrite_rag',  'iterative_rag', 'self_ask', 'active_rag','selfrag_reproduction']
+# ALGORITHM_LIST = ['naive_rag', 'query_rewrite_rag',  'iterative_rag', 'self_ask', 'active_rag','selfrag_reproduction', 'unified_critic_rag']
+ALGORITHM_LIST = ['unified_critic_rag']
 
 # Configuration files directory
 config_dir_base = "./config"
@@ -27,7 +28,7 @@ for algorithm_name in ALGORITHM_LIST:
 
     # Iterate over the configuration files directory
     for filename in os.listdir(config_dir):
-        if filename.endswith(".yaml") and '4bit' in filename :
+        if filename.endswith(".yaml"):
             # Get the filename (without extension)
             basename = os.path.splitext(filename)[0]
 
@@ -54,11 +55,12 @@ for algorithm_name in ALGORITHM_LIST:
             # Append the script path to the list
             # "interact" not in filename
             # if  '70B' in filename and 'pregiven_passages' not in filename and 'interact' not in filename:
-            if '4bit' in filename and all(substring not in filename for substring in ['pregiven_passages', 'interact']):
-                script_paths.append(f"sh {script_filename}")
+            # if '4bit' in filename and all(substring not in filename for substring in ['pregiven_passages']):
+            #     script_paths.append(f"sh {script_filename}")
+            script_paths.append(f"sh {script_filename}")
 
 # Write the script paths to a text file
-with open("./auto_gpu_scheduling_scripts/auto_run-Llama3_70B-baseline_4bit-scripts.py", "w") as txt_file:
+with open("./auto_gpu_scheduling_scripts/auto_run-unified_critic-8b_2w-scripts.py", "w") as txt_file:
     txt_file.write("\n".join(script_paths))
 
 print("Generated success!!!")

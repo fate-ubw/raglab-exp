@@ -1,3 +1,3 @@
-export CUDA_VISIBLE_DEVICES=3,4
+# export CUDA_VISIBLE_DEVICES=1,2
 python ./main-evaluation.py\
  --config ./config/query_rewrite_rag/query_rewrite_rag-ASQA-Llama3-70B-baseline.yaml
