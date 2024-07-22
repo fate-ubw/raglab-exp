@@ -11,4 +11,3 @@ def over_write_args_from_file(args, yml):
         dic = yaml.load(f.read())
         for k in dic:
             setattr(args, k, dic[k])
-

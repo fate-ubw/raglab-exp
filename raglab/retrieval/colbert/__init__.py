@@ -1,1 +1,0 @@
-from raglab.retrieval.colbert.colbert_retrieve import ColbertRetrieve
