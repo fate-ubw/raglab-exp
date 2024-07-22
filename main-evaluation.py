@@ -23,7 +23,8 @@ def get_config():
     parser.add_argument('--seed', type=int, default = 633, help='random  seed')
     parser.add_argument('--use_seed', action= 'store_true', help='this args will control all random seed of torch, numpy and pyhthon operation')
     parser.add_argument('--num_gpu', type = int, default = 1, help = 'the number of gpu')
-    
+    parser.add_argument('--gpu_ids', type=int, nargs='+', default=None, help='GPU IDs to use (e.g., 0 1 2 3)')
+
     # evaluation config
     parser.add_argument('--algorithm_name', type=str, default='naive_rag', choices= ALGOROTHM_LIST, help='name of rag algorithm' )
     parser.add_argument('--task', type=str, default='', choices= TASK_LIST,  help='name of evaluation dataset, different task will select different format and instruction')
@@ -104,7 +105,8 @@ def get_config():
 
     # self ask config
     parser.add_argument('--selfask_max_iter', type=int, default=5, help='max iter of follow qeustion generation. In some situation, self ask will get stuck in a loop')
-
+    # critic config
+    parser.add_argument('--critic_path', type=str, help='path of unified critic model path')
     # evaluate parameters
     parser.add_argument('--metrics', type=str, help='Evaluation metrics')
 
