@@ -729,7 +729,7 @@ INSTRUCTION_LAB = [
             "Output:{output}\n"
         )
     },
-    {
+    {   
         "algorithm_name": "collector-incorrect_sample",
         "dataset_name": None,
         "instruction": 
@@ -931,11 +931,9 @@ INSTRUCTION_LAB = [
         "dataset_name": ""
     },
     {
-        "algorithm_name": "",
+        "algorithm_name": "base_model_instruction",
         "dataset_name": None,
-        "instruction": 
-        (
-            
-        )
+        "instruction": "Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages}\n{task_instruction} {query}"
     }
+
 ]

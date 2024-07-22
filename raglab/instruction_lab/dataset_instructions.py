@@ -143,7 +143,7 @@ DATA_INSTRUCTIONS = [
     {
         "dataset_name": "PubHealth",
         "type": 'fact',
-        "instruction": "Is the following statement correct or not? Say true if it's correct; otherwise say false"
+        "instruction": "Is the following statement correct or not? Say true if it's correct; otherwise say false."
     },
     {
         "dataset_name": "StrategyQA",
