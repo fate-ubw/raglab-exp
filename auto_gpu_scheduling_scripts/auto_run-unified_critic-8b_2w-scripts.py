@@ -1,0 +1,10 @@
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-Arc-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-MMLU-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-WikiMultiQA-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-HotPotQA-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-PubHealth-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-ASQA-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-TriviaQA-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-Factscore-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-StrategyQA-Llama3-baseline.sh
+sh ./run/rag_inference/unified_critic_rag/unified_critic_rag-PopQA-Llama3-baseline.sh
