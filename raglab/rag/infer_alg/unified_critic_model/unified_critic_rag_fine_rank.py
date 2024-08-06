@@ -10,7 +10,7 @@ from raglab.rag.infer_alg.unified_critic_model.utils import load_special_tokens
 from raglab.instruction_lab import ALGORITHM_INSTRUCTIONS, DATA_INSTRUCTIONS, SYSTEM_INSTRUCTION
 import pdb
 
-class UnifiedCriticRAG(SelfRag_Reproduction):
+class UnifiedCriticRAGFineRank(SelfRag_Reproduction):
     def __init__(self,args):
         super().__init__(args)
 
@@ -118,29 +118,22 @@ class UnifiedCriticRAG(SelfRag_Reproduction):
         # --> end of passage loop
         # rank and get top-1 branch
         path2score = {key: item['score'] for key, item in branch_track.items()}
-        best_path = sorted(path2score.items(), key=lambda x:x[1], reverse=True)[0][0]
-        top_response = branch_track[best_path]['pred']
-        top_passage = branch_track[best_path]['passage']
-        formatted_top_passage =  f"Title:{top_passage['title']} content:{top_passage['text']}"
-
-        # improvement answer
-        system_instruction_no_input = SYSTEM_INSTRUCTION['normal_prompt_no_input']
-        improvement_answer = self.find_algorithm_instruction('critic-Infer_improvement_answer', None)
-        formatted_improvement_answer = improvement_answer.format_map({'instruction':question_with_task_instruct, 'evidences': formatted_top_passage})
-        input = system_instruction_no_input.format_map({'instruction':formatted_improvement_answer})
-        outputlist = self.critic_model.generate(input)
-        improvement_answer = outputlist[0].text
-        generation_track['improvement_answer'] = improvement_answer
+        ranked_path = sorted(path2score.items(), key=lambda x:x[1], reverse=True)
+        top_1_path = ranked_path[0][0]
+        top_2_path = ranked_path[1][0]
+        
+        top_1_response = branch_track[top_1_path]['pred']
+        top_2_response = branch_track[top_2_path]['pred']
 
         # pairwise improvement_answer & top_response
         pair_wise_instruction = self.find_algorithm_instruction('critic-pair_wise-instruction', None)
-        formatted_pair_wise_instruction = pair_wise_instruction.format_map({'instruction':question_with_task_instruct, 'response_1':top_response, 'response_2':improvement_answer})
+        formatted_pair_wise_instruction = pair_wise_instruction.format_map({'instruction':question_with_task_instruct, 'response_1':top_1_response, 'response_2':top_2_response})
         input_1 = system_instruction_no_input.format_map({'instruction':formatted_pair_wise_instruction})
         outputlist = self.critic_model.generate(input_1)
         output_1 = outputlist[0].text
         result_1 = self.extract_pairwise_result(output_1)
         generation_track['pair-wise_turn_1_result'] = output_1
-        formatted_pair_wise_instruction = pair_wise_instruction.format_map({'instruction':question_with_task_instruct, 'response_1':improvement_answer, 'response_2':top_response})
+        formatted_pair_wise_instruction = pair_wise_instruction.format_map({'instruction':question_with_task_instruct, 'response_1':top_2_response, 'response_2':top_1_response})
         input_2 = system_instruction_no_input.format_map({'instruction':formatted_pair_wise_instruction})
         outputlist = self.critic_model.generate(input_2)
         output_2 = outputlist[0].text
@@ -148,13 +141,13 @@ class UnifiedCriticRAG(SelfRag_Reproduction):
         generation_track['pair-wise_turn_2_result'] = output_2
 
         if result_1 == '1' and result_2 == '2':
-            final_answer = top_response
+            final_answer = top_1_response
         elif result_1 == '2' and result_2 == '1':
-            final_answer = improvement_answer
+            final_answer = top_2_response
         elif result_1 == result_2: # tie 
-            final_answer = top_response
+            final_answer = top_1_response # 这里面到底使用什么比较合适呢？
         else:
-            final_answer = top_response
+            final_answer = top_1_response
         return final_answer, generation_track
 
     def find_dataset_instruction(self, dataset_name:str) -> str:

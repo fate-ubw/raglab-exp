@@ -1,1 +1,4 @@
 from raglab.rag.infer_alg.unified_critic_model.unified_critic_rag import UnifiedCriticRAG
+from raglab.rag.infer_alg.unified_critic_model.unified_critic_rag_no_pair_wise import UnifiedCriticRAG_NoPairwise
+from raglab.rag.infer_alg.unified_critic_model.unified_critic_rag_fine_rank import UnifiedCriticRAGFineRank
+from raglab.rag.infer_alg.unified_critic_model.unified_critic_rag_fine_rank_post_passage import UnifiedCriticRAGFineRankPostPassage
