@@ -8,12 +8,12 @@
 ![figure-1](./figures/Raglab-figure-1_00.png)
 
 # 🌟Features
-- Comprehensive RAG Ecosystem: Supports the entire RAG pipeline from data collection and training to auto-evaluation.
-- Advanced Algorithm Implementations: Reproduces 6 state-of-the-art RAG algorithms, with an easy-to-extend framework for developing new algorithms.
-- Fair Comparison Platform: Provides benchmark results for 6 algorithms across 5 task types and 10 datasets.
-- Efficient Retriever Client: Offers local API for parallel access and caching, with average latency under 1 second.
- -Versatile Generator Support: Compatible with 70B+ models, VLLM, and quantization techniques.
-- Flexible Instruction Lab: Customizable instruction templates for various RAG scenarios.
+- **Comprehensive RAG Ecosystem:** Supports the entire RAG pipeline from data collection and training to auto-evaluation.
+- **Advanced Algorithm Implementations:** Reproduces 6 state-of-the-art RAG algorithms, with an easy-to-extend framework for developing new algorithms.
+- **Fair Comparison Platform:** Provides benchmark results for 6 algorithms across 5 task types and 10 datasets.
+- **Efficient Retriever Client:** Offers local API for parallel access and caching, with average latency under 1 second.
+- **Versatile Generator Support:** Compatible with 70B+ models, VLLM, and quantization techniques.
+- **Flexible Instruction Lab:** Customizable instruction templates for various RAG scenarios.
 
 
 
