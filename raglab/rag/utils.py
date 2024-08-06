@@ -5,9 +5,9 @@ from raglab.rag.infer_alg.active_rag import ActiveRag
 from raglab.rag.infer_alg.self_rag_original import SelfRag_Original
 from raglab.rag.infer_alg.self_rag_reproduction import SelfRag_Reproduction
 from raglab.rag.infer_alg.self_ask import SelfAsk
-from raglab.rag.infer_alg.unified_critic_model import UnifiedCriticRAG
+from raglab.rag.infer_alg.unified_critic_model import UnifiedCriticRAG, UnifiedCriticRAG_NoPairwise, UnifiedCriticRAGFineRank, UnifiedCriticRAGFineRankPostPassage
 
-ALGOROTHM_LIST = ['naive_rag', 'selfrag_original', 'selfrag_reproduction', 'iter_retgen', 'query_rewrite_rag', 'active_rag', 'self_ask', 'unified_critic_rag']
+ALGOROTHM_LIST = ['naive_rag', 'selfrag_original', 'selfrag_reproduction', 'iter_retgen', 'query_rewrite_rag', 'active_rag', 'self_ask', 'unified_critic_rag', 'unified_critic_rag_no_pairwise', 'unified_critic_rag_fine_rank', 'unified_critic_rag_fine_rank_post_passage']
 def get_algorithm(args):
     if args.algorithm_name == 'naive_rag':
         Rag = NaiveRag(args)
@@ -25,6 +25,12 @@ def get_algorithm(args):
         Rag = SelfAsk(args)
     elif args.algorithm_name == 'unified_critic_rag':
         Rag = UnifiedCriticRAG(args)
+    elif args.algorithm_name == 'unified_critic_rag_no_pairwise':
+        Rag = UnifiedCriticRAG_NoPairwise(args)
+    elif args.algorithm_name == 'unified_critic_rag_fine_rank':
+        Rag = UnifiedCriticRAGFineRank(args)
+    elif args.algorithm_name == 'unified_critic_rag_fine_rank_post_passage':
+        Rag = UnifiedCriticRAGFineRankPostPassage(args)
     else:
         raise AlgorithmNotFoundError("Algorithm not recognized. Please provide a valid algorithm name.")
     return Rag
