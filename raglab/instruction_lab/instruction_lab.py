@@ -89,17 +89,17 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "Naive_rag",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "algorithm_name": "Naive_rag",
-        "dataset_name": "ArcChallenge-posterior_instruction",
+        "dataset_name": "Arc-posterior_instruction",
         "instruction": "### Instruction:\nNow, based on the passages and your internal knowledge, please answer the question more succinctly and professionally. ### Retrieved Knowledge:\n {passages}\n  Given four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n  ### Response:\n"
     }, 
     {
         "algorithm_name": "Naive_rag-without_retrieval",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
@@ -223,12 +223,12 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "query_rewrite_rag-rewrite",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "Provide a better search query for Wikipedia to answer the given question, end the query with '**'. \n\n Question: Ezzard Charles was a world champion in which sport? \n\n Query: Ezzard Charles champion** \n\n Question: What is the correct name of laughing gas? \n\n Query: laughing gas name** \n\n Question: {query} \n\n Query: "
     },
     {
         "algorithm_name": "query_rewrite_rag-read",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
@@ -312,7 +312,7 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "Iterative_rag-read",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
@@ -376,7 +376,7 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "active_rag-read",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
@@ -475,12 +475,12 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "self_ask-read",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages} \n\n### Response:\n"
     },
     {
         "algorithm_name": "self_ask-followup_question",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "Question: Are both the directors of Jaws and Casino Royale from the same country? \n Are follow up questions needed here: Yes. Follow up: Who is the director of Jaws? \n Intermediate Answer: The director of Jaws is Steven Spielberg. \n Follow up: Where is Steven Spielberg from? \n Intermediate Answer: The United States. \n Follow up: Who is the director of Casino Royale? \n Intermediate Answer: The director of Casino Royale is Martin Campbell. \n Follow up: Where is Martin Campbell from? \n Intermediate Answer: New Zealand. \n  \nSo the final answer is: No \n{query} Are follow up questions needed here:"
     },
     {
@@ -566,7 +566,7 @@ ALGORITHM_INSTRUCTIONS = [
     },
     {
         "algorithm_name": "selfrag_reproduction-read",
-        "dataset_name": "ArcChallenge",
+        "dataset_name": "Arc",
         "instruction": "### Instruction:\nGiven four answer candidates, A, B, C and D, choose the best answer choice.\n\n## Input:\n\n{query}\n\n### Response:\n"
     },
     {
@@ -934,6 +934,10 @@ ALGORITHM_INSTRUCTIONS = [
         "algorithm_name": "base_model_instruction",
         "dataset_name": None,
         "instruction": "Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages}\n{task_instruction} {query}"
+    },
+    {
+        "algorithm_name": "base_model_instruction-post_passage",
+        "dataset_name": None,
+        "instruction": "{query}\n\n Now, based on the following passages and your knowledge, please answer the question more succinctly and professionally. ### Background Knowledge:\n {passages}"
     }
-
 ]
