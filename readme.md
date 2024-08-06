@@ -1,5 +1,6 @@
 # raglab
 ![alt text](https://github.com/fate-ubw/raglab-exp/blob/main/figures/image.png)
+![figure-1](https://github.com/fate-ubw/raglab-exp/blob/main/figures/Raglab-figure-1.pdf)
 
 # 🔨Install environment
 - dev environment：pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04
