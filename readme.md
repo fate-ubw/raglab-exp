@@ -1,5 +1,4 @@
 # raglab
-![alt text](https://github.com/fate-ubw/raglab-exp/blob/main/figures/image.png)
 ![figure-1](./figures/Raglab-figure-1_00.png)
 # 🔨Install environment
 - dev environment：pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04
@@ -120,32 +119,43 @@ gdown --id xxxxxx
     sh run/wiki2023_preprocess/4-wiki2023_tsv-2-colbert_embedding.sh
     ~~~
 
-# 💽 process wiki2018 as vector database
-- 这部分是使用 wiki2018 的教程
-## 下载文本文件
-  - 直接 wget 下载 wiki2018 raw database
+
+
+
+# 💽 Process wiki2018 as vector database
+- This section is a tutorial on using wiki2018
+
+## Download text files
+  - Directly download wiki2018 raw database using wget
 ~~~bash
 cd raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018
 wget https://dl.fbaipublicfiles.com/dpr/wikipedia_split/psgs_w100.tsv.gz
 ~~~
-## 处理 raw wiki2018 into colbert format
+
+## Process raw wiki2018 into colbert format
 
 ~~~bash
 cd raglab-exp
 sh run/wiki2018_preprocess/1-wiki2018_tsv_2_tsv.sh
 ~~~
-## 修改wiki2018 embedding config 文件
-1. 修改路径
+
+## Modify wiki2018 embedding config file
+1. Change the path
 ~~~
 cd /raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2018/indexes/wiki2018
 vim metadata.json 
 ~~~
-- 只需要修改修metadata.json 文件中的两个路径，这里直接删除原来的路径，复制以下路径即可其他的参数均不需要修改
+- You only need to modify two paths in the metadata.json file. Here, simply delete the original paths and copy the following paths. Other parameters do not need to be modified.
 ~~~sh
 "collection": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_passages/wiki2018/wiki2018.tsv",
 "experiment": "/home/ec2-user/SageMaker/raglab-exp/data/retrieval/colbertv2.0_embedding/wiki2018",
 ~~~
-- 修改好之后直接启动 colbert server 即可，实验启动方式参照 readme 最后一节 Inference experiments
+- After modification, you can directly start the colbert server. For experimental startup method, refer to the last section of the readme: Inference experiments.
+
+
+
+
+
 
 # Fine tune llama3 & self rag 
 - The base models for raglab baseline and selfrag use llama3-instruction-8b. Since selfrag was further fine-tuned on additional data during the fine-tuning stage, in order to make a fair comparison, the baseline model also needs to be fine-tuned.
