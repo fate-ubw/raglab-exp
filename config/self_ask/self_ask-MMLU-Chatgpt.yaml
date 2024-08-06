@@ -10,7 +10,7 @@ output_dir: ./data/eval_results/
 llm_mode: Openai_api
 llm_name: gpt-3.5-turbo
 api_key_path: ./api_keys.txt
-api_base: https://api.aigcbest.top/v1
+api_base: https://api2.aigcbest.top/v1
 temperature: 0.0
 top_p: 1.0
 generation_stop: 'Intermediate Answer:'

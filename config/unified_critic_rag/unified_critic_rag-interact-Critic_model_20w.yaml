@@ -1,0 +1,29 @@
+use_seed: True
+seed: 633
+num_gpu: 2
+# eval config
+algorithm_name: unified_critic_rag
+task: ''
+# llm config
+llm_mode: HF_Model
+llm_path: ./model/Llama3-8B-baseline
+critic_path: ./model/output_models/unified-Critic-8B-baseline_20w/
+use_vllm: False
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: True
+retrieval_name: colbert_api
+# max length should bigger than the length of input_ids
+n_docs: 2
+passages_max_length: -1
+threshold: 0.2
+use_groundness: True
+use_utility: True
+beam_width: 2
+max_depth: 7
+w_rel: 1.0
+w_sup: 1.0
+w_use: 0.5

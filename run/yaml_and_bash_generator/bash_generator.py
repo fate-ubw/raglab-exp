@@ -2,7 +2,7 @@ import os
 
 # Algorithm list
 # ALGORITHM_LIST = ['naive_rag', 'query_rewrite_rag',  'iterative_rag', 'self_ask', 'active_rag','selfrag_reproduction', 'unified_critic_rag']
-ALGORITHM_LIST = ['unified_critic_rag']
+ALGORITHM_LIST = ['unified_critic_rag_fine_rank_post_passage']
 
 # Configuration files directory
 config_dir_base = "./config"
@@ -28,7 +28,7 @@ for algorithm_name in ALGORITHM_LIST:
 
     # Iterate over the configuration files directory
     for filename in os.listdir(config_dir):
-        if filename.endswith(".yaml"):
+        if filename.endswith(".yaml") and '20w' in filename:
             # Get the filename (without extension)
             basename = os.path.splitext(filename)[0]
 
@@ -42,7 +42,7 @@ for algorithm_name in ALGORITHM_LIST:
                 python_file = "main-evaluation.py"
 
             # Generate the Shell script content
-            script_content = f"# export CUDA_VISIBLE_DEVICES=1,2\n"
+            script_content = f"# export CUDA_VISIBLE_DEVICES=1\n"
             script_content += f"python ./{python_file}\\\n"
             script_content += f" --config ./config/{algorithm_name}/{filename}"
 
@@ -60,7 +60,7 @@ for algorithm_name in ALGORITHM_LIST:
             script_paths.append(f"sh {script_filename}")
 
 # Write the script paths to a text file
-with open("./auto_gpu_scheduling_scripts/auto_run-unified_critic-8b_2w-scripts.py", "w") as txt_file:
+with open("./auto_gpu_scheduling_scripts/auto_run-unified_critic-8b_20w-fine_rank_post_passage-scripts.py", "w") as txt_file:
     txt_file.write("\n".join(script_paths))
 
 print("Generated success!!!")

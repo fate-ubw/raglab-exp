@@ -1,0 +1,29 @@
+use_seed: True
+seed: 633
+num_gpu: 1
+# eval config
+algorithm_name: unified_critic_rag_fine_rank
+task: Arc
+eval_datapath: ./data/eval_datasets/Arc_Challenge/arc_challenge_processed_first_500_samples.jsonl 
+output_dir: ./data/eval_results/
+# llm config
+llm_mode: HF_Model
+llm_path: ./model/Llama3-8B-baseline
+critic_path: ./model/output_models/unified-Critic-8B-baseline_20w/
+dtype: half
+use_vllm: False
+temperature: 0.0
+top_p: 1.0
+generation_stop: ''
+generate_maxlength: 300
+# retrieval config
+realtime_retrieval: True
+retrieval_name: colbert_api
+# max length should bigger than the length of input_ids
+n_docs: 10
+passages_max_length: -1
+use_groundness: True
+use_utility: True
+w_rel: 1.0
+w_sup: 1.0
+w_use: 0.5
