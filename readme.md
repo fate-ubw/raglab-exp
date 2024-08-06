@@ -1,5 +1,22 @@
-# raglab
+# RAGLAB: A Modular and Research-Oriented Unified Framework for Retrieval-Augmented Generation
+
+RAGLAB is a modular, research-oriented open-source framework for Retrieval-Augmented Generation (RAG) algorithms. It offers reproductions of 6 existing RAG algorithms and a comprehensive evaluation system with 10 benchmark datasets, enabling fair comparisons between RAG algorithms and easy expansion for efficient development of new algorithms, datasets, and evaluation metrics.
+
+
+
+
 ![figure-1](./figures/Raglab-figure-1_00.png)
+
+# 🌟Features
+- Comprehensive RAG Ecosystem: Supports the entire RAG pipeline from data collection and training to auto-evaluation.
+- Advanced Algorithm Implementations: Reproduces 6 state-of-the-art RAG algorithms, with an easy-to-extend framework for developing new algorithms.
+- Fair Comparison Platform: Provides benchmark results for 6 algorithms across 5 task types and 10 datasets.
+- Efficient Retriever Client: Offers local API for parallel access and caching, with average latency under 1 second.
+ -Versatile Generator Support: Compatible with 70B+ models, VLLM, and quantization techniques.
+- Flexible Instruction Lab: Customizable instruction templates for various RAG scenarios.
+
+
+
 # 🔨Install environment
 - dev environment：pytorch:2.0.1-py3.10-cuda11.8.0-devel-ubuntu22.04
 - [install miniconda](https://docs.anaconda.com/free/miniconda/index.html)
@@ -121,7 +138,6 @@ gdown --id xxxxxx
 
 
 
-
 # 💽 Process wiki2018 as vector database
 - This section is a tutorial on using wiki2018
 
@@ -154,12 +170,44 @@ vim metadata.json
 
 
 
+# Inference experiments
+## Retrieval server & api
+- The inference experiments require running hundreds of scripts in parallel. If each script loads the wiki2023 database separately, not only does it require a large amount of RAM, but loading the wiki2023 database each time also takes a considerable amount of time, which is a significant waste of computing resources. Therefore, RagLab has designed [colbert server & colbert api](https://github.com/fate-ubw/raglab-exp/tree/main/raglab/retrieval/colbert_api) to address the problem of multi-task parallel retrieval. By runnging local colbert server, tasks can call the colbert api to obtain retrieval results, greatly reducing the inference time for multiple tasks.
+- Attention: colbert_server need atleast 60GB ram 
+  ~~~bash
+  cd raglab-exp
+  sh run/colbert_server/colbert_server.sh
+  ~~~
+- open another terminal test your ColBERT server
+~~~bash
+cd raglab-exp
+sh run/colbert_server/ask_api.sh
+~~~
+- ColBERT server started successfully!!! 🌈
+## Automatic GPU Scheduler
+- inference experiments require running hundreds of scripts in parallel, the [automatic gpu scheduler](https://github.com/ExpectationMax/simple_gpu_scheduler) needs to be used to automatically allocate GPUs for different bash scripts in Parallel.
+- install `simple_gpu_scheduler`
+  ~~~bash
+  pip install simple_gpu_scheduler
+  ~~~
+- run hundreds of experiments in one line 😎
+  ~~~bash
+  cd raglab-exp
+  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < auto_gpu_scheduling_scripts/auto_run_scripts-jeff.py
+  ~~~
+- how to write your_script.txt?
+  - here is an example
+  ~~~bash
+  # auto_inference_selfreg-7b.txt
+  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-adaptive_retrieval-pregiven_passages.sh
+  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-always_retrieval-pregiven_passages.sh
+  ~~~
 
 
 
-# Fine tune llama3 & self rag 
+## Fine tune llama3 & self rag 
 - The base models for raglab baseline and selfrag use llama3-instruction-8b. Since selfrag was further fine-tuned on additional data during the fine-tuning stage, in order to make a fair comparison, the baseline model also needs to be fine-tuned.
-## download self rag train data
+### download self rag train data
 - we get the train data from [selfrag](https://github.com/AkariAsai/self-rag/tree/main)
 - google drive [url](https://drive.google.com/file/d/10G_FozUV4u27EX0NjwVe-3YMUMeTwuLk/view)
 - download through gdown
@@ -167,7 +215,7 @@ vim metadata.json
   cd raglab-exp/data/train_data/
   gdown --id 10G_FozUV4u27EX0NjwVe-3YMUMeTwuLk
   ~~~
-## 10-samples test for fintune
+### 10-samples test for fintune
 - The 10-samples train dataset has been processed, please directly start the bash script to begin testing.
 - Note: The test script only uses one GPU
   - full weight requires 80GB VRam GPU
@@ -219,7 +267,7 @@ vim metadata.json
   sh run/rag_train/script_finetune-llama3-70B-baseline-Lora.sh
   ~~~
 
-# QLora finetune llama3-70B as baseline
+## QLora finetune llama3-70B as baseline
 - preprocess train data. Train data for baseline model need remove special tokens.
   ~~~bash
   cd raglab-exp
@@ -234,7 +282,7 @@ vim metadata.json
   sh run/rag_train/script_finetune-llama3-70B-baseline-QLora-4bit.sh
   ~~~
 
-# 8bit QLora finetune selfrag-70B as baseline
+## 8bit QLora finetune selfrag-70B as baseline
 - 8bit Qlora finetune slefrag 70B
   ~~~bash
     sh run/rag_train/script_finetune-selfrag_llama3-70b-QLora-8bit.sh
@@ -244,36 +292,7 @@ vim metadata.json
     sh run/rag_train/script_finetune-selfrag_llama3-70b-QLora-4bit.sh
   ~~~
 
-# Inference experiments
-## Retrieval server & api
-- The inference experiments require running hundreds of scripts in parallel. If each script loads the wiki2023 database separately, not only does it require a large amount of RAM, but loading the wiki2023 database each time also takes a considerable amount of time, which is a significant waste of computing resources. Therefore, RagLab has designed [colbert server & colbert api](https://github.com/fate-ubw/raglab-exp/tree/main/raglab/retrieval/colbert_api) to address the problem of multi-task parallel retrieval. By runnging local colbert server, tasks can call the colbert api to obtain retrieval results, greatly reducing the inference time for multiple tasks.
-- Attention: colbert_server need atleast 60GB ram 
-  ~~~bash
-  cd raglab-exp
-  sh run/colbert_server/colbert_server.sh
-  ~~~
-- open another terminal test your ColBERT server
-~~~bash
-cd raglab-exp
-sh run/colbert_server/ask_api.sh
-~~~
-- 这里应该会返回 top-10 passages，第一检索时间较慢，再次检索时间可缩短到0.01s
-- ColBERT server started successfully!!! 🌈
-## Automatic GPU Scheduler
-- inference experiments require running hundreds of scripts in parallel, the [automatic gpu scheduler](https://github.com/ExpectationMax/simple_gpu_scheduler) needs to be used to automatically allocate GPUs for different bash scripts in Parallel.
-- install `simple_gpu_scheduler`
-  ~~~bash
-  pip install simple_gpu_scheduler
-  ~~~
-- run hundreds of experiments in one line 😎
-  ~~~bash
-  cd raglab-exp
-  simple_gpu_scheduler --gpus 0,1,2,3,4,5,6,7 < auto_gpu_scheduling_scripts/auto_run_scripts-jeff.py
-  ~~~
-- how to write your_script.txt?
-  - here is an example
-  ~~~bash
-  # auto_inference_selfreg-7b.txt
-  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-adaptive_retrieval-pregiven_passages.sh
-  sh run/rag_inference/selfrag_reproduction/selfrag_reproduction-evaluation-short_form-PubHealth-always_retrieval-pregiven_passages.sh
-  ~~~
+
+## :bookmark: License
+
+FlashRAG is licensed under the [<u>MIT License</u>](./LICENSE).
