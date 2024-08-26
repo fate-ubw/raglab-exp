@@ -291,4 +291,4 @@ sh run/colbert_server/ask_api.sh
 
 ## :bookmark: License
 
-RAGLAB is licensed under the [<u>MIT License</u>](./LICENSE).
+raglab-exp is licensed under the MIT License.
